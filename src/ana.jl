@@ -52,64 +52,30 @@ function Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
     return mass(tlv_4l)
 end
 
+@pour initial_cut begin
+    v_l_pid = vcat(evt.v_e_pid, evt.v_m_pid)
+    nlepton = length(v_l_pid)
+    nlepton <= 3 && return false
+
+    v_l_tlv = vcat(evt.v_e_tlv, evt.v_m_tlv)
+    v_l_wgt = vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
+
+    v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
+    length(v_Z_wgt) == 0 && return false
+
+    best_p = first(v_Z_pair)
+    abs(mass(v_l_tlv[best_p[1]] + v_l_tlv[best_p[2]]) - Z_m) > 20e3 && return false
+
+    v_l_order = sortperm(v_l_tlv; by=mass)
+    mass_4l = Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
+end # end of initial_cut
+
 function main_looper(mytree)
     for evt in mytree
         ### initial_cut
-        pass_initial_cut = begin
-            v_l_pid = vcat(evt.v_e_pid, evt.v_m_pid)
-            nlepton = length(v_l_pid)
-            nlepton <= 3 && return false
-
-            v_l_tlv = vcat(evt.v_e_tlv, evt.v_m_tlv)
-            v_l_wgt = vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
-
-            v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
-            length(v_Z_wgt) == 0 && return false
-
-            best_p = first(v_Z_pair)
-            abs(mass(v_l_tlv[best_p[1]] + v_l_tlv[best_p[2]]) - Z_m) > 20e3 && return false
-
-            v_l_order = sortperm(v_l_tlv; by=mass)
-            mass_4l = Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
-        end # end of initial_cut
-
+        pass_initial_cut = @initial_cut
         ### ZZZ_cut
-        pass_ZZZ_cut = begin
-            nZ = length(v_Z_pair)
-            nlepton < 6 && return false
-
-            nZ == 1 && return false
-
-            if nZ == 2
-                # recovery? doesn't do anything other than update cut flow
-            end
-
-            nlepton > 6 && return false
-
-            # 3 SFOS
-            if nZ == 3
-                # update weights?
-            end
-
-            if nZ == 2
-                Z3_tlv = zero(LorentzVector)
-                for i in eachindex(v_l_pid)
-                    i ∈ v_ignore && continue
-                    Z3_tlv += v_l_tlv[i]
-                end
-                m_Z3 = mass(Z3_tlv)
-
-                m_Z3 < 40e3 && return false
-            end
-
-            if nZ == 3
-                sp = v_Z_pair[2]
-                m_2ndpair = mass(v_l_tlv[sp[1]] + v_l_tlv[sp[2]])
-                m_2ndpair <= 40e3 && return false
-            end
-
-            return true
-        end # end of ZZZ_cut
+        pass_ZZZ_cut = @ZZZ_cut
 
         break
     end
