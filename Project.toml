@@ -1,0 +1,18 @@
+name = "WVZAnalysis"
+uuid = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"
+authors = ["Jerry Ling <proton@jling.dev> and contributors"]
+version = "0.1.0"
+
+[deps]
+FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
+LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
+UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
