@@ -1,5 +1,4 @@
-@pour ZZZ_cut begin
-    nZ = length(v_Z_pair)
+function ZZZ_Cut(v_Z_pair, nZ, nlepton, v_ignore, v_l_pid, v_l_tlv)
     nlepton < 6 && return false
 
     nZ == 1 && return false
@@ -33,4 +32,4 @@
     end
 
     return true
-end # end of ZZZ_cut
+end # end of ZZZ_Cut
