@@ -48,6 +48,26 @@ function Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
     return mass(tlv_4l)
 end
 
+function Bjet_Cut(evt)
+    tagnums = ("60", "70", "77", "85")
+    _btags = [getproperty(evt, Symbol("v_j_btag$i")) for i in tagnums]
+    _wgts = [getproperty(evt, Symbol("v_j_wgt_btag$i")) for i in tagnums]
+
+    b_wgt = Vector{Float64}(undef, 4)
+
+    for idx in eachindex(_btags, _wgts)
+        btag_wgt = 1
+        btag_veto = true
+        for (b, w) in zip(_btags[idx], _wgts[idx])
+            b > 0 && (btag_veto = false)
+            btag_wgt *= w
+        end
+        # normally there's a cutflow line here
+        b_wgt[idx] = btag_wgt
+    end
+    return b_wgt
+end
+
 function main_looper(mytree)
     for evt in mytree
         ### initial_cut
@@ -73,6 +93,9 @@ function main_looper(mytree)
 
         nZ = length(v_Z_pair)
         pass_ZZZ_cut = ZZZ_Cut(v_Z_pair, nZ, nlepton, v_ignore, v_l_pid, v_l_tlv)
-        pass_WZZ_cut = WZZ_Cut(nlepton, nZ, v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt)
+        pass_WZZ_cut = WZZ_Cut(
+            nlepton, nZ, v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt
+        )
+        b_wgt = Bjet_Cut(evt)
     end
 end
