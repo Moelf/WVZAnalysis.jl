@@ -12,6 +12,7 @@ Mixers = "2a8e4939-dab8-5edc-8f64-72a8776f13de"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 
 [compat]
+LoopVectorization = "0.12"
 julia = "1"
 
 [extras]
