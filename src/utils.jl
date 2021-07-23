@@ -17,3 +17,22 @@ function eta(lv::LorentzVector)
     fZ > 0.0 && return 10e10
     return -10e10
 end
+function phi(lv::LorentzVector)
+    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atand(lv.y, lv.x)
+end
+
+function phi_mpi_pi(x)
+    while (x >= pi)
+        x -= 2pi
+    end
+    while (x < -pi)
+        x += 2pi
+    end
+    return x
+end
+
+function deltaR(lv1::LorentzVector, lv2::LorentzVector)
+    deta = eta(lv1) - eta(lv2)
+    dphi = phi_mpi_pi(phi(lv1) - phi(lv2))
+    return sqrt(deta * deta + dphi * dphi)
+end
