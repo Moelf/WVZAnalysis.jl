@@ -50,13 +50,13 @@ end
 
 function Bjet_Cut(evt)
     tagnums = ("60", "70", "77", "85")
-    _btags = [getproperty(evt, Symbol("v_j_btag$i")) for i in tagnums]
-    _wgts = [getproperty(evt, Symbol("v_j_wgt_btag$i")) for i in tagnums]
+    _btags = [getproperty(evt, Symbol(:v_j_btag, i)) for i in tagnums]
+    _wgts =  [getproperty(evt, Symbol(:v_j_wgt_btag, i)) for i in tagnums]
 
     b_wgt = Vector{Float64}(undef, 4)
 
     for idx in eachindex(_btags, _wgts)
-        btag_wgt = 1
+        btag_wgt = 1.
         btag_veto = true
         for (b, w) in zip(_btags[idx], _wgts[idx])
             b > 0 && (btag_veto = false)
