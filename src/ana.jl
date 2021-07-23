@@ -19,8 +19,7 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv, v_l_wgt)
             end
         end
         isinf(M) && break # can't find any more pairs
-        push!(v_ignore, temp_tup[1])
-        push!(v_ignore, temp_tup[2])
+        push!(v_ignore, temp_tup...)
 
         push!(v_Z_pair, temp_tup)
         push!(v_Z_wgt, v_l_wgt[temp_tup[1]] * v_l_wgt[temp_tup[2]])
@@ -32,10 +31,10 @@ end
 function Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
     m4l = first(v_Z_pair)
 
-    @inbounds for i in eachindex(v_l_order)
+    @inbounds for vlo in v_l_order
         length(m4l) >= 4 && break
-        (v_l_order[i] == m4l[1] || v_l_order[i] == m4l[2]) && continue
-        m4l = (m4l..., v_l_order[i])
+        (vlo ∈ m4l) && continue
+        m4l = (m4l..., vlo)
     end
     # require 2SFOS
     length(m4l) != 4 && return -1.0
@@ -70,16 +69,48 @@ function Bjet_Cut(evt)
     return b_wgt, b_veto
 end
 
+const _EISOS = (
+    :HighPtCaloOnly,
+    :TightTrackOnly_VarRad,
+    :TightTrackOnly_FixedRad,
+    :Tight_VarRad,
+    :Loose_VarRad,
+)
+const _MISOS = (
+    :PflowTight_VarRad,
+    :PflowTight_FixedRad,
+    :PflowLoose_VarRad,
+    :PflowLoose_FixedRad,
+    :HighPtTrackOnly,
+    :TightTrackOnly_VarRad,
+    :TightTrackOnly_FixedRad,
+    :Tight_VarRad,
+    :Tight_FixedRad,
+    :Loose_VarRad,
+    :Loose_FixedRad,
+)
+
 function main_looper(r::ROOTFile)
     sumWeight = r["sumWeight"][:fN][3]
     mytree = LazyTree(
         r,
         "tree_NOMINAL",
-        ["passTrig", r"v_j_(wgt_)?btag.*", "weight", r"v_(e|m|j)_(fwd|tlv|wgtLoose|pid|lowpt)$"],
+        [
+            "MET",
+            "passTrig",
+            r"v_(e|m)_(LHTight|tight)",
+            r"v_j_(wgt_)?btag.*",
+            r"v_(e|m)_passIso_.*",
+            "weight",
+            r"v_(e|m|j)_(fwd|tlv|wgtLoose|pid|lowpt)$",
+        ],
     )
-    hist_WZZ_ZZ_mass = Hist1D(; bins=0:10:800)
-    hist_Z_mass_first = Hist1D(Float32; bins=0:10:200)
-    for evt in mytree
+    hists_dict = Dict{Symbol, Hist1D}(
+    :Z_mass_first => Hist1D(Float32; bins=0:10:200),
+    :WZZ_ZZ_mass  => Hist1D(Float32; bins=0:10:800),
+    :WWZ_MET      => Hist1D(Float32; bins=0:5:400),
+   )
+    for (enum, evt) in enumerate(mytree)
         ### initial_cut
         wgt = evt.weight / sumWeight
         e_mask = .!(evt.v_e_fwd)
@@ -88,20 +119,21 @@ function main_looper(r::ROOTFile)
         nlepton = length(v_l_pid)
         nlepton <= 3 && continue
 
+
         v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
         v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
 
         v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
         isempty(v_Z_pair) && continue
         zpr1 = first(v_Z_pair)
-        push!(hist_Z_mass_first, mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])/1000 ,wgt)
+        push!(hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt)
 
-        best_p = first(v_Z_pair)
-        abs(mass(v_l_tlv[best_p[1]] + v_l_tlv[best_p[2]]) - Z_m) > 20e3 && continue
+        abs(mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) - Z_m) > 20e3 && continue
 
-        v_l_order = sortperm(v_l_tlv; by=mass)
+        v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         mass_4l = Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
-        # end of initial_cut
+        mass_4l < 0.0 && continue
+        ### end of initial_cut
 
         pass_ZZZ_cut, wgt = ZZZ_Cut(v_Z_pair, v_ignore, v_l_pid, v_l_tlv, wgt)
         if pass_ZZZ_cut
@@ -109,37 +141,44 @@ function main_looper(r::ROOTFile)
         end
         !(evt.passTrig) && continue
 
+        v_l_passIso = Vector{Bool}[]
+        foreach(findall(e_mask)) do idx
+            push!(v_l_passIso, Bool[getproperty(evt, Symbol(:v_e_passIso_, s))[idx] for s in _EISOS])
+        end
+        foreach(findall(m_mask)) do idx
+            push!(v_l_passIso, Bool[getproperty(evt, Symbol(:v_m_passIso_, s))[idx] for s in _MISOS])
+        end
+
         pass_WZZ_cut, wgt = WZZ_Cut(
-            v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt
+            v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, wgt
         )
         # `true` in `b_veto` means we've passed the criterial,
         # which means we didn't see a b-tagged
-        b_wgt, b_veto = Bjet_Cut(evt)
-        if (b_veto[3])
-            wgt *= b_wgt[3]
-        else
-            continue
-        end
         if pass_WZZ_cut
             zpr2 = v_Z_pair[2]
             Z1_vlt = v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]
             Z2_vlt = v_l_tlv[zpr2[1]] + v_l_tlv[zpr2[2]]
             ZZ_vlt = Z1_vlt + Z2_vlt
             ZZ_mass = mass(ZZ_vlt)
-            ZZ_pt = pt(ZZ_vlt)
 
-            # @show ZZ_mass / 1000
-            push!(hist_WZZ_ZZ_mass, ZZ_mass / 1000, wgt)
+            push!(hists_dict[:WZZ_ZZ_mass], ZZ_mass / 1000, wgt)
             continue
         end
 
+        v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
         pass_WWZ_cut, wgt = WWZ_Cut(
-            v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt
+            v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_tight, wgt
         )
+        b_wgt, b_veto = Bjet_Cut(evt)
         if pass_WWZ_cut
+            if (b_veto[3])
+                wgt *= b_wgt[3]
+            else
+                continue
+            end
+            push!(hists_dict[:WWZ_MET], evt.MET/1000, wgt)
             continue
         end
-
     end
-    return hist_WZZ_ZZ_mass
+    return hists_dict
 end

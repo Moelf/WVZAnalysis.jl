@@ -1,4 +1,4 @@
-function WZZ_Cut(v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt)
+function WZZ_Cut(v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, wgt)
     nlepton = length(v_l_pid)
     fifth_l = -1
     nZ = length(v_Z_pair)
@@ -20,7 +20,14 @@ function WZZ_Cut(v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, wgt)
         break
     end
 
-    abs(mass((v_l_tlv[pr2[1]]+v_l_tlv[pr2[2]])) - Z_m) > 20e3 && return false, wgt
+    abs(mass((v_l_tlv[pr2[1]] + v_l_tlv[pr2[2]])) - Z_m) > 20e3 && return false, wgt
+
+    if (abs(v_l_pid[fifth_l]) == 11)
+        !v_l_passIso[fifth_l][4] && return false, wgt
+    end
+    if (abs(v_l_pid[fifth_l]) == 13)
+        !v_l_passIso[fifth_l][3] && return false, wgt
+    end
 
     return true, WZZ_wgt
 end # end of WZZ Cut

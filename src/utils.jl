@@ -18,7 +18,7 @@ function eta(lv::LorentzVector)
     return -10e10
 end
 function phi(lv::LorentzVector)
-    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atand(lv.y, lv.x)
+    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atan(lv.y, lv.x)
 end
 
 function phi_mpi_pi(x)

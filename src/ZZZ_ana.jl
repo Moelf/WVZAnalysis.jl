@@ -24,7 +24,7 @@ function ZZZ_Cut(v_Z_pair, v_ignore, v_l_pid, v_l_tlv, wgt)
         end
         m_Z3 = mass(Z3_tlv)
 
-        m_Z3 < 40e3 && return false, wgt
+        m_Z3 <= 40e3 && return false, wgt
     end
 
     if nZ == 3
