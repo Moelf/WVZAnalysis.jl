@@ -48,101 +48,16 @@ function Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
 end
 
 function Bjet_Cut(evt)
-    tagnums = ("60", "70", "77", "85")
-    _btags = [getproperty(evt, Symbol(:v_j_btag, i)) for i in tagnums]
-    _wgts = [getproperty(evt, Symbol(:v_j_wgt_btag, i)) for i in tagnums]
+    b = evt.v_j_btag77
+    w = evt.v_j_wgt_btag77
 
-    b_wgt = Vector{Float64}(undef, 4)
-    b_veto = Vector{Bool}(undef, 4)
-
-    for idx in eachindex(_btags, _wgts)
-        btag_wgt = 1.0
-        btag_veto = true
-        for (b, w) in zip(_btags[idx], _wgts[idx])
-            b > 0 && (btag_veto = false)
-            btag_wgt *= w
-        end
-        # normally there's a cutflow line here
-        b_wgt[idx] = btag_wgt
-        b_veto[idx] = btag_veto
+    b_wgt = 1.
+    btag_veto = true
+    for (b, w) in zip(b, w)
+        b > 0 && (btag_veto = false)
+        b_wgt *= w
     end
-    return b_wgt, b_veto
-end
-
-const _EISOS = (
-    :HighPtCaloOnly,
-    :TightTrackOnly_VarRad,
-    :TightTrackOnly_FixedRad,
-    :Tight_VarRad,
-    :Loose_VarRad,
-)
-const _MISOS = (
-    :PflowTight_VarRad,
-    :PflowTight_FixedRad,
-    :PflowLoose_VarRad,
-    :PflowLoose_FixedRad,
-    :HighPtTrackOnly,
-    :TightTrackOnly_VarRad,
-    :TightTrackOnly_FixedRad,
-    :Tight_VarRad,
-    :Tight_FixedRad,
-    :Loose_VarRad,
-    :Loose_FixedRad,
-)
-
-#FIXME thanks HEP, replace this with a @generated
-function get_Isos(e_mask, m_mask, evt)
-    v_l_passIso = Vector{Bool}[]
-
-    v_e_passIso_HighPtCaloOnly = evt.v_e_passIso_HighPtCaloOnly
-    v_e_passIso_TightTrackOnly_VarRad = evt.v_e_passIso_TightTrackOnly_VarRad
-    v_e_passIso_TightTrackOnly_FixedRad = evt.v_e_passIso_TightTrackOnly_FixedRad
-    v_e_passIso_Tight_VarRad = evt.v_e_passIso_Tight_VarRad
-    v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
-    v_m_passIso_PflowTight_VarRad = evt.v_m_passIso_PflowTight_VarRad
-    v_m_passIso_PflowTight_FixedRad = evt.v_m_passIso_PflowTight_FixedRad
-    v_m_passIso_PflowLoose_VarRad = evt.v_m_passIso_PflowLoose_VarRad
-    v_m_passIso_PflowLoose_FixedRad = evt.v_m_passIso_PflowLoose_FixedRad
-    v_m_passIso_HighPtTrackOnly = evt.v_m_passIso_HighPtTrackOnly
-    v_m_passIso_TightTrackOnly_VarRad = evt.v_m_passIso_TightTrackOnly_VarRad
-    v_m_passIso_TightTrackOnly_FixedRad = evt.v_m_passIso_TightTrackOnly_FixedRad
-    v_m_passIso_Tight_VarRad = evt.v_m_passIso_Tight_VarRad
-    v_m_passIso_Tight_FixedRad = evt.v_m_passIso_Tight_FixedRad
-    v_m_passIso_Loose_VarRad = evt.v_m_passIso_Loose_VarRad
-    v_m_passIso_Loose_FixedRad = evt.v_m_passIso_Loose_FixedRad
-
-    for idx in findall(e_mask)
-        push!(
-            v_l_passIso,
-            Bool[
-                v_e_passIso_HighPtCaloOnly[idx],
-                v_e_passIso_TightTrackOnly_VarRad[idx],
-                v_e_passIso_TightTrackOnly_FixedRad[idx],
-                v_e_passIso_Tight_VarRad[idx],
-                v_e_passIso_Loose_VarRad[idx],
-            ],
-        )
-    end
-    for idx in findall(m_mask)
-        push!(
-            v_l_passIso,
-            Bool[
-                 v_m_passIso_PflowTight_VarRad[idx],
-                 v_m_passIso_PflowTight_FixedRad[idx],
-                 v_m_passIso_PflowLoose_VarRad[idx],
-                 v_m_passIso_PflowLoose_FixedRad[idx],
-                 v_m_passIso_HighPtTrackOnly[idx],
-                 v_m_passIso_TightTrackOnly_VarRad[idx],
-                 v_m_passIso_TightTrackOnly_FixedRad[idx],
-                 v_m_passIso_Tight_VarRad[idx],
-                 v_m_passIso_Tight_FixedRad[idx],
-                 v_m_passIso_Loose_VarRad[idx],
-                 v_m_passIso_Loose_FixedRad[idx],
-            ],
-        )
-    end
-
-    return v_l_passIso
+    return b_wgt, btag_veto
 end
 
 function main_looper(r::ROOTFile)
@@ -160,22 +75,26 @@ function main_looper(r::ROOTFile)
             r"v_(e|m|j)_(fwd|tlv|wgtLoose|pid|lowpt)$",
         ],
     )
+    main_looper(mytree, sumWeight)
+end
+
+function main_looper(mytree, sumWeight)
     hists_dict = Dict{Symbol,Hist1D}(
         :Z_mass_first => Hist1D(Float32; bins=0:10:200),
         :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
         :WWZ_MET => Hist1D(Float32; bins=0:5:400),
     )
-    for (enum, evt) in enumerate(mytree)
+    @inbounds for evt in mytree
         ### initial_cut
         wgt = evt.weight / sumWeight
         e_mask = .!(evt.v_e_fwd)
         m_mask = .!(evt.v_m_lowpt)
-        v_l_pid = vcat(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
+        v_l_pid = append!(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
         nlepton = length(v_l_pid)
         nlepton <= 3 && continue
 
-        v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
-        v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
+        v_l_tlv = append!(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
+        v_l_wgt = append!(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
 
         v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
         isempty(v_Z_pair) && continue
@@ -215,7 +134,7 @@ function main_looper(r::ROOTFile)
             continue
         end
 
-        v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
+        v_l_tight = append!(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
         pass_WWZ_cut, wgt = WWZ_Cut(
             v_Z_wgt,
             v_Z_pair,
@@ -229,8 +148,8 @@ function main_looper(r::ROOTFile)
         )
         b_wgt, b_veto = Bjet_Cut(evt)
         if pass_WWZ_cut
-            if (b_veto[3])
-                wgt *= b_wgt[3]
+            if (b_veto)
+                wgt *= b_wgt
             else
                 continue
             end
