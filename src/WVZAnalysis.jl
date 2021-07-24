@@ -1,6 +1,6 @@
 module WVZAnalysis
 
-using UnROOT, FHist, LinearAlgebra, LorentzVectors, StaticArrays
+using UnROOT, FHist, LinearAlgebra, LorentzVectors, LoopVectorization, StaticArrays
 
 include("./utils.jl")
 include("./ZZZ_ana.jl")

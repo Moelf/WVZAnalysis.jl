@@ -2,7 +2,7 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv, v_l_wgt)
     v_Z_pair = Tuple{Int,Int}[]
     v_Z_wgt = Float32[]
 
-    v_ignore = Set{Int}()
+    v_ignore = Int[]
     @inbounds while length(v_ignore) < length(v_l_pids)
         M = Inf
         local temp_tup
@@ -86,9 +86,11 @@ function main_looper(mytree, sumWeight)
     )
     @inbounds for evt in mytree
         ### initial_cut
-        wgt = evt.weight / sumWeight
-        e_mask = .!(evt.v_e_fwd)
-        m_mask = .!(evt.v_m_lowpt)
+        e_mask = evt.v_e_fwd
+        e_mask .⊻= true
+        m_mask = evt.v_m_lowpt
+        m_mask .⊻= true
+
         v_l_pid = append!(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
         nlepton = length(v_l_pid)
         nlepton <= 3 && continue
@@ -99,6 +101,7 @@ function main_looper(mytree, sumWeight)
         v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
         isempty(v_Z_pair) && continue
         zpr1 = first(v_Z_pair)
+        wgt = evt.weight / sumWeight
         push!(
             hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
         )

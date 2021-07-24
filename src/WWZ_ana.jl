@@ -24,7 +24,7 @@ function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
     return chi2
 end
 
-function WWZ_Cut(
+Base.@propagate_inbounds function WWZ_Cut(
     v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_tight, wgt
 )
     WWZ_wgt = wgt * first(v_Z_wgt)
@@ -32,7 +32,7 @@ function WWZ_Cut(
     W_id = Vector{Int}(undef, 2)
     # define W lepton ID and modify weight
     pr1 = first(v_Z_pair)
-    for vlo in v_l_order
+    @inbounds for vlo in v_l_order
         nW >= 3 && break
         (vlo in pr1) && continue
         WWZ_wgt *= v_l_wgt[vlo]

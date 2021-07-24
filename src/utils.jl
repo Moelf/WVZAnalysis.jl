@@ -66,46 +66,48 @@ function get_Isos(e_mask, m_mask, evt)
     v_e_passIso_TightTrackOnly_VarRad = evt.v_e_passIso_TightTrackOnly_VarRad
     v_e_passIso_TightTrackOnly_FixedRad = evt.v_e_passIso_TightTrackOnly_FixedRad
     v_e_passIso_Tight_VarRad = evt.v_e_passIso_Tight_VarRad
-    v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
+    # v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
     v_m_passIso_PflowTight_VarRad = evt.v_m_passIso_PflowTight_VarRad
     v_m_passIso_PflowTight_FixedRad = evt.v_m_passIso_PflowTight_FixedRad
     v_m_passIso_PflowLoose_VarRad = evt.v_m_passIso_PflowLoose_VarRad
     v_m_passIso_PflowLoose_FixedRad = evt.v_m_passIso_PflowLoose_FixedRad
-    v_m_passIso_HighPtTrackOnly = evt.v_m_passIso_HighPtTrackOnly
-    v_m_passIso_TightTrackOnly_VarRad = evt.v_m_passIso_TightTrackOnly_VarRad
-    v_m_passIso_TightTrackOnly_FixedRad = evt.v_m_passIso_TightTrackOnly_FixedRad
-    v_m_passIso_Tight_VarRad = evt.v_m_passIso_Tight_VarRad
-    v_m_passIso_Tight_FixedRad = evt.v_m_passIso_Tight_FixedRad
-    v_m_passIso_Loose_VarRad = evt.v_m_passIso_Loose_VarRad
-    v_m_passIso_Loose_FixedRad = evt.v_m_passIso_Loose_FixedRad
+    # v_m_passIso_HighPtTrackOnly = evt.v_m_passIso_HighPtTrackOnly
+    # v_m_passIso_TightTrackOnly_VarRad = evt.v_m_passIso_TightTrackOnly_VarRad
+    # v_m_passIso_TightTrackOnly_FixedRad = evt.v_m_passIso_TightTrackOnly_FixedRad
+    # v_m_passIso_Tight_VarRad = evt.v_m_passIso_Tight_VarRad
+    # v_m_passIso_Tight_FixedRad = evt.v_m_passIso_Tight_FixedRad
+    # v_m_passIso_Loose_VarRad = evt.v_m_passIso_Loose_VarRad
+    # v_m_passIso_Loose_FixedRad = evt.v_m_passIso_Loose_FixedRad
 
-    @inbounds for idx in findall(e_mask)
+    @inbounds for (i,f) in enumerate(e_mask)
+        f || continue
         push!(
             v_l_passIso,
             Bool[
-                v_e_passIso_HighPtCaloOnly[idx],
-                v_e_passIso_TightTrackOnly_VarRad[idx],
-                v_e_passIso_TightTrackOnly_FixedRad[idx],
-                v_e_passIso_Tight_VarRad[idx],
-                v_e_passIso_Loose_VarRad[idx],
+                v_e_passIso_HighPtCaloOnly[i],
+                v_e_passIso_TightTrackOnly_VarRad[i],
+                v_e_passIso_TightTrackOnly_FixedRad[i],
+                v_e_passIso_Tight_VarRad[i],
+                # v_e_passIso_Loose_VarRad[i],
             ],
         )
     end
-    @inbounds for idx in findall(m_mask)
+    @inbounds for (i,f) in enumerate(m_mask)
+        f || continue
         push!(
             v_l_passIso,
             Bool[
-                 v_m_passIso_PflowTight_VarRad[idx],
-                 v_m_passIso_PflowTight_FixedRad[idx],
-                 v_m_passIso_PflowLoose_VarRad[idx],
-                 v_m_passIso_PflowLoose_FixedRad[idx],
-                 v_m_passIso_HighPtTrackOnly[idx],
-                 v_m_passIso_TightTrackOnly_VarRad[idx],
-                 v_m_passIso_TightTrackOnly_FixedRad[idx],
-                 v_m_passIso_Tight_VarRad[idx],
-                 v_m_passIso_Tight_FixedRad[idx],
-                 v_m_passIso_Loose_VarRad[idx],
-                 v_m_passIso_Loose_FixedRad[idx],
+                 v_m_passIso_PflowTight_VarRad[i],
+                 v_m_passIso_PflowTight_FixedRad[i],
+                 v_m_passIso_PflowLoose_VarRad[i],
+                 v_m_passIso_PflowLoose_FixedRad[i],
+                 # v_m_passIso_HighPtTrackOnly[i],
+                 # v_m_passIso_TightTrackOnly_VarRad[i],
+                 # v_m_passIso_TightTrackOnly_FixedRad[i],
+                 # v_m_passIso_Tight_VarRad[i],
+                 # v_m_passIso_Tight_FixedRad[i],
+                 # v_m_passIso_Loose_VarRad[i],
+                 # v_m_passIso_Loose_FixedRad[i],
             ],
         )
     end
