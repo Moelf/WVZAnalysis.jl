@@ -12,7 +12,7 @@ function eta(lv::LorentzVector)
     cosTheta = CosTheta(lv)
     (cosTheta^2 < 1.0) && return -0.5 * log((1.0 - cosTheta) / (1.0 + cosTheta))
     fZ = lv.z
-    fZ == 0.0 && return 0.0
+    iszero(fZ) && return 0.0
     # Warning("PseudoRapidity","transvers momentum = 0! return +/- 10e10");
     fZ > 0.0 && return 10e10
     return -10e10
@@ -22,11 +22,12 @@ function phi(lv::LorentzVector)
 end
 
 function phi_mpi_pi(x)
+    twopi = 2pi
     while (x >= pi)
-        x -= 2pi
+        x -= twopi
     end
     while (x < -pi)
-        x += 2pi
+        x += twopi
     end
     return x
 end
@@ -66,18 +67,18 @@ function get_Isos(e_mask, m_mask, evt)
     v_e_passIso_TightTrackOnly_VarRad = evt.v_e_passIso_TightTrackOnly_VarRad
     v_e_passIso_TightTrackOnly_FixedRad = evt.v_e_passIso_TightTrackOnly_FixedRad
     v_e_passIso_Tight_VarRad = evt.v_e_passIso_Tight_VarRad
-    # v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
+    v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
     v_m_passIso_PflowTight_VarRad = evt.v_m_passIso_PflowTight_VarRad
     v_m_passIso_PflowTight_FixedRad = evt.v_m_passIso_PflowTight_FixedRad
     v_m_passIso_PflowLoose_VarRad = evt.v_m_passIso_PflowLoose_VarRad
     v_m_passIso_PflowLoose_FixedRad = evt.v_m_passIso_PflowLoose_FixedRad
-    # v_m_passIso_HighPtTrackOnly = evt.v_m_passIso_HighPtTrackOnly
-    # v_m_passIso_TightTrackOnly_VarRad = evt.v_m_passIso_TightTrackOnly_VarRad
-    # v_m_passIso_TightTrackOnly_FixedRad = evt.v_m_passIso_TightTrackOnly_FixedRad
-    # v_m_passIso_Tight_VarRad = evt.v_m_passIso_Tight_VarRad
-    # v_m_passIso_Tight_FixedRad = evt.v_m_passIso_Tight_FixedRad
-    # v_m_passIso_Loose_VarRad = evt.v_m_passIso_Loose_VarRad
-    # v_m_passIso_Loose_FixedRad = evt.v_m_passIso_Loose_FixedRad
+    v_m_passIso_HighPtTrackOnly = evt.v_m_passIso_HighPtTrackOnly
+    v_m_passIso_TightTrackOnly_VarRad = evt.v_m_passIso_TightTrackOnly_VarRad
+    v_m_passIso_TightTrackOnly_FixedRad = evt.v_m_passIso_TightTrackOnly_FixedRad
+    v_m_passIso_Tight_VarRad = evt.v_m_passIso_Tight_VarRad
+    v_m_passIso_Tight_FixedRad = evt.v_m_passIso_Tight_FixedRad
+    v_m_passIso_Loose_VarRad = evt.v_m_passIso_Loose_VarRad
+    v_m_passIso_Loose_FixedRad = evt.v_m_passIso_Loose_FixedRad
 
     @inbounds for (i,f) in enumerate(e_mask)
         f || continue
@@ -88,7 +89,7 @@ function get_Isos(e_mask, m_mask, evt)
                 v_e_passIso_TightTrackOnly_VarRad[i],
                 v_e_passIso_TightTrackOnly_FixedRad[i],
                 v_e_passIso_Tight_VarRad[i],
-                # v_e_passIso_Loose_VarRad[i],
+                v_e_passIso_Loose_VarRad[i],
             ],
         )
     end
@@ -101,13 +102,13 @@ function get_Isos(e_mask, m_mask, evt)
                  v_m_passIso_PflowTight_FixedRad[i],
                  v_m_passIso_PflowLoose_VarRad[i],
                  v_m_passIso_PflowLoose_FixedRad[i],
-                 # v_m_passIso_HighPtTrackOnly[i],
-                 # v_m_passIso_TightTrackOnly_VarRad[i],
-                 # v_m_passIso_TightTrackOnly_FixedRad[i],
-                 # v_m_passIso_Tight_VarRad[i],
-                 # v_m_passIso_Tight_FixedRad[i],
-                 # v_m_passIso_Loose_VarRad[i],
-                 # v_m_passIso_Loose_FixedRad[i],
+                 v_m_passIso_HighPtTrackOnly[i],
+                 v_m_passIso_TightTrackOnly_VarRad[i],
+                 v_m_passIso_TightTrackOnly_FixedRad[i],
+                 v_m_passIso_Tight_VarRad[i],
+                 v_m_passIso_Tight_FixedRad[i],
+                 v_m_passIso_Loose_VarRad[i],
+                 v_m_passIso_Loose_FixedRad[i],
             ],
         )
     end
