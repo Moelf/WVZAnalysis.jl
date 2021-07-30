@@ -28,7 +28,7 @@ function ZZZ_Cut(v_Z_pair, v_ignore, v_l_pid, v_l_tlv, wgt)
     end
 
     if nZ == 3
-        sp = v_Z_pair[2]
+        sp = v_Z_pair[3]
         m_2ndpair = mass(v_l_tlv[sp[1]] + v_l_tlv[sp[2]])
         m_2ndpair <= 40e3 && return false, wgt
     end

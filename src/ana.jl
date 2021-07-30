@@ -51,7 +51,7 @@ function Bjet_Cut(evt)
     b = evt.v_j_btag77
     w = evt.v_j_wgt_btag77
 
-    b_wgt = 1.
+    b_wgt = one(eltype(w))
     btag_veto = true
     for (b, w) in zip(b, w)
         b > 0 && (btag_veto = false)
@@ -84,19 +84,19 @@ function main_looper(mytree, sumWeight)
         :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
         :WWZ_MET => Hist1D(Float32; bins=0:5:400),
     )
-    @inbounds for evt in mytree
+    @inbounds for (i, evt) in enumerate(mytree)
         ### initial_cut
         e_mask = evt.v_e_fwd
         e_mask .⊻= true
         m_mask = evt.v_m_lowpt
         m_mask .⊻= true
 
-        v_l_pid = append!(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
+        v_l_pid = vcat(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
         nlepton = length(v_l_pid)
         nlepton <= 3 && continue
 
-        v_l_tlv = append!(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
-        v_l_wgt = append!(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
+        v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
+        v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
 
         v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
         isempty(v_Z_pair) && continue
@@ -137,7 +137,7 @@ function main_looper(mytree, sumWeight)
             continue
         end
 
-        v_l_tight = append!(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
+        v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
         pass_WWZ_cut, wgt = WWZ_Cut(
             v_Z_wgt,
             v_Z_pair,
@@ -156,6 +156,8 @@ function main_looper(mytree, sumWeight)
             else
                 continue
             end
+            # @show i
+            # @show wgt
             push!(hists_dict[:WWZ_MET], evt.MET / 1000, wgt)
             continue
         end
