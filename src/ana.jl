@@ -60,6 +60,8 @@ function Bjet_Cut(evt)
     return b_wgt, btag_veto
 end
 
+main_looper(s::String) = main_looper(ROOTFile(s))
+
 function main_looper(r::ROOTFile)
     sumWeight = r["sumWeight"][:fN][3]
     mytree = LazyTree(

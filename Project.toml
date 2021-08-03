@@ -4,16 +4,13 @@ authors = ["Jerry Ling <proton@jling.dev> and contributors"]
 version = "0.1.0"
 
 [deps]
-ArraysOfArrays = "65a8f2f4-9b39-5baf-92e2-a9cc46fdf018"
+Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
 FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
 LorentzVectors = "3f54b04b-17fc-5cd4-9758-90c048d965e3"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 
 [compat]
-LoopVectorization = "0.12"
 LorentzVectors = "0.4"
 UnROOT = "0.3"
 julia = "1"
