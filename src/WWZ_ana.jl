@@ -1,5 +1,5 @@
 function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
-    WWZ_tlv = Vector{LorenztVector{Float64}}(undef, 4)
+    WWZ_tlv = Vector{LorentzVector{Float64}}(undef, 4)
     pr1 = first(v_Z_pair)
     WWZ_tlv[1] = v_l_tlv[pr1[1]]
     WWZ_tlv[2] = v_l_tlv[pr1[2]]
@@ -7,18 +7,20 @@ function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
     WWZ_tlv[4] = v_l_tlv[W_id[2]]
     chi2 = 999999.0
     local temp
-    local Z1_tlv , Z2_tlv
+    Z1_tlv = zero(LorentzVector)
+    Z2_tlv = zero(LorentzVector)
     for i in 2:4
         Z1_tlv = WWZ_tlv[1] + WWZ_tlv[i]
         for j in 2:4
             (j == i) && continue
             Z2_tlv += WWZ_tlv[j]
         end
+        mz1 = mass(Z1_tlv)
+        mz2 = mass(Z2_tlv)
         temp =
             (
-                (mass(Z1_tlv) - Z_m) * (mass(Z1_tlv) - Z_m) +
-                (mass(Z2_tlv) - Z_m) * (mass(Z2_tlv) - Z_m)
-            ) / (2495.2 * 2495.2)
+                (mz1 - Z_m)^2 + (mz2 - Z_m)^2
+            ) / 2495.2^2
         (temp < chi2) && (chi2 = temp)
     end
     return chi2
@@ -39,18 +41,18 @@ Base.@propagate_inbounds function WWZ_Cut(
         W_id[nW] = vlo
         nW += 1
     end
-    # chi2 = WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
+    chi2 = WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
     for i in eachindex(v_l_tlv)
         @inbounds for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
             WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
-            WWZ_dilepton_mass < 12 && return false, wgt
+            WWZ_dilepton_mass < 12 && return false, wgt, Inf, W_id
         end
     end
-    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return false, wgt
-    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return false, wgt
-    pt(v_l_tlv[v_l_order[3]]) < 8e3 && return false, wgt
-    pt(v_l_tlv[v_l_order[4]]) < 6e3 && return false, wgt
+    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return false, wgt, Inf, W_id
+    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return false, wgt, Inf, W_id
+    pt(v_l_tlv[v_l_order[3]]) < 8e3 && return false, wgt, Inf, W_id
+    pt(v_l_tlv[v_l_order[4]]) < 6e3 && return false, wgt, Inf, W_id
 
     # selected lepton min dR
     dR = 999.0
@@ -60,10 +62,10 @@ Base.@propagate_inbounds function WWZ_Cut(
             dR = ifelse(temp < dR, temp, dR)
         end
     end
-    dR < 0.1 && return false, wgt
+    dR < 0.1 && return false, wgt, Inf, W_id
 
     #tight cut
-    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt
+    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt, Inf, W_id
 
     #isolation cut, require all 4 of them to be true
     if all((
@@ -73,8 +75,8 @@ Base.@propagate_inbounds function WWZ_Cut(
         v_l_passIso[W_id[2]][1],
     ))
     else
-        return false, wgt
+        return false, wgt, Inf, W_id
     end
 
-    return true, WWZ_wgt
+    return true, WWZ_wgt, chi2, W_id
 end # end of WWZ Cut
