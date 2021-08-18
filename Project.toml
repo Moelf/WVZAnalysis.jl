@@ -13,6 +13,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 
 [compat]
+Arrow = "1"
 Dictionaries = "0.3"
 FHist = "0.3"
 LorentzVectors = "0.4"
