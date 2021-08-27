@@ -15,7 +15,7 @@ UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 [compat]
 Arrow = "1"
 Dictionaries = "0.3"
-FHist = "0.3, 0.4"
+FHist = "0.3, 0.4, 0.5"
 LorentzVectors = "0.4"
 Plots = "1"
 UnROOT = "0.3"
