@@ -1,34 +1,10 @@
 function main_looper(mytree, sumWeight)
-    # hists_dict = dictionary([
-    #     :Z_mass_first => Hist1D(Float32; bins=0:10:200),
-    #     :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
-    #     :WWZ_MET => Hist1D(Float32; bins=0:5:400),
-    # ])
+    hists_dict = dictionary([
+        :Z_mass_first => Hist1D(Float32; bins=0:10:200),
+        :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
+        :WWZ_MET => Hist1D(Float32; bins=0:5:400),
+    ])
 
-    data_ML = Dictionary(Dict(
-        :Zlep1_pt => Float32[],
-        :Zlep1_eta => Float32[],
-        :Zlep1_phi => Float32[],
-        :Zlep1_pid => Int32[],
-        :Zlep2_pt => Float32[],
-        :Zlep2_eta => Float32[],
-        :Zlep2_phi => Float32[],
-        :Zlep2_pid => Int32[],
-        :Wlep1_pt => Float32[],
-        :Wlep1_eta => Float32[],
-        :Wlep1_phi => Float32[],
-        :Wlep1_pid => Int32[],
-        :Wlep2_pt => Float32[],
-        :Wlep2_eta => Float32[],
-        :Wlep2_phi => Float32[],
-        :Wlep2_pid => Int32[],
-        :Zcand_mass => Float32[],
-        :chisq => Float32[],
-        :MET => Float32[],
-        :mass_4l => Float32[],
-        :pt_4l => Float32[],
-        :wgt => Float64[],
-       ))
     @inbounds for (i, evt) in enumerate(mytree)
         ### initial_cut
         e_mask = evt.v_e_fwd
@@ -48,9 +24,9 @@ function main_looper(mytree, sumWeight)
 
         zpr1 = first(v_Z_pair)
         wgt = evt.weight / sumWeight
-        # push!(
-        #     hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
-        # )
+        push!(
+            hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
+        )
 
         best_Z_mass = mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
 
@@ -99,34 +75,11 @@ function main_looper(mytree, sumWeight)
             end
             l1, l2 = zpr1
             l3, l4 = W_id
-            push!(data_ML[:Zlep1_pt], pt(v_l_tlv[l1]))
-            push!(data_ML[:Zlep1_eta], eta(v_l_tlv[l1]))
-            push!(data_ML[:Zlep1_phi], phi(v_l_tlv[l1]))
-            push!(data_ML[:Zlep1_pid], v_l_pid[l1])
-            push!(data_ML[:Zlep2_pt], pt(v_l_tlv[l2]))
-            push!(data_ML[:Zlep2_eta], eta(v_l_tlv[l2]))
-            push!(data_ML[:Zlep2_phi], phi(v_l_tlv[l2]))
-            push!(data_ML[:Zlep2_pid], v_l_pid[l2])
-            push!(data_ML[:Wlep1_pt], pt(v_l_tlv[l3]))
-            push!(data_ML[:Wlep1_eta], eta(v_l_tlv[l3]))
-            push!(data_ML[:Wlep1_phi], phi(v_l_tlv[l3]))
-            push!(data_ML[:Wlep1_pid], v_l_pid[l3])
-            push!(data_ML[:Wlep2_pt], pt(v_l_tlv[l4]))
-            push!(data_ML[:Wlep2_eta], eta(v_l_tlv[l4]))
-            push!(data_ML[:Wlep2_phi], phi(v_l_tlv[l4]))
-            push!(data_ML[:Wlep2_pid], v_l_pid[l4])
-            push!(data_ML[:Zcand_mass], best_Z_mass)
-            push!(data_ML[:chisq], chi2)
-            push!(data_ML[:MET], evt.MET)
-            push!(data_ML[:mass_4l], mass_4l)
-            push!(data_ML[:pt_4l], pt(sum(@view v_l_tlv[[l1,l2,l3,l4]])))
-            # TODO HT
             push!(data_ML[:wgt], wgt)
 
-            # push!(hists_dict[:WWZ_MET], evt.MET / 1000, wgt)
+            push!(hists_dict[:WWZ_MET], evt.MET / 1000, wgt)
             continue
         end
     end
-    # return hists_dict
-    return data_ML
+    return hists_dict
 end
