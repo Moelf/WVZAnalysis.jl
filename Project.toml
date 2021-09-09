@@ -1,7 +1,7 @@
 name = "WVZAnalysis"
 uuid = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"
 authors = ["Jerry Ling <proton@jling.dev> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
@@ -16,10 +16,11 @@ UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 
 [compat]
 Arrow = "1"
+FHist = "^0.6.1"
 Dictionaries = "0.3"
 LorentzVectors = "0.4"
 Plots = "1"
-UnROOT = "0.3, 0.4, 0.5"
+UnROOT = "0.5"
 julia = "1"
 
 [extras]
