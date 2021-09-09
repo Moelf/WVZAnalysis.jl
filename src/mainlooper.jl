@@ -4,8 +4,8 @@ function main_looper(mytree, sumWeight)
         :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
         :WWZ_MET => Hist1D(Float32; bins=0:5:400),
     ])
-
-    @inbounds for (i, evt) in enumerate(mytree)
+ 
+    @batch for (i, evt) in enumerate(mytree)
         ### initial_cut
         e_mask = evt.v_e_fwd
         e_mask .⊻= true
@@ -75,7 +75,6 @@ function main_looper(mytree, sumWeight)
             end
             l1, l2 = zpr1
             l3, l4 = W_id
-            push!(data_ML[:wgt], wgt)
 
             push!(hists_dict[:WWZ_MET], evt.MET / 1000, wgt)
             continue
