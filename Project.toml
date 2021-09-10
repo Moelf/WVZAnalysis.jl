@@ -16,10 +16,11 @@ UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 
 [compat]
 Arrow = "1"
-FHist = "^0.6.1"
 Dictionaries = "0.3"
+FHist = "^0.6.1"
 LorentzVectors = "0.4"
 Plots = "1"
+Revise = "3"
 UnROOT = "0.5"
 julia = "1"
 
