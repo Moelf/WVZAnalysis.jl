@@ -64,6 +64,27 @@ Base.@propagate_inbounds function WWZ_Cut(
     end
     dR < 0.1 && return false, wgt, Inf, W_id
 
+    # summing the charge of the highest pt leptons:
+    chargesum = 0
+    for i in 1:4
+        chargesum += sign(v_l_pid[v_l_order[i]])
+    end
+    chargesum != 0 && return false, wgt, Inf, W_id
+
+      # Gabriel's best quality (MM)
+#     ( (abs(v_l_pid[W_id[1]]) == 11) && !v_l_medium[W_id[1]] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[2]]) == 11) && !v_l_medium[W_id[2]] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[1]]) == 13) && !v_l_medium[W_id[1]] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[2]]) == 13) && !v_l_medium[W_id[2]] ) && return false, wgt, Inf, W_id
+
+      # Gabriel's best isolation (4,1)
+#     ( (abs(v_l_pid[W_id[1]]) == 11) && !v_l_passIso[W_id[1]][4] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[2]]) == 11) && !v_l_passIso[W_id[2]][4] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[1]]) == 13) && !v_l_passIso[W_id[1]][1] ) && return false, wgt, Inf, W_id
+#     ( (abs(v_l_pid[W_id[2]]) == 13) && !v_l_passIso[W_id[2]][1] ) && return false, wgt, Inf, W_id
+
+    # following, the quality/isolation cuts from master branch
+
     #tight cut
     (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt, Inf, W_id
 
