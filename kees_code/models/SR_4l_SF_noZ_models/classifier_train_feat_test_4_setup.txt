@@ -1,7 +1,7 @@
 Epochs: 10000
 Patience: 500
 Learning rate: 1e-05
-Batch size: 256
+Batch size: 512
 
 Training features:
 HT
@@ -33,10 +33,6 @@ Zlep2_pt
 leptonic_HT
 mass_4l
 other_mass
-pt_1
-pt_2
-pt_3
-pt_4
 pt_4l
 total_HT
 classifier_ZZ_score

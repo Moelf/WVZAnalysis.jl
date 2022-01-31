@@ -1,12 +1,10 @@
 Epochs: 10000
 Patience: 500
 Learning rate: 1e-05
-Batch size: 256
+Batch size: 512
 
 Training features:
 HT
-MET
-METSig
 Njet
 Nlep
 SR
