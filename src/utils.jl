@@ -2,6 +2,8 @@ const Z_m = 91.1876 * 10^3 # in MeV
 
 mass(lv::LorentzVector) = sqrt(dot(lv, lv))
 pt(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2)
+mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
+mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
 mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
 @inline function CosTheta(lv::LorentzVector)
     fZ = lv.z
