@@ -1,7 +1,7 @@
 Epochs: 10000
 Patience: 500
 Learning rate: 1e-05
-Batch size: 256
+Batch size: 512
 
 Training features:
 HT
@@ -39,8 +39,3 @@ pt_3
 pt_4
 pt_4l
 total_HT
-classifier_ZZ_score
-classifier_Zjets_score
-classifier_WZ_score
-classifier_ttZ_score
-classifier_other_score

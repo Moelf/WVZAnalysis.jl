@@ -7,8 +7,6 @@ Training features:
 HT
 MET
 METSig
-Njet
-Nlep
 SR
 Wlep1_dphi
 Wlep1_eta
