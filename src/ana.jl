@@ -69,8 +69,11 @@ function main_looper(r::ROOTFile)
         "tree_NOMINAL",
         [
             "MET",
+            "METSig",
+            "METPhi",
             "passTrig",
             r"v_(e|m)_(LHTight|tight)",
+            r"v_(e|m)_(LHMedium|medium)",
             r"v_j_(wgt_)?btag.*",
             r"v_(e|m)_passIso_.*",
             "weight",
