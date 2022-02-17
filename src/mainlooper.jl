@@ -1,7 +1,7 @@
 function main_looper(mytree, sumWeight)
 
-    # @hist_prologue
-    @arrow_prologue
+    @hist_prologue
+    # @arrow_prologue
 
     for (i, evt) in enumerate(mytree[1:3000])
         ### initial_cut
@@ -81,9 +81,9 @@ function main_looper(mytree, sumWeight)
         leptonic_HT = sum([pt(v_l_tlv[v_l_order[x]]) for x in 1:4])
         total_HT    = HT + leptonic_HT
 
-        # @hist_epilogue # -> return hists_dict
-        @arrow_epilogue  # -> return data_ML
+        @hist_epilogue # -> return hists_dict
+        # @arrow_epilogue  # -> return data_ML
     end
-    # return hists_dict
-    return data_ML
+    return hists_dict
+    # return data_ML
 end

@@ -29,6 +29,7 @@ end
 Base.@propagate_inbounds function WWZ_Cut(
     v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_tight, wgt
 )
+    FAIL_REUTRN = (false, wgt, Inf, W_id)
     WWZ_wgt = wgt * first(v_Z_wgt)
     nW = 1
     W_id = Vector{Int}(undef, 2)
@@ -46,13 +47,13 @@ Base.@propagate_inbounds function WWZ_Cut(
         @inbounds for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
             WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
-            WWZ_dilepton_mass < 12 && return false, wgt, Inf, W_id
+            WWZ_dilepton_mass < 12 && return FAIL_REUTRN
         end
     end
-    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[3]]) < 8e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[4]]) < 6e3 && return false, wgt, Inf, W_id
+    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL_REUTRN
+    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL_REUTRN
+    pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL_REUTRN
+    pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL_REUTRN
 
     # selected lepton min dR
     dR = 999.0
@@ -62,14 +63,14 @@ Base.@propagate_inbounds function WWZ_Cut(
             dR = ifelse(temp < dR, temp, dR)
         end
     end
-    dR < 0.1 && return false, wgt, Inf, W_id
+    dR < 0.1 && return FAIL_REUTRN
 
     # summing the charge of the highest pt leptons:
     chargesum = 0
     for i in 1:4
         chargesum += sign(v_l_pid[v_l_order[i]])
     end
-    chargesum != 0 && return false, wgt, Inf, W_id
+    chargesum != 0 && return FAIL_REUTRN
 
       # Gabriel's best quality (MM)
 #     ( (abs(v_l_pid[W_id[1]]) == 11) && !v_l_medium[W_id[1]] ) && return false, wgt, Inf, W_id
@@ -86,7 +87,7 @@ Base.@propagate_inbounds function WWZ_Cut(
     # following, the quality/isolation cuts from master branch
 
     #tight cut
-    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt, Inf, W_id
+    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return FAIL_REUTRN
 
     #isolation cut, require all 4 of them to be true
     if all((
@@ -96,7 +97,7 @@ Base.@propagate_inbounds function WWZ_Cut(
         v_l_passIso[W_id[2]][1],
     ))
     else
-        return false, wgt, Inf, W_id
+        return FAIL_REUTRN
     end
 
     return true, WWZ_wgt, chi2, W_id
