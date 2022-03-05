@@ -3,7 +3,7 @@ function main_looper(mytree, sumWeight)
     @hist_prologue
     # @arrow_prologue
 
-    for (i, evt) in enumerate(mytree[1:3000])
+    for (i, evt) in enumerate(mytree)
         ### initial_cut
         e_mask = evt.v_e_fwd
         e_mask .⊻= true

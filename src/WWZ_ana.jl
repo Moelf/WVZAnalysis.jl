@@ -29,7 +29,6 @@ end
 Base.@propagate_inbounds function WWZ_Cut(
     v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_tight, wgt
 )
-    FAIL_REUTRN = (false, wgt, Inf, W_id)
     WWZ_wgt = wgt * first(v_Z_wgt)
     nW = 1
     W_id = Vector{Int}(undef, 2)
@@ -43,6 +42,7 @@ Base.@propagate_inbounds function WWZ_Cut(
         nW += 1
     end
     chi2 = WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
+    FAIL_REUTRN = (false, wgt, Inf, W_id)
     for i in eachindex(v_l_tlv)
         @inbounds for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
