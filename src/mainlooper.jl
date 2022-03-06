@@ -1,9 +1,14 @@
 function main_looper(mytree, sumWeight)
 
-    @hist_prologue
+    # @hist_prologue
     # @arrow_prologue
+    hists_dict = dictionary([
+                             :WWZ_MET_DF => Hist1D(Float32; bins=0:5:800),
+                             :WWZ_MET_inZ => Hist1D(Float32; bins=0:5:800),
+                             :WWZ_MET_noZ => Hist1D(Float32; bins=0:5:800),
+                            ])
 
-    for (i, evt) in enumerate(mytree)
+    Threads.@threads for evt in mytree
         ### initial_cut
         e_mask = evt.v_e_fwd
         e_mask .⊻= true
@@ -81,7 +86,17 @@ function main_looper(mytree, sumWeight)
         leptonic_HT = sum([pt(v_l_tlv[v_l_order[x]]) for x in 1:4])
         total_HT    = HT + leptonic_HT
 
-        @hist_epilogue # -> return hists_dict
+                # Distinguish 3 signal channel: inZ, noZ, DF
+        ch_tag = if abs(v_l_pid[l3]) != abs(v_l_pid[l4])
+            :DF
+        elseif abs(other_pair_mass - Z_m) < 20000
+            :inZ
+        else
+            :noZ
+        end
+
+        atomic_push!(hists_dict[Symbol(:WWZ_MET_, ch_tag)], evt.MET/10^3, wgt)
+        # @hist_epilogue # -> return hists_dict
         # @arrow_epilogue  # -> return data_ML
     end
     return hists_dict
