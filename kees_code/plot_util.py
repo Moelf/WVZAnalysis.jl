@@ -47,3 +47,37 @@ def make_nn_output_plot(df_1, df_2, column, df_1_label, df_2_label, weight_col='
         
     plt.show()
     
+    
+def make_nn_output_source_plot(*dfs, column, weight_col='wgt', density=False, 
+                               save=False, save_dir='/', save_name='tmp', title=None, log=True, 
+                               bins=30):
+    vals_to_plot = [df[column] for df in dfs]
+    weights_to_plot = [df[weight_col] for df in dfs]
+    labels = [df.iloc[0]['source'] for df in dfs]
+    
+    plt.hist(vals_to_plot, weights=weights_to_plot, bins=bins, density=density, 
+             stacked=True, label=labels)
+
+    if log:
+        plt.yscale('log')
+
+    plt.xlabel('NN Output', fontsize=12)
+    
+    if density:
+        plt.ylabel('Normalized [a.u.]', fontsize=12)
+    else:
+        plt.ylabel('Events', fontsize=12)
+        
+    if title is not None:
+        plt.title(title, fontsize=14, loc='right')
+
+    plt.legend(fontsize=12, bbox_to_anchor=(1, 1))
+
+    atlasify('Internal Simulation', outside=True)
+    plt.minorticks_on()
+    
+    if save:
+        save_fig(save_dir, save_name)
+        
+    plt.show()
+    
