@@ -38,17 +38,14 @@ function main_looper(mytree, sumWeight; sfsyst)
 
         abs(best_Z_mass - Z_m) > 20e3 && continue
 
-        v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         mass_4l = Find_m4l(v_l_tlv)
         mass_4l < 0.0 && continue
         ### end of initial_cut
 
         !(evt.passTrig) && continue
 
+        v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         v_l_passIso = get_Isos(evt)
-        for i in v_l_passIso
-            i .= true
-        end
 
         # `true` in `b_veto` means we've passed the criterial,
         # which means we didn't see a b-tagged
