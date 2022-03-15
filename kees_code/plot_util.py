@@ -4,6 +4,18 @@ import matplotlib.pyplot as plt
 
 from atlasify import atlasify
 
+            
+color_scheme = {'WVZ': '#ff0000', #red
+                'ZZ': '#32ffff', #light blue
+                'Zjets': '#03ff00', #light green
+                'ttZ': '#5ad454', #dark green
+                'Zgamma': '#2900ff', #dark blue
+                'others': '#ff00ff', #pink
+                'tZ': '#660066', #purple
+                'WZ': '#cf5f61', #orange
+                'tWZ': '#cccccc', #grey
+               }
+
 
 def save_fig(save_dir, save_name):
     if not save_dir.endswith('/'):
@@ -48,7 +60,7 @@ def make_nn_output_plot(df_1, df_2, column, df_1_label, df_2_label, weight_col='
     plt.show()
     
     
-def make_nn_output_source_plot(*dfs, column, weight_col='wgt', density=False, 
+def make_nn_output_source_plot(*dfs, colors, column, weight_col='wgt', density=False, 
                                save=False, save_dir='/', save_name='tmp', title=None, log=True, 
                                bins=30):
     vals_to_plot = [df[column] for df in dfs]
@@ -56,7 +68,7 @@ def make_nn_output_source_plot(*dfs, column, weight_col='wgt', density=False,
     labels = [df.iloc[0]['source'] for df in dfs]
     
     plt.hist(vals_to_plot, weights=weights_to_plot, bins=bins, density=density, 
-             stacked=True, label=labels)
+             stacked=True, label=labels, color=colors, histtype='stepfilled', edgecolor='k')
 
     if log:
         plt.yscale('log')
