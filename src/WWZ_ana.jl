@@ -1,14 +1,13 @@
-function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
-    WWZ_tlv = Vector{LorentzVector{Float64}}(undef, 4)
-    pr1 = first(v_Z_pair)
+function WWZ_chi2(pr1, W_id, v_l_pid, v_l_tlv)
+    WWZ_tlv = Vector{eltype(v_l_tlv)}(undef, 4)
     WWZ_tlv[1] = v_l_tlv[pr1[1]]
     WWZ_tlv[2] = v_l_tlv[pr1[2]]
     WWZ_tlv[3] = v_l_tlv[W_id[1]]
     WWZ_tlv[4] = v_l_tlv[W_id[2]]
     chi2 = 999999.0
     local temp
-    Z1_tlv = zero(LorentzVector)
-    Z2_tlv = zero(LorentzVector)
+    Z1_tlv = zero(WWZ_tlv[1])
+    Z2_tlv = zero(WWZ_tlv[1])
     for i in 2:4
         Z1_tlv = WWZ_tlv[1] + WWZ_tlv[i]
         for j in 2:4
@@ -27,33 +26,25 @@ function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
 end
 
 Base.@propagate_inbounds function WWZ_Cut(
-    v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_tight, wgt
+    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_medium, wgt
 )
-    WWZ_wgt = wgt * first(v_Z_wgt)
     nW = 1
-    W_id = Vector{Int}(undef, 2)
     # define W lepton ID and modify weight
-    pr1 = first(v_Z_pair)
-    @inbounds for vlo in v_l_order
-        nW >= 3 && break
-        (vlo in pr1) && continue
-        WWZ_wgt *= v_l_wgt[vlo]
-        W_id[nW] = vlo
-        nW += 1
-    end
-    chi2 = WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
-    FAIL_REUTRN = (false, wgt, Inf, W_id)
+    WWZ_wgt = wgt * v_l_wgt[Z_pair[1]] * v_l_wgt[Z_pair[2]]
+    chi2 = Inf
+    # chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
+    FAIL = (false, wgt, Inf, W_pair)
     for i in eachindex(v_l_tlv)
         @inbounds for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
             WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
-            WWZ_dilepton_mass < 12 && return FAIL_REUTRN
+            WWZ_dilepton_mass < 12 && return FAIL
         end
     end
-    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL_REUTRN
-    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL_REUTRN
-    pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL_REUTRN
-    pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL_REUTRN
+    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL
+    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL
+    pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL
+    pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL
 
     # selected lepton min dR
     dR = 999.0
@@ -63,42 +54,29 @@ Base.@propagate_inbounds function WWZ_Cut(
             dR = ifelse(temp < dR, temp, dR)
         end
     end
-    dR < 0.1 && return FAIL_REUTRN
+    dR < 0.1 && return FAIL
 
     # summing the charge of the highest pt leptons:
     chargesum = 0
     for i in 1:4
         chargesum += sign(v_l_pid[v_l_order[i]])
     end
-    chargesum != 0 && return FAIL_REUTRN
+    chargesum != 0 && return FAIL
 
-      # Gabriel's best quality (MM)
-#     ( (abs(v_l_pid[W_id[1]]) == 11) && !v_l_medium[W_id[1]] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[2]]) == 11) && !v_l_medium[W_id[2]] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[1]]) == 13) && !v_l_medium[W_id[1]] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[2]]) == 13) && !v_l_medium[W_id[2]] ) && return false, wgt, Inf, W_id
-
-      # Gabriel's best isolation (4,1)
-#     ( (abs(v_l_pid[W_id[1]]) == 11) && !v_l_passIso[W_id[1]][4] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[2]]) == 11) && !v_l_passIso[W_id[2]][4] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[1]]) == 13) && !v_l_passIso[W_id[1]][1] ) && return false, wgt, Inf, W_id
-#     ( (abs(v_l_pid[W_id[2]]) == 13) && !v_l_passIso[W_id[2]][1] ) && return false, wgt, Inf, W_id
-
-    # following, the quality/isolation cuts from master branch
-
-    #tight cut
-    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return FAIL_REUTRN
-
-    #isolation cut, require all 4 of them to be true
-    if all((
-        v_l_passIso[pr1[1]][1],
-        v_l_passIso[pr1[2]][1],
-        v_l_passIso[W_id[1]][1],
-        v_l_passIso[W_id[2]][1],
-    ))
-    else
-        return FAIL_REUTRN
+    #### choice ELReLMIs54_MULMIs31 here:
+    return true, WWZ_wgt, chi2, W_pair
+    for i in 1:2
+        ### for Z bosons
+        # Overall best quality (Loose(e) and Loose(mu))
+        # Isolation (5,3)
+        ( (abs(v_l_pid[Z_Pair[i]]) == 11) && !v_l_passIso[Z_Pair[i]][3] ) && return FAIL
+        ( (abs(v_l_pid[Z_Pair[i]]) == 13) && !v_l_passIso[Z_Pair[i]][2] ) && return FAIL
+        ### for W bosons
+        # Overall best quality (Medium(e) and Medium(mu))
+        ( !v_l_medium[W_pair[i]] ) && return FAIL
+        # Isolation (4,1)
+        ( (abs(v_l_pid[W_pair[i]]) == 11) && !v_l_passIso[W_pair[i]][2] ) && return FAIL
+        ( (abs(v_l_pid[W_pair[i]]) == 13) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
     end
 
-    return true, WWZ_wgt, chi2, W_id
 end # end of WWZ Cut

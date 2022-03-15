@@ -1,75 +1,67 @@
-function main_looper(mytree, sumWeight)
+function main_looper(mytree, sumWeight; sfsyst)
 
     # @hist_prologue
     # @arrow_prologue
-    hists_dict = dictionary([
-                             :WWZ_MET_DF => Hist1D(Float32; bins=0:5:800),
-                             :WWZ_MET_inZ => Hist1D(Float32; bins=0:5:800),
-                             :WWZ_MET_noZ => Hist1D(Float32; bins=0:5:800),
-                            ])
+    _dict = Dict{Symbol, Hist1D{Float64, Tuple{UnitRange{Int64}}}}()
+    for n in (:NN_inZ, :NN_noZ, :NN_DF)
+        _dict[Symbol(n, :__NOMINAL)] = Hist1D(Float64; bins=1:2)
+        !sfsyst && continue
+        for (k,vs) in SF_BRANCH_DICT
+            for v in vs, ud in ("1up", "1down")
+                _dict[Symbol(n, :__, k, :__, v, :__, ud)] = Hist1D(Float64; bins=1:2)
+            end
+        end
+    end
+    hists_dict = dictionary(_dict)
 
     Threads.@threads for evt in mytree
         ### initial_cut
-        e_mask = evt.v_e_fwd
-        e_mask .⊻= true
-        m_mask = evt.v_m_lowpt
-        m_mask .⊻= true
 
-        v_l_pid = vcat(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
+        v_l_pid = Vcat(evt.v_e_pid, evt.v_m_pid)
         nlepton = length(v_l_pid)
-        nlepton <= 3 && continue
+        nlepton != 4 && continue
 
+        # (;v_e_tlv, v_m_tlv) = evt
+        
+        (; v_e_pt, v_e_eta, v_e_phi, v_e_m,
+         v_m_pt, v_m_eta, v_m_phi, v_m_m) = evt
+        v_e_tlv = LorentzVectorCyl.(v_e_pt, v_e_eta, v_e_phi, v_e_m)
+        v_m_tlv = LorentzVectorCyl.(v_m_pt, v_m_eta, v_m_phi, v_m_m)
 
-        v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
-        v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
+        v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
+        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
 
-        v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
-        isempty(v_Z_pair) && continue
-
-        zpr1 = first(v_Z_pair)
-        other = setdiff((1,2,3,4), zpr1)
+        zpr1, other, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
+        isinf(best_Z_mass) && continue
         wgt = evt.weight / sumWeight
-
-        best_Z_mass = mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
-        Z_phi = phi(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
         other_pair_mass = mass(v_l_tlv[other[1]] + v_l_tlv[other[2]])
 
         abs(best_Z_mass - Z_m) > 20e3 && continue
 
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
-        mass_4l = Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
+        mass_4l = Find_m4l(v_l_tlv)
         mass_4l < 0.0 && continue
         ### end of initial_cut
 
-        pass_ZZZ_cut, wgt = ZZZ_Cut(v_Z_pair, v_ignore, v_l_pid, v_l_tlv, wgt)
-        if pass_ZZZ_cut
-            continue
-        end
         !(evt.passTrig) && continue
 
-        v_l_passIso = get_Isos(e_mask, m_mask, evt)
-
-        pass_WZZ_cut, wgt = WZZ_Cut(
-                                    v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, 
-                                    v_l_wgt, v_l_tlv, v_l_passIso, wgt
-                                   )
-        # `true` in `b_veto` means we've passed the criterial,
-        # which means we didn't see a b-tagged
-        if pass_WZZ_cut
-            continue
+        v_l_passIso = get_Isos(evt)
+        for i in v_l_passIso
+            i .= true
         end
 
-        v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
-        v_l_medium = vcat(evt.v_e_LHMedium[e_mask], evt.v_m_medium[m_mask])
+        # `true` in `b_veto` means we've passed the criterial,
+        # which means we didn't see a b-tagged
+        v_l_medium = Vcat(evt.v_e_LHMedium, evt.v_m_medium)
         pass_WWZ_cut, wgt, chi2, W_id = WWZ_Cut(
-                                                v_Z_wgt,
-                                                v_Z_pair,
+                                                zpr1,
+                                                other,
                                                 v_l_pid,
                                                 v_l_order,
                                                 v_l_wgt,
                                                 v_l_tlv,
                                                 v_l_passIso,
-                                                v_l_tight,
+                                                v_l_medium,
                                                 wgt,
                                                )
         b_wgt, b_veto = Bjet_Cut(evt)
@@ -78,27 +70,26 @@ function main_looper(mytree, sumWeight)
         wgt *= b_wgt
         l1, l2 = zpr1
         l3, l4 = W_id
-        v_j_tlv = evt.v_j_tlv
+        # v_j_tlv = evt.v_j_tlv
+        v_j_tlv = LorentzVectorCyl.(evt.v_j_pt, evt.v_j_eta, evt.v_j_phi, evt.v_j_m)
         Njet = length(v_j_tlv)
 
         # Here we calculate the HT's:
-        HT = isempty(v_j_tlv) ? 0.f0 : sum(pt, v_j_tlv) # hadronic HT
-        leptonic_HT = sum([pt(v_l_tlv[v_l_order[x]]) for x in 1:4])
-        total_HT    = HT + leptonic_HT
+        # HT = sum(pt, v_j_tlv; init=0.f0) # hadronic HT
+        # leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)
+        # total_HT    = HT + leptonic_HT
 
-                # Distinguish 3 signal channel: inZ, noZ, DF
-        ch_tag = if abs(v_l_pid[l3]) != abs(v_l_pid[l4])
-            :DF
-        elseif abs(other_pair_mass - Z_m) < 20000
-            :inZ
+        # Distinguish 3 signal channel: inZ, noZ, DF
+        if abs(v_l_pid[l3]) != abs(v_l_pid[l4])
+            atomic_push!(hists_dict[Symbol(:NN_DF__NOMINAL)], 1, wgt)
+        elseif abs(other_pair_mass - Z_m) < 20e3
+            atomic_push!(hists_dict[Symbol(:NN_inZ__NOMINAL)], 1, wgt)
         else
-            :noZ
+            atomic_push!(hists_dict[Symbol(:NN_noZ__NOMINAL)], 1, wgt)
         end
 
-        atomic_push!(hists_dict[Symbol(:WWZ_MET_, ch_tag)], evt.MET/10^3, wgt)
         # @hist_epilogue # -> return hists_dict
         # @arrow_epilogue  # -> return data_ML
     end
     return hists_dict
-    # return data_ML
 end

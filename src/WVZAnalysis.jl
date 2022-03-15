@@ -1,6 +1,6 @@
 module WVZAnalysis
 
-using UnROOT, FHist, LinearAlgebra, LorentzVectors,  Dictionaries, Mixers
+using UnROOT, FHist, LinearAlgebra, LorentzVectors,  Dictionaries, Mixers, LazyArrays, LVCyl
 
 include("./utils.jl")
 include("./ZZZ_ana.jl")
