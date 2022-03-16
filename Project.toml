@@ -25,6 +25,7 @@ FHist = "^0.7"
 LorentzVectors = "0.4"
 Plots = "1"
 Revise = "3"
+ThreadsX = "0.1"
 UnROOT = "^0.8"
 julia = "1"
 
