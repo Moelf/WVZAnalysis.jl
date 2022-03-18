@@ -1,6 +1,6 @@
 module WVZAnalysis
 
-using UnROOT, FHist, LinearAlgebra, LorentzVectors,  Dictionaries, Polyester
+using UnROOT, FHist, LinearAlgebra, LorentzVectors,  Dictionaries
 
 include("./utils.jl")
 include("./ZZZ_ana.jl")

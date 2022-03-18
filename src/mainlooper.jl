@@ -5,7 +5,7 @@ function main_looper(mytree, sumWeight)
         :WWZ_MET => Hist1D(Float32; bins=0:5:400),
     ])
  
-    @batch for (i, evt) in enumerate(mytree)
+    Threads.@threads for evt in mytree
         ### initial_cut
         e_mask = evt.v_e_fwd
         e_mask .⊻= true
