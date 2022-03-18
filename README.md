@@ -7,7 +7,8 @@
 4. I would recomment to use https://github.com/andyferris/Dictionaries.jl for in-memory "hadd" when combining results from different files.
 
 ### Install the dependencies:
-
+```
 export JULIA_LOAD_PATH=.
 julia
 ] instantiate
+```
