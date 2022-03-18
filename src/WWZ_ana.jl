@@ -65,18 +65,18 @@ Base.@propagate_inbounds function WWZ_Cut(
     dR < 0.1 && return false, wgt, Inf, W_id
 
     #tight cut
-    (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt, Inf, W_id
+    # (!v_l_tight[W_id[1]] || !v_l_tight[W_id[2]]) && return false, wgt, Inf, W_id
 
     #isolation cut, require all 4 of them to be true
-    if all((
-        v_l_passIso[pr1[1]][1],
-        v_l_passIso[pr1[2]][1],
-        v_l_passIso[W_id[1]][1],
-        v_l_passIso[W_id[2]][1],
-    ))
-    else
-        return false, wgt, Inf, W_id
-    end
+    # if all((
+    #     v_l_passIso[pr1[1]][1],
+    #     v_l_passIso[pr1[2]][1],
+    #     v_l_passIso[W_id[1]][1],
+    #     v_l_passIso[W_id[2]][1],
+    # ))
+    # else
+    #     return false, wgt, Inf, W_id
+    # end
 
     return true, WWZ_wgt, chi2, W_id
 end # end of WWZ Cut

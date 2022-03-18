@@ -1,8 +1,8 @@
 function main_looper(mytree, sumWeight)
     hists_dict = dictionary([
-        :Z_mass_first => Hist1D(Float32; bins=0:10:200),
-        :WZZ_ZZ_mass => Hist1D(Float32; bins=0:10:800),
-        :WWZ_MET => Hist1D(Float32; bins=0:5:400),
+        :inZ => Hist1D(Float64; bins=1:3),
+        :noZ => Hist1D(Float64; bins=1:3),
+        :DF => Hist1D(Float64; bins=1:3),
     ])
  
     Threads.@threads for evt in mytree
@@ -14,7 +14,7 @@ function main_looper(mytree, sumWeight)
 
         v_l_pid = vcat(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
         nlepton = length(v_l_pid)
-        nlepton <= 3 && continue
+        nlepton < 4 && continue
 
         v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
         v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
@@ -24,9 +24,9 @@ function main_looper(mytree, sumWeight)
 
         zpr1 = first(v_Z_pair)
         wgt = evt.weight / sumWeight
-        push!(
-            hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
-        )
+        # push!(
+        #     hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
+        # )
 
         best_Z_mass = mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
 
@@ -53,6 +53,15 @@ function main_looper(mytree, sumWeight)
         if pass_WZZ_cut
             continue
         end
+        chargesum=0
+        for i=1:4
+            if v_l_pid[v_l_order[i]] > 0
+                chargesum+=1
+            else
+                chargesum-=1
+            end
+        end
+        chargesum!= 0 && continue
 
         v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
         pass_WWZ_cut, wgt, chi2, W_id = WWZ_Cut(
@@ -75,8 +84,19 @@ function main_looper(mytree, sumWeight)
             end
             l1, l2 = zpr1
             l3, l4 = W_id
+            other_pair_mass = mass(v_l_tlv[l3] + v_l_tlv[l4])
 
-            push!(hists_dict[:WWZ_MET], evt.MET / 1000, wgt)
+            if abs(v_l_pid[l3]) != abs(v_l_pid[l4])
+                atomic_push!(hists_dict[Symbol(:DF)], 1, wgt)
+                atomic_push!(hists_dict[Symbol(:DF)], 2)
+            elseif abs(other_pair_mass - Z_m) < 20e3
+                atomic_push!(hists_dict[Symbol(:inZ)], 1, wgt)
+                atomic_push!(hists_dict[Symbol(:inZ)], 2)
+            else
+                atomic_push!(hists_dict[Symbol(:noZ)], 1, wgt)
+                atomic_push!(hists_dict[Symbol(:noZ)], 2)
+            end
+
             continue
         end
     end
