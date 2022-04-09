@@ -5,7 +5,7 @@
   #   - master
   #   - development
   script:
-    - julia -e 'using Pkg; Pkg.add(url="https://github.com/JuliaHEP/LVCyl.jl", rev="master"); Pkg.add(path="."); Pkg.build("WVZAnalysis"); Pkg.test("WVZAnalysis"; coverage = true)'
+    - julia -e 'using Pkg; Pkg.add(path="."); Pkg.build("WVZAnalysis"); Pkg.test("WVZAnalysis"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage");
       import WVZAnalysis; cd(joinpath(dirname(pathof(WVZAnalysis)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
@@ -20,7 +20,7 @@ pages:
   stage: deploy
   script:
     - apt-get update -qq && apt-get install -y git  # needed by Documenter
-    - julia -e 'using Pkg; Pkg.add(url="https://github.com/JuliaHEP/LVCyl.jl", rev="master"); Pkg.add(path="."); Pkg.build("WVZAnalysis");'
+    - julia -e 'using Pkg; Pkg.add(path="."); Pkg.build("WVZAnalysis");'
     - julia -e 'using Pkg; import WVZAnalysis; Pkg.add("Documenter")'  # install Documenter
     - julia --color=yes docs/make.jl  # make documentation
     - mv docs/build public  # move to the directory picked up by Gitlab pages
