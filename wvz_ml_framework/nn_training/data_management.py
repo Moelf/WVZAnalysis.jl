@@ -45,7 +45,7 @@ def load_datasets_from_arrow(
     except KeyError:
         raise KeyError('Data path dictionary must contain a signal source.')
 
-    other_sources = [k for k in data_paths.keys if k != 'Signal']
+    other_sources = [k for k in data_paths.keys() if k != 'Signal']
     backgrounds = [None] * len(other_sources)
     for i, source in enumerate(other_sources):
         bg = pd.read_feather(data_paths[source])
@@ -118,7 +118,7 @@ def generate_scale_params_file(data_paths: Optional[Dict[str, str]], rescale_fea
                              for i, feat in enumerate(rescale_features)}
 
     with open(json_filepath, 'w', encoding='utf-8') as json_file:
-        json_file.write(scale_params)
+        json.dump(scale_params, json_file)
 
 
 def min_max_scale_datasets_from_file(sig: pd.DataFrame,
@@ -158,7 +158,8 @@ def get_train_test_val_data(data_paths: Dict[str, str],
                             test_prop: float,
                             val_prop: float,
                             rescale_filepath: str,
-                            rescale_feats: Optional[List[str]] = None
+                            rescale_feats: Optional[List[str]] = None,
+                            verbose: bool = True,
                             ) -> Tuple[pd.DataFrame, np.ndarray, np.ndarray,
                                        pd.DataFrame, np.ndarray, np.ndarray,
                                        pd.DataFrame, np.ndarray, np.ndarray]:
@@ -175,7 +176,7 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     train_feats : List[str]
         List of training features to load.
     sr_to_train : str
-        Name of the signal region to load. Must be `DF`, `SF_noZ`, or `SF_inZ`.
+        Name of the signal region to load. Must be `DF`, `SF_noZ`, `SF_inZ`, or 'full'.
     test_prop : float
         Proportion of events in test sample.
     val_prop : float
@@ -184,6 +185,8 @@ def get_train_test_val_data(data_paths: Dict[str, str],
         Filepath of file containing rescaling parameters.
     rescale_feats : (optional) List[str]
         List of features to rescale. If `None`, all training features will be rescaled.
+    verbose : (optional) bool
+        Verbosity of output.
 
     Returns
     -------
@@ -197,17 +200,29 @@ def get_train_test_val_data(data_paths: Dict[str, str],
         sr_index = 1
     elif sr_to_train == 'SF_inZ':
         sr_index = 0
+    elif sr_to_train == 'full':
+        pass
     else:
         raise KeyError('invalid signal region name')
 
     sig, bg = load_datasets_from_arrow(data_paths)
+    
+    if verbose:
+        print('Data loaded...')
 
     if rescale_feats is not None:
         min_max_scale_datasets_from_file(sig, bg, rescale_feats, rescale_filepath)
     else:
         min_max_scale_datasets_from_file(sig, bg, train_feats, rescale_filepath)
+       
+    if verbose:
+        print('Data scaled...')
 
-    sig, bg = cut_to_sr(sig, bg, sr_index)
+    if sr_to_train != 'full':
+        sig, bg = cut_to_sr(sig, bg, sr_index)
+        
+        if verbose:
+            print('Data cut down to ' + sr_to_train + ' signal region...')
 
     sig_train, sig_val = train_test_split(sig, test_size=val_prop + test_prop)
     sig_val, sig_test = train_test_split(sig_val, test_size=test_prop / (val_prop + test_prop))
@@ -234,5 +249,8 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     x_test = pd.concat([sig_test[train_feats], bg_test[train_feats]])
     y_test = np.concatenate([np.ones(len(sig_test)), np.zeros(len(bg_test))])
     w_test = np.concatenate([np.abs(sig_test['wgt']), np.abs(bg_test['wgt'])])
+    
+    if verbose:
+        print('Splits generated... Finished.')
 
     return x_train, y_train, w_train, x_test, y_test, w_test, x_val, y_val, w_val

@@ -3,11 +3,15 @@ import pickle
 from typing import Tuple
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
+
+physical_devices = tf.config.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 def make_model(input_dim: int, num_nodes: int, dropout: float, learn_rate: float) -> Sequential:
