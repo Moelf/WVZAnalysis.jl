@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 import pandas as pd
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
 
@@ -28,7 +29,14 @@ def load_datasets_from_arrow(
     Parameters
     ----------
     data_paths : Dict[str, str] or `None`
-        Dictionary linking source names to their respective `arrow` files. Must contain a source labeled `Signal`. If `None`, uses default datasets created on 2022-03-01.
+        Dictionary linking source names to their respective `arrow` files.
+        Must contain a source labeled `Signal`.
+        If `None`, uses default datasets created on 2022-03-01.
+
+    Returns
+    -------
+    Tuple[pandas.DataFrame, pandas.DataFrame]
+        Signal and background datasets, in that order.
     '''
     try:
         signal = pd.read_feather(data_paths['Signal'])
@@ -77,6 +85,42 @@ def cut_to_sr(sig: pd.DataFrame, bg: pd.DataFrame,
     return sig, bg
 
 
+def generate_scale_params_file(data_paths: Optional[Dict[str, str]], rescale_features: List[str],
+                               json_filepath: str):
+    '''
+    Given a list of training observables, generate the scale parameters
+    for a min/max scaling and write them to a `.json` file.
+
+    Parameters
+    ----------
+    data_paths : Dict[str, str] or `None`
+        Dictionary linking source names to their respective `arrow` files.
+        Must contain a source labeled `Signal`.
+        If `None`, uses default datasets created on 2022-03-01.
+    rescale_features : List[str]
+        List of features to rescale.
+    json_filepath : str
+        Filepath to a `.json` file to which to write the scale parameters.
+    '''
+    if not json_filepath.endswith('.json'):
+        raise ValueError('JSON filepath must be a ".json" file.')
+
+    sig, bg = load_datasets_from_arrow(data_paths)
+    full_dataset = pd.concat([sig, bg], ignore_index=True)
+
+    min_max_scaler = preprocessing.MinMaxScaler()
+    min_max_scaler.fit(full_dataset[rescale_features])
+
+    scale_params = {}
+    scale_params['min'] = {feat: min_max_scaler.min_[i]
+                           for i, feat in enumerate(rescale_features)}
+    scale_params['scale'] = {feat: min_max_scaler.scale_[i]
+                             for i, feat in enumerate(rescale_features)}
+
+    with open(json_filepath, 'w', encoding='utf-8') as json_file:
+        json_file.write(scale_params)
+
+
 def min_max_scale_datasets_from_file(sig: pd.DataFrame,
                                      bg: pd.DataFrame,
                                      feats_to_rescale: List[str],
@@ -97,7 +141,7 @@ def min_max_scale_datasets_from_file(sig: pd.DataFrame,
     rescaling_filepath : str
         Path of file containing rescaling parameters.
     '''
-    with open(rescaling_filepath) as json_file:
+    with open(rescaling_filepath, 'r', encoding='utf-8') as json_file:
         min_max_scale_params = json.load(json_file)
 
     for df in [sig, bg]:
