@@ -144,7 +144,8 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     Returns
     -------
     Tuple of DataFrames and ndarrays
-        3 groups (train, test, and validation) of 3 samples (training features, truth labels, weights).
+        3 groups (train, test, and validation) of 3 samples
+        (training features, truth labels, weights).
     '''
     if sr_to_train == 'DF':
         sr_index = 2
@@ -158,7 +159,7 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     sig, bg = load_datasets_from_arrow(data_paths)
 
     if rescale_feats is not None:
-        min_max_scale_datasets_from_file(sig, bg, train_feats)
+        min_max_scale_datasets_from_file(sig, bg, rescale_feats, rescale_filepath)
     else:
         min_max_scale_datasets_from_file(sig, bg, train_feats, rescale_filepath)
 
