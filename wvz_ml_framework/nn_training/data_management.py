@@ -152,6 +152,24 @@ def min_max_scale_datasets_from_file(sig: pd.DataFrame,
             df[train_feat] = df[train_feat] * scale_val + min_val
 
 
+def one_hot_encode_signal_regions(data: pd.DataFrame):
+    '''
+    Generate one-hot encoded features referring to each signal region.
+    Currently based on three signal regions: SF (in Z), SF (no Z), and DF.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Dataset on which to perform one-hot encoding.
+    '''
+
+    one_hot_flags = {'sr_SF_in_Z': 0, 'sr_SF_no_Z': 1, 'sr_DF': 2}
+
+    for flag, sr_index in one_hot_flags.items():
+        data[flag] = 0
+        data.loc[data['SR'] == sr_index, flag] = 1
+
+
 def get_train_test_val_data(data_paths: Dict[str, str],
                             train_feats: List[str],
                             sr_to_train: str,
@@ -201,12 +219,12 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     elif sr_to_train == 'SF_inZ':
         sr_index = 0
     elif sr_to_train == 'full':
-        pass
+        sr_index = -1
     else:
         raise KeyError('invalid signal region name')
 
     sig, bg = load_datasets_from_arrow(data_paths)
-    
+
     if verbose:
         print('Data loaded...')
 
@@ -214,13 +232,19 @@ def get_train_test_val_data(data_paths: Dict[str, str],
         min_max_scale_datasets_from_file(sig, bg, rescale_feats, rescale_filepath)
     else:
         min_max_scale_datasets_from_file(sig, bg, train_feats, rescale_filepath)
-       
+
     if verbose:
         print('Data scaled...')
 
-    if sr_to_train != 'full':
+    if sr_to_train == 'full':
+        one_hot_encode_signal_regions(sig)
+        one_hot_encode_signal_regions(bg)
+
+        if verbose:
+            print('Signal regions one-hot encoded...')
+    else:
         sig, bg = cut_to_sr(sig, bg, sr_index)
-        
+
         if verbose:
             print('Data cut down to ' + sr_to_train + ' signal region...')
 
@@ -249,7 +273,7 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     x_test = pd.concat([sig_test[train_feats], bg_test[train_feats]])
     y_test = np.concatenate([np.ones(len(sig_test)), np.zeros(len(bg_test))])
     w_test = np.concatenate([np.abs(sig_test['wgt']), np.abs(bg_test['wgt'])])
-    
+
     if verbose:
         print('Splits generated... Finished.')
 
