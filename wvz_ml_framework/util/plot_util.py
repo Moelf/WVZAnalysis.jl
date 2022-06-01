@@ -69,7 +69,7 @@ def make_nn_output_plot(df_1, df_2, column, df_1_label, df_2_label, weight_col='
 
     plt.legend(fontsize=12)
 
-    atlasify('Internal Simulation', outside=True)
+    atlasify('Internal Simulation', outside=True)  # type: ignore
     plt.minorticks_on()
 
     if save:

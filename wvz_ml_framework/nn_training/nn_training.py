@@ -4,13 +4,16 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+
+import tf2onnx
+
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
 
-physical_devices = tf.config.list_physical_devices('GPU') 
+physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
@@ -60,7 +63,9 @@ def make_and_train_model(training_data: Tuple[pd.DataFrame, np.ndarray, np.ndarr
                          epochs: int = 10000,
                          patience: int = 200,
                          model_dir: str = 'models/',
-                         model_name: str = 'classifier'):
+                         model_name: str = 'classifier',
+                         generate_onnx: bool = False,
+                         ):
     '''
     Generate a 3-layer model and train it on a particular dataset. Saves the model to disk and the
     training history as a `.pkl` file.
@@ -83,10 +88,12 @@ def make_and_train_model(training_data: Tuple[pd.DataFrame, np.ndarray, np.ndarr
         Number of training epochs.
     patience : int (default 200)
         Patience on early stopping during training.
-    model_dir : str (default `models/`)
+    model_dir : str (default `'models/'`)
         Directory to save the model.
-    model_name : str (default `classifier`)
+    model_name : str (default `'classifier'`)
         Name to which to save the model weights and training history.
+    generate_onnx : bool (default `False`)
+        Whether to save an ONNX version of the model.
     '''
 
 
@@ -111,3 +118,6 @@ def make_and_train_model(training_data: Tuple[pd.DataFrame, np.ndarray, np.ndarr
     classifier.save(model_dir + model_name)
     with open(model_dir + model_name + '_history.pkl', 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
+
+    if generate_onnx:
+        tf2onnx.convert.from_keras(classifier, output_path=model_dir+model_name+'.onnx')

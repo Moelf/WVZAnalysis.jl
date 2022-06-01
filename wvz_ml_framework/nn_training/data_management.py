@@ -206,7 +206,7 @@ def get_train_test_val_data(data_paths: Dict[str, str],
         raise KeyError('invalid signal region name')
 
     sig, bg = load_datasets_from_arrow(data_paths)
-    
+
     if verbose:
         print('Data loaded...')
 
@@ -214,13 +214,13 @@ def get_train_test_val_data(data_paths: Dict[str, str],
         min_max_scale_datasets_from_file(sig, bg, rescale_feats, rescale_filepath)
     else:
         min_max_scale_datasets_from_file(sig, bg, train_feats, rescale_filepath)
-       
+
     if verbose:
         print('Data scaled...')
 
     if sr_to_train != 'full':
         sig, bg = cut_to_sr(sig, bg, sr_index)
-        
+
         if verbose:
             print('Data cut down to ' + sr_to_train + ' signal region...')
 
@@ -249,7 +249,7 @@ def get_train_test_val_data(data_paths: Dict[str, str],
     x_test = pd.concat([sig_test[train_feats], bg_test[train_feats]])
     y_test = np.concatenate([np.ones(len(sig_test)), np.zeros(len(bg_test))])
     w_test = np.concatenate([np.abs(sig_test['wgt']), np.abs(bg_test['wgt'])])
-    
+
     if verbose:
         print('Splits generated... Finished.')
 
