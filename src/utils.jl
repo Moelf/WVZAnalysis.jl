@@ -4,9 +4,7 @@ pt(lv::LorentzVectorCyl) = lv.pt
 eta(lv::LorentzVectorCyl) = lv.eta
 phi(lv::LorentzVectorCyl) = lv.phi
 mass(lv::LorentzVectorCyl) = lv.mass
-Base.zero(lv::T) where T<:LorentzVectorCyl = T(0,0,0,0)
 
-Base.zero(lv::T) where T<:LorentzVector = T(0,0,0,0)
 mass(lv::LorentzVector) = sqrt(dot(lv, lv))
 pt(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2)
 mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
