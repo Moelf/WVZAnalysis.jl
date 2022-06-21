@@ -34,7 +34,14 @@ function Bjet_Cut(evt)
     return b_wgt, btag_veto
 end
 
-main_looper(s::AbstractString; kws...) = main_looper(ROOTFile(s); kws...)
+function main_looper(s::AbstractString; kws...) 
+    wgt_factor = if occursin(r"346645|346646|346647", s)
+        2.745e-4
+    else
+        1.0
+    end
+    main_looper(ROOTFile(s); wgt_factor, kws...)
+end
 
 function main_looper(files::Vector{<:AbstractString}; kws...)
     mapreduce(x->main_looper(x; kws...), (.+), files)
