@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; sfsyst)
+function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
 
     # @hist_prologue
     # @arrow_prologue
@@ -33,7 +33,7 @@ function main_looper(mytree, sumWeight; sfsyst)
 
         zpr1, other, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
-        wgt = evt.weight / sumWeight
+        wgt = evt.weight / sumWeight * wgt_factor
         other_pair_mass = mass(v_l_tlv[other[1]] + v_l_tlv[other[2]])
 
         abs(best_Z_mass - Z_m) > 20e3 && continue

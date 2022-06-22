@@ -34,15 +34,22 @@ function Bjet_Cut(evt)
     return b_wgt, btag_veto
 end
 
-main_looper(s::AbstractString; kws...) = main_looper(ROOTFile(s); kws...)
+function main_looper(s::AbstractString; kws...) 
+    wgt_factor = if occursin(r"346645|346646|346647", s)
+        2.745e-4
+    else
+        1.0
+    end
+    main_looper(ROOTFile(s); wgt_factor, kws...)
+end
 
 function main_looper(files::Vector{<:AbstractString}; kws...)
     mapreduce(x->main_looper(x; kws...), (.+), files)
 end
 
-function main_looper(r::ROOTFile; treename = "tree_NOMINAL", sfsyst=false)
+function main_looper(r::ROOTFile; treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0)
     sumWeight = r["sumWeight"][:fN][3]
     mytree = LazyTree(r, treename)
-    return main_looper(mytree, sumWeight; sfsyst)
+    return main_looper(mytree, sumWeight; sfsyst, wgt_factor)
 end
 
