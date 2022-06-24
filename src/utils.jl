@@ -1,49 +1,51 @@
 const Z_m = 91.1876 * 10^3 # in MeV
 
-pt(lv::LorentzVectorCyl) = lv.pt
-eta(lv::LorentzVectorCyl) = lv.eta
-phi(lv::LorentzVectorCyl) = lv.phi
-mass(lv::LorentzVectorCyl) = lv.mass
-
-mass(lv::LorentzVector) = sqrt(dot(lv, lv))
-pt(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2)
-mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
-mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
-mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
-@inline function CosTheta(lv::LorentzVector)
-    fZ = lv.z
-    ptot = mag(lv)
-    return ifelse(ptot == 0.0, 1.0, fZ / ptot)
-end
-function eta(lv::LorentzVector)
-    cosTheta = CosTheta(lv)
-    (cosTheta^2 < 1.0) && return -0.5 * log((1.0 - cosTheta) / (1.0 + cosTheta))
-    fZ = lv.z
-    iszero(fZ) && return 0.0
-    # Warning("PseudoRapidity","transvers momentum = 0! return +/- 10e10");
-    fZ > 0.0 && return 10e10
-    return -10e10
-end
-function phi(lv::LorentzVector)
-    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atan(lv.y, lv.x)
-end
-
-function phi_mpi_pi(x)
-    twopi = 2pi
-    while (x >= pi)
-        x -= twopi
-    end
-    while (x < -pi)
-        x += twopi
-    end
-    return x
-end
-
-function deltaR(lv1, lv2)
-    deta = eta(lv1) - eta(lv2)
-    dphi = phi_mpi_pi(phi(lv1) - phi(lv2))
-    return sqrt(deta * deta + dphi * dphi)
-end
+#pt(lv::LorentzVectorCyl) = lv.pt
+#eta(lv::LorentzVectorCyl) = lv.eta
+#phi(lv::LorentzVectorCyl) = lv.phi
+#mass(lv::LorentzVectorCyl) = lv.mass
+#Base.zero(lv::T) where T<:LorentzVectorCyl = T(0,0,0,0)
+#
+#Base.zero(lv::T) where T<:LorentzVector = T(0,0,0,0)
+#mass(lv::LorentzVector) = sqrt(dot(lv, lv))
+#pt(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2)
+#mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
+#mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
+#mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
+#@inline function CosTheta(lv::LorentzVector)
+#    fZ = lv.z
+#    ptot = mag(lv)
+#    return ifelse(ptot == 0.0, 1.0, fZ / ptot)
+#end
+#function eta(lv::LorentzVector)
+#    cosTheta = CosTheta(lv)
+#    (cosTheta^2 < 1.0) && return -0.5 * log((1.0 - cosTheta) / (1.0 + cosTheta))
+#    fZ = lv.z
+#    iszero(fZ) && return 0.0
+#    # Warning("PseudoRapidity","transvers momentum = 0! return +/- 10e10");
+#    fZ > 0.0 && return 10e10
+#    return -10e10
+#end
+#function phi(lv::LorentzVector)
+#    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atan(lv.y, lv.x)
+#end
+#
+#function phi_mpi_pi(x)
+#    twopi = 2pi
+#    while (x >= pi)
+#        x -= twopi
+#    end
+#    while (x < -pi)
+#        x += twopi
+#    end
+#    return x
+#end
+#
+#function deltaR(lv1, lv2)
+#    deta = eta(lv1) - eta(lv2)
+#    dphi = phi_mpi_pi(phi(lv1) - phi(lv2))
+#    return sqrt(deta * deta + dphi * dphi)
+#end
 
 const _EISOS = (
     :HighPtCaloOnly,
