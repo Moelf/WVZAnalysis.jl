@@ -5,19 +5,24 @@ function main_looper(mytree, sumWeight)
         :DF => Hist1D(Float64; bins=1:3),
     ])
  
-    Threads.@threads for evt in mytree
+    for evt in mytree
         ### initial_cut
-        e_mask = evt.v_e_fwd
-        e_mask .⊻= true
-        m_mask = evt.v_m_lowpt
-        m_mask .⊻= true
+        # e_mask = evt.v_e_fwd
+        # e_mask .⊻= true
+        # m_mask = evt.v_m_lowpt
+        # m_mask .⊻= true
 
-        v_l_pid = vcat(evt.v_e_pid[e_mask], evt.v_m_pid[m_mask])
+        v_l_pid = vcat(evt.v_e_pid, evt.v_m_pid)
         nlepton = length(v_l_pid)
-        nlepton < 4 && continue
+        nlepton != 4 && continue
 
-        v_l_tlv = vcat(evt.v_e_tlv[e_mask], evt.v_m_tlv[m_mask])
-        v_l_wgt = vcat(evt.v_e_wgtLoose[e_mask], evt.v_m_wgtLoose[m_mask])
+        (; v_e_pt, v_e_eta, v_e_phi, v_e_m,
+         v_m_pt, v_m_eta, v_m_phi, v_m_m) = evt
+        v_e_tlv = LorentzVectorCyl.(v_e_pt, v_e_eta, v_e_phi, v_e_m)
+        v_m_tlv = LorentzVectorCyl.(v_m_pt, v_m_eta, v_m_phi, v_m_m)
+
+        v_l_tlv = vcat(v_e_tlv, v_m_tlv)
+        v_l_wgt = vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
 
         v_Z_pair, v_Z_wgt, v_ignore = Find_Z_Pairs(v_l_pid, v_l_tlv, v_l_wgt)
         isempty(v_Z_pair) && continue
@@ -28,11 +33,11 @@ function main_looper(mytree, sumWeight)
         #     hists_dict[:Z_mass_first], mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]]) / 1000, wgt
         # )
 
-        best_Z_mass = mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
+        best_Z_mass = LorentzVectorHEP.mass(v_l_tlv[zpr1[1]] + v_l_tlv[zpr1[2]])
 
         abs(best_Z_mass - Z_m) > 20e3 && continue
 
-        v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
+        v_l_order = sortperm(v_l_tlv; by=LorentzVectorHEP.pt, rev=true)
         mass_4l = Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
         mass_4l < 0.0 && continue
         ### end of initial_cut
@@ -43,7 +48,7 @@ function main_looper(mytree, sumWeight)
         end
         !(evt.passTrig) && continue
 
-        v_l_passIso = get_Isos(e_mask, m_mask, evt)
+        v_l_passIso = get_Isos(evt)
 
         pass_WZZ_cut, wgt = WZZ_Cut(
             v_Z_wgt, v_Z_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, wgt
@@ -63,7 +68,7 @@ function main_looper(mytree, sumWeight)
         end
         chargesum!= 0 && continue
 
-        v_l_tight = vcat(evt.v_e_LHTight[e_mask], evt.v_m_tight[m_mask])
+        v_l_tight = vcat(evt.v_e_LHTight, evt.v_m_tight)
         pass_WWZ_cut, wgt, chi2, W_id = WWZ_Cut(
             v_Z_wgt,
             v_Z_pair,
@@ -84,7 +89,7 @@ function main_looper(mytree, sumWeight)
             end
             l1, l2 = zpr1
             l3, l4 = W_id
-            other_pair_mass = mass(v_l_tlv[l3] + v_l_tlv[l4])
+            other_pair_mass = LorentzVectorHEP.mass(v_l_tlv[l3] + v_l_tlv[l4])
 
             if abs(v_l_pid[l3]) != abs(v_l_pid[l4])
                 atomic_push!(hists_dict[Symbol(:DF)], 1, wgt)

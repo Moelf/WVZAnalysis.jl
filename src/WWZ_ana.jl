@@ -1,5 +1,5 @@
 function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
-    WWZ_tlv = Vector{LorentzVector{Float64}}(undef, 4)
+    WWZ_tlv = Vector{LorentzVectorHEP.LorentzVectorCyl{Float32}}(undef, 4)
     pr1 = first(v_Z_pair)
     WWZ_tlv[1] = v_l_tlv[pr1[1]]
     WWZ_tlv[2] = v_l_tlv[pr1[2]]
@@ -7,16 +7,16 @@ function WWZ_chi2(v_Z_pair, v_Z_wgt, v_l_pid, v_l_tlv, W_id)
     WWZ_tlv[4] = v_l_tlv[W_id[2]]
     chi2 = 999999.0
     local temp
-    Z1_tlv = zero(LorentzVector)
-    Z2_tlv = zero(LorentzVector)
+    Z1_tlv = zero(eltype(WWZ_tlv))
+    Z2_tlv = zero(eltype(WWZ_tlv))
     for i in 2:4
         Z1_tlv = WWZ_tlv[1] + WWZ_tlv[i]
         for j in 2:4
             (j == i) && continue
             Z2_tlv += WWZ_tlv[j]
         end
-        mz1 = mass(Z1_tlv)
-        mz2 = mass(Z2_tlv)
+        mz1 = LorentzVectorHEP.mass(Z1_tlv)
+        mz2 = LorentzVectorHEP.mass(Z2_tlv)
         temp =
             (
                 (mz1 - Z_m)^2 + (mz2 - Z_m)^2
@@ -45,20 +45,20 @@ Base.@propagate_inbounds function WWZ_Cut(
     for i in eachindex(v_l_tlv)
         @inbounds for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
-            WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
+            WWZ_dilepton_mass = LorentzVectorHEP.mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
             WWZ_dilepton_mass < 12 && return false, wgt, Inf, W_id
         end
     end
-    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[3]]) < 8e3 && return false, wgt, Inf, W_id
-    pt(v_l_tlv[v_l_order[4]]) < 6e3 && return false, wgt, Inf, W_id
+    LorentzVectorHEP.pt(v_l_tlv[v_l_order[1]]) < 30e3 && return false, wgt, Inf, W_id
+    LorentzVectorHEP.pt(v_l_tlv[v_l_order[2]]) < 15e3 && return false, wgt, Inf, W_id
+    LorentzVectorHEP.pt(v_l_tlv[v_l_order[3]]) < 8e3 && return false, wgt, Inf, W_id
+    LorentzVectorHEP.pt(v_l_tlv[v_l_order[4]]) < 6e3 && return false, wgt, Inf, W_id
 
     # selected lepton min dR
     dR = 999.0
     for i in 1:4
         @inbounds for j in (i + 1):4
-            temp = deltaR(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
+            temp = deltar(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
             dR = ifelse(temp < dR, temp, dR)
         end
     end

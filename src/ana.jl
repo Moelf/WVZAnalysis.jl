@@ -11,7 +11,7 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv, v_l_wgt)
             for j in (i + 1):length(v_l_pids)
                 j ∈ v_ignore && continue
                 v_l_pids[i] != -v_l_pids[j] && continue # require OS
-                m0 = mass(v_l_tlv[i] + v_l_tlv[j])
+                m0 = LorentzVectorHEP.mass(v_l_tlv[i] + v_l_tlv[j])
                 if abs(m0 - Z_m) < abs(M - Z_m)
                     M = m0
                     temp_tup = (i, j)
@@ -39,12 +39,12 @@ function Find_m4l(v_Z_pair, v_l_tlv, v_l_order)
     # require 2SFOS
     length(m4l) != 4 && return -1.0
 
-    tlv_4l = zero(LorentzVector)
+    tlv_4l = zero(eltype(v_l_tlv))
     for idx in m4l
         tlv_4l += v_l_tlv[idx]
     end
 
-    return mass(tlv_4l)
+    return LorentzVectorHEP.mass(tlv_4l)
 end
 
 function Bjet_Cut(evt)
@@ -66,16 +66,7 @@ function main_looper(r::ROOTFile)
     sumWeight = r["sumWeight"][:fN][3]
     mytree = LazyTree(
         r,
-        "tree_NOMINAL",
-        [
-            "MET",
-            "passTrig",
-            r"v_(e|m)_(LHTight|tight)",
-            r"v_j_(wgt_)?btag.*",
-            r"v_(e|m)_passIso_.*",
-            "weight",
-            r"v_(e|m|j)_(fwd|tlv|wgtLoose|pid|lowpt)$",
-        ],
+        "tree_NOMINAL"
     )
     return main_looper(mytree, sumWeight)
 end
