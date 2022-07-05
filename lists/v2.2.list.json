@@ -181,6 +181,20 @@
         "mc16_13TeV.410472.PhPy8EG_A14_ttbar_hdamp258p75_dil.deriv.DAOD_STDM3.e6348_s3126_r10201_p4434",
         "mc16_13TeV.410472.PhPy8EG_A14_ttbar_hdamp258p75_dil.deriv.DAOD_STDM3.e6348_s3126_r10724_p4434"
     ],
+    "VBS":[
+        "mc16_13TeV.366086.Sh_222_NN30NNLO_lllljj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r9364_p4434",
+        "mc16_13TeV.366086.Sh_222_NN30NNLO_lllljj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10201_p4434",
+        "mc16_13TeV.366086.Sh_222_NN30NNLO_lllljj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10724_p4434",
+        "mc16_13TeV.366087.Sh_222_NN30NNLO_lllvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r9364_p4434",
+        "mc16_13TeV.366087.Sh_222_NN30NNLO_lllvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10201_p4434",
+        "mc16_13TeV.366087.Sh_222_NN30NNLO_lllvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10724_p4434",
+        "mc16_13TeV.366088.Sh_222_NN30NNLO_llvvjj_ss_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r9364_p4434",
+        "mc16_13TeV.366088.Sh_222_NN30NNLO_llvvjj_ss_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10201_p4434",
+        "mc16_13TeV.366088.Sh_222_NN30NNLO_llvvjj_ss_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10724_p4434",
+        "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r9364_p4434",
+        "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10201_p4434",
+        "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10724_p4434"
+    ],
     "Others": [
         "mc16_13TeV.410155.aMcAtNloPythia8EvtGen_MEN30NLO_A14N23LO_ttW.deriv.DAOD_STDM3.e5070_s3126_r9364_p4434",
         "mc16_13TeV.410155.aMcAtNloPythia8EvtGen_MEN30NLO_A14N23LO_ttW.deriv.DAOD_STDM3.e5070_s3126_r10201_p4434",
