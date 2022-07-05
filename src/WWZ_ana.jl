@@ -29,8 +29,6 @@ Base.@propagate_inbounds function WWZ_Cut(
     Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_medium, wgt
 )
     nW = 1
-    # define W lepton ID and modify weight
-    WWZ_wgt = wgt * v_l_wgtLoose[Z_pair[1]] * v_l_wgtLoose[Z_pair[2]] * v_l_wgtMedium[W_pair[1]] * v_l_wgtMedium[W_pair[2]]
     chi2 = Inf
     # chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     FAIL = (false, wgt, Inf, W_pair)
@@ -63,8 +61,6 @@ Base.@propagate_inbounds function WWZ_Cut(
     end
     chargesum != 0 && return FAIL
 
-    #### choice ELReLMIs54_MULMIs31 here:
-    return true, WWZ_wgt, chi2, W_pair
     for i in 1:2
         ### for Z bosons
         # Overall best quality (Loose(e) and Loose(mu))
@@ -74,9 +70,8 @@ Base.@propagate_inbounds function WWZ_Cut(
         ### for W bosons
         # Overall best quality (Medium(e) and Medium(mu))
         ( !v_l_medium[W_pair[i]] ) && return FAIL
-        # Isolation (4,1)
-        ( (abs(v_l_pid[W_pair[i]]) == 11) && !v_l_passIso[W_pair[i]][2] ) && return FAIL
-        ( (abs(v_l_pid[W_pair[i]]) == 13) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
     end
-
+    # define W lepton ID and modify weight
+    WWZ_wgt = wgt * v_l_wgtLoose[Z_pair[1]] * v_l_wgtLoose[Z_pair[2]] * v_l_wgtLoose[W_pair[1]] * v_l_wgtLoose[W_pair[2]]
+    return true, WWZ_wgt, chi2, W_pair
 end # end of WWZ Cut

@@ -21,7 +21,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
         nlepton = length(v_l_pid)
         nlepton != 4 && continue
 
-        # (;v_e_tlv, v_m_tlv) = evt
         
         (; v_e_pt, v_e_eta, v_e_phi, v_e_m,
          v_m_pt, v_m_eta, v_m_phi, v_m_m) = evt
@@ -30,10 +29,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
 
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
 
-        zpr1, other, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
+        Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         wgt = evt.weight / sumWeight * wgt_factor
-        other_pair_mass = mass(v_l_tlv[other[1]] + v_l_tlv[other[2]])
+        other_pair_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
 
         abs(best_Z_mass - Z_m) > 20e3 && continue
 
@@ -52,9 +51,16 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
         v_l_wgtLoose = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose) # quality wgt
         v_l_wgtMedium = Vcat(evt.v_e_wgtMedium, evt.v_m_wgtMedium) #quality wgt
 
+        # W lepton ISO
+        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight, evt.v_m_passIso_PLImprovedTight)
+        failed_PLTight = !all(v_l_PLTight[W_pair])
+        failed_PLTight && continue
+        # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight, evt.v_m_wgtIso_PLImprovedTight)
+        # wgt *= reduce(*, v_l_wgtPLTight[W_pair])
+
         pass_WWZ_cut, wgt, chi2, W_id = WWZ_Cut(
-                                                zpr1,
-                                                other,
+                                                Z_pair,
+                                                W_pair,
                                                 v_l_pid,
                                                 v_l_order,
                                                 v_l_wgtLoose,
@@ -64,13 +70,14 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
                                                 v_l_medium,
                                                 wgt,
                                                )
-        b_wgt, b_veto = Bjet_Cut(evt)
         !pass_WWZ_cut && continue
-        !b_veto && continue
+
+        b_wgt, b_veto = Bjet_Cut(evt)
         wgt *= b_wgt
-        l1, l2 = zpr1
-        l3, l4 = W_id
-        # v_j_tlv = evt.v_j_tlv
+        !b_veto && continue
+
+        l1, l2 = Z_pair
+        l3, l4 = W_pair
         v_j_tlv = LorentzVectorCyl.(evt.v_j_pt, evt.v_j_eta, evt.v_j_phi, evt.v_j_m)
         Njet = length(v_j_tlv)
 
