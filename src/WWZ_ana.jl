@@ -25,53 +25,53 @@ function WWZ_chi2(pr1, W_id, v_l_pid, v_l_tlv)
     return chi2
 end
 
-Base.@propagate_inbounds function WWZ_Cut(
-    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_medium, wgt
+function WWZ_Cut(
+    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_medium, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_wgtIso, wgt
 )
-    nW = 1
     chi2 = Inf
     # chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     FAIL = (false, wgt, Inf, W_pair)
-    for i in eachindex(v_l_tlv)
-        @inbounds for j in (i + 1):length(v_l_tlv)
+    @inbounds for i in eachindex(v_l_tlv)
+        for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
             WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
             WWZ_dilepton_mass < 12 && return FAIL
         end
     end
-    pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL
-    pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL
-    pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL
-    pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL
 
     # selected lepton min dR
-    dR = 999.0
-    for i in 1:4
-        @inbounds for j in (i + 1):4
-            temp = deltaR(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
-            dR = ifelse(temp < dR, temp, dR)
+    @inbounds for i in 1:4
+        for j in (i + 1):4
+            dR = deltar(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
+            dR < 0.1 && return FAIL
         end
     end
-    dR < 0.1 && return FAIL
 
-    # summing the charge of the highest pt leptons:
-    chargesum = 0
-    for i in 1:4
-        chargesum += sign(v_l_pid[v_l_order[i]])
-    end
+    chargesum = sum(sign, v_l_pid)
     chargesum != 0 && return FAIL
 
+    WWZ_wgt = wgt
     for i in 1:2
-        ### for Z bosons
+        ### for Z leptons
         # Overall best quality (Loose(e) and Loose(mu))
-        # Isolation (5,3)
-        ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]][3] ) && return FAIL
+        ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]][2] ) && return FAIL
         ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]][2] ) && return FAIL
-        ### for W bosons
+
+        ### for W leptons
         # Overall best quality (Medium(e) and Medium(mu))
         ( !v_l_medium[W_pair[i]] ) && return FAIL
+        ( (abs(v_l_pid[W_pair[i]]) == 11) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
+        ( (abs(v_l_pid[W_pair[i]]) == 13) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
+
+        # quality weights
+        WWZ_wgt *= v_l_wgtLoose[Z_pair[i]] * v_l_wgtMedium[W_pair[i]]
+        # iso weights
+        WWZ_wgt *= v_l_wgtIso[Z_pair[i]][2] * v_l_wgtIso[W_pair[i]][1]
     end
-    # define W lepton ID and modify weight
-    WWZ_wgt = wgt * v_l_wgtLoose[Z_pair[1]] * v_l_wgtLoose[Z_pair[2]] * v_l_wgtLoose[W_pair[1]] * v_l_wgtLoose[W_pair[2]]
+
     return true, WWZ_wgt, chi2, W_pair
-end # end of WWZ Cut
+end
