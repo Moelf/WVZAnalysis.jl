@@ -53,9 +53,9 @@ def load_sig_bg_datasets():
 
     bg = pd.concat([bg_others, bg_ttZ, bg_tWZ, bg_tZ, bg_WZ, bg_Zgamma, bg_Zjets, bg_ZZ])
     bg['is_signal'] = False
-    
+
     return sig, bg
-    
+
 
 def rescale_datasets(sig, bg, train_feats):
     with open('/home/kbenkend/WVZ_shared_by_group/WVZAnalysis.jl/kees_code/min_max_scale_params.json') as json_file:
@@ -67,15 +67,15 @@ def rescale_datasets(sig, bg, train_feats):
             min_val = min_max_scale_params['min'][train_feat]
 
             df[train_feat] = df[train_feat] * scale_val + min_val
-            
-            
+
+
 def cut_to_sr(sig, bg, sr_index):
     '''
     sr_index: 0 for SF in Z, 0.5 for SF no Z, 1 for DF
     '''
     bg = bg[bg.SR == sr_index]
     sig = sig[sig.SR == sr_index]
-    
+
     return sig, bg
 
 
@@ -91,37 +91,37 @@ def get_train_val_data(sr_to_train, val_prop):
         sr_index = 0
     else:
         raise KeyError('invalid signal region name')
-        
+
     sig, bg = load_sig_bg_datasets()
-    train_feats = sorted([f for f in sig.columns if f not in ['index', 'wgt', 'is_signal', 
-                                                              'v_j_btag77', 'v_j_btag60', 
-                                                              'v_j_btag85', 'v_j_btagCont', 'v_j_btag70', 
+    train_feats = sorted([f for f in sig.columns if f not in ['index', 'wgt', 'is_signal',
+                                                              'v_j_btag77', 'v_j_btag60',
+                                                              'v_j_btag85', 'v_j_btagCont', 'v_j_btag70',
                                                               'source']])
     print('Using the following training features:')
     print(sorted(train_feats))
-    
+
     rescale_datasets(sig, bg, train_feats)
     sig, bg = cut_to_sr(sig, bg, sr_index)
-    
+
     sig_train, sig_val = train_test_split(sig, test_size=val_prop)
     bg_train, bg_val = train_test_split(bg, test_size=val_prop)
-    
+
     x_train = pd.concat([sig_train[train_feats], bg_train[train_feats]])
     y_train = np.concatenate([np.ones(len(sig_train)), np.zeros(len(bg_train))])
-    
+
     n_train_sig = sum(sig_train.wgt)
     n_train_bg = sum(bg_train.wgt)
-    
+
     sig_correction = (n_train_sig + n_train_bg) / (2 * n_train_sig)
     bg_correction = (n_train_sig + n_train_bg) / (2 * n_train_bg)
-    
-    w_train = np.concatenate([sig_correction * np.abs(sig_train['wgt']), 
+
+    w_train = np.concatenate([sig_correction * np.abs(sig_train['wgt']),
                               bg_correction * np.abs(bg_train['wgt'])])
-    
+
     x_val = pd.concat([sig_val[train_feats], bg_val[train_feats]])
     y_val = np.concatenate([np.ones(len(sig_val)), np.zeros(len(bg_val))])
     w_val = np.concatenate([np.abs(sig_val['wgt']), np.abs(bg_val['wgt'])])
-    
+
     return x_train, y_train, w_train, x_val, y_val, w_val
 
 
@@ -129,7 +129,7 @@ def make_model(input_dim, num_nodes, dropout, learn_rate):
     # Generate and fit model
     K.clear_session()
     classifier = Sequential()
-    classifier.add(Dense(num_nodes, input_dim=input_dim, activation='relu')) 
+    classifier.add(Dense(num_nodes, input_dim=input_dim, activation='relu'))
     classifier.add(Dropout(dropout))
     classifier.add(Dense(num_nodes, activation='relu'))
     classifier.add(Dropout(dropout))
@@ -139,7 +139,7 @@ def make_model(input_dim, num_nodes, dropout, learn_rate):
 
     opt = keras.optimizers.Adam(learning_rate=learn_rate)
     classifier.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
-    
+
     return classifier
 
 
@@ -153,27 +153,27 @@ def train_model(sr_to_train,
     '''
     sr_to_train: 'DF', 'SF_noZ', or 'SF_inZ'
     '''
-    
-    
+
+
     x_train, y_train, w_train, x_val, y_val, w_val = get_train_val_data(sr_to_train, val_prop)
-    
-    classifier = make_model(input_dim=x_train.shape[1], num_nodes=num_nodes, 
+
+    classifier = make_model(input_dim=x_train.shape[1], num_nodes=num_nodes,
                             dropout=dropout, learn_rate=learn_rate)
-    
-    es_callback = EarlyStopping(monitor='val_loss', patience=patience, 
+
+    es_callback = EarlyStopping(monitor='val_loss', patience=patience,
                                 restore_best_weights=True)
 
-    history = classifier.fit(x_train, y_train, sample_weight=w_train, 
+    history = classifier.fit(x_train, y_train, sample_weight=w_train,
                              validation_data=(x_val, y_val, w_val),
                              epochs=epochs, batch_size=batch_size,
                              verbose=1, callbacks=[es_callback], shuffle=True)
-    
+
     # Save model and history
     model_dir = 'models/'
     model_name = 'classifier_' + sr_to_train
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-        
+
     classifier.save(model_dir + model_name)
     with open(model_dir + model_name + '_history.pkl', 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
