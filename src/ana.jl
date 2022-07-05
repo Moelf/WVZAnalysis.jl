@@ -47,12 +47,7 @@ function main_looper(files::Vector{<:AbstractString}; kws...)
     mapreduce(x->main_looper(x; kws...), (.+), files)
 end
 
-function main_looper(r::ROOTFile; treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0)
-    sumWeight = if haskey(r, "sumWeight")
-            r["sumWeight"][:fN][3] # MC tree
-        else
-            1.0 # data tree
-        end
+function main_looper(r::ROOTFile; sumWeight, treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0)
     mytree = LazyTree(r, treename)
     return main_looper(mytree, sumWeight; sfsyst, wgt_factor)
 end

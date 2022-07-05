@@ -65,8 +65,8 @@ Base.@propagate_inbounds function WWZ_Cut(
         ### for Z bosons
         # Overall best quality (Loose(e) and Loose(mu))
         # Isolation (5,3)
-        ( (abs(v_l_pid[Z_Pair[i]]) == 11) && !v_l_passIso[Z_Pair[i]][3] ) && return FAIL
-        ( (abs(v_l_pid[Z_Pair[i]]) == 13) && !v_l_passIso[Z_Pair[i]][2] ) && return FAIL
+        ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]][3] ) && return FAIL
+        ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]][2] ) && return FAIL
         ### for W bosons
         # Overall best quality (Medium(e) and Medium(mu))
         ( !v_l_medium[W_pair[i]] ) && return FAIL
