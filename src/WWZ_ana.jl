@@ -26,11 +26,11 @@ function WWZ_chi2(pr1, W_id, v_l_pid, v_l_tlv)
 end
 
 Base.@propagate_inbounds function WWZ_Cut(
-    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgt, v_l_tlv, v_l_passIso, v_l_medium, wgt
+    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_medium, wgt
 )
     nW = 1
     # define W lepton ID and modify weight
-    WWZ_wgt = wgt * v_l_wgt[Z_pair[1]] * v_l_wgt[Z_pair[2]]
+    WWZ_wgt = wgt * v_l_wgtLoose[Z_pair[1]] * v_l_wgtLoose[Z_pair[2]] * v_l_wgtMedium[W_pair[1]] * v_l_wgtMedium[W_pair[2]]
     chi2 = Inf
     # chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     FAIL = (false, wgt, Inf, W_pair)

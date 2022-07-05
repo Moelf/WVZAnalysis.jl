@@ -29,7 +29,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
         v_m_tlv = LorentzVectorCyl.(v_m_pt, v_m_eta, v_m_phi, v_m_m)
 
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
-        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
 
         zpr1, other, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
@@ -49,13 +48,17 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0)
 
         # `true` in `b_veto` means we've passed the criterial,
         # which means we didn't see a b-tagged
-        v_l_medium = Vcat(evt.v_e_LHMedium, evt.v_m_medium)
+        v_l_medium = Vcat(evt.v_e_LHMedium, evt.v_m_medium) #quality
+        v_l_wgtLoose = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose) # quality wgt
+        v_l_wgtMedium = Vcat(evt.v_e_wgtMedium, evt.v_m_wgtMedium) #quality wgt
+
         pass_WWZ_cut, wgt, chi2, W_id = WWZ_Cut(
                                                 zpr1,
                                                 other,
                                                 v_l_pid,
                                                 v_l_order,
-                                                v_l_wgt,
+                                                v_l_wgtLoose,
+                                                v_l_wgtMedium,
                                                 v_l_tlv,
                                                 v_l_passIso,
                                                 v_l_medium,
