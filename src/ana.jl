@@ -1,5 +1,5 @@
 function Find_Z_Pairs(v_l_pids, v_l_tlv)
-    Z_pair = (-1,-1)
+    Z_pair = [-1,-1]
     idxs = eachindex(v_l_pids)
     M = Inf
     for i in idxs
@@ -10,15 +10,12 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv)
             m0 = mass(vi + v_l_tlv[j])
             if abs(m0 - Z_m) < abs(M - Z_m)
                 M = m0
-                Z_pair = (i, j)
+                Z_pair[1] = i
+                Z_pair[2] = j
             end
         end
     end
     return Z_pair, setdiff(1:4, Z_pair), M
-end
-
-function Find_m4l(v_l_tlv)
-    return mass(sum(v_l_tlv))
 end
 
 function Bjet_Cut(evt)
@@ -47,8 +44,7 @@ function main_looper(files::Vector{<:AbstractString}; kws...)
     mapreduce(x->main_looper(x; kws...), (.+), files)
 end
 
-function main_looper(r::ROOTFile; sumWeight, treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0)
+function main_looper(r::ROOTFile; sumWeight, treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0, arrow_making=false)
     mytree = LazyTree(r, treename)
-    return main_looper(mytree, sumWeight; sfsyst, wgt_factor)
+    return main_looper(mytree, sumWeight; sfsyst, wgt_factor, arrow_making)
 end
-

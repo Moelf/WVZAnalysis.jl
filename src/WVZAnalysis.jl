@@ -1,6 +1,7 @@
 module WVZAnalysis
 
-using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP,  Dictionaries, Mixers, LazyArrays, ThreadsX, JSON3, ProgressMeter
+using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP,  Dictionaries, Mixers, LazyArrays, JSON3, ProgressMeter
+using ThreadsX, FoldsThreads, FLoops
 
 include("./utils.jl")
 include("./ZZZ_ana.jl")
