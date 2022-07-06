@@ -25,8 +25,8 @@ Pkg.activate(pathof(WVZAnalysis) |> dirname |> dirname)
 
 using ProgressMeter, PrettyTables, UnROOT, FHist, JSON3, CairoMakie, ThreadsX, Arrow, Measurements
 
-const BKG_TAGS = ("ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
-const ALL_TAGS = ("Signal", BKG_TAGS...)
+BKG_TAGS = ("ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
+ALL_TAGS = ("Signal", BKG_TAGS...)
 ```
 
 ## Example Usage:
