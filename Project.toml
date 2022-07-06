@@ -1,7 +1,7 @@
 name = "WVZAnalysis"
 uuid = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"
 authors = ["Jerry Ling <proton@jling.dev> and contributors"]
-version = "0.1.2"
+version = "0.2.2"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
