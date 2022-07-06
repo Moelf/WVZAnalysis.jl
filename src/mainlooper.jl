@@ -57,8 +57,8 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium, evt.v_m_wgtIso_PLImprovedTight)
         # wgt *= reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
 
-        # wgt *= reduce(*, evt.v_e_wgtReco; init = 1.0)
-        # wgt *= reduce(*, evt.v_m_wgtTTVA; init = 1.0)
+        wgt *= reduce(*, evt.v_e_wgtReco)
+        wgt *= reduce(*, evt.v_m_wgtTTVA)
 
         pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
                                                  Z_pair,
