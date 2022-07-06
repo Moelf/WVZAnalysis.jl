@@ -1,14 +1,14 @@
-function WWZ_chi2(pr1, W_id, v_l_pid, v_l_tlv)
+function WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     WWZ_tlv = Vector{eltype(v_l_tlv)}(undef, 4)
-    WWZ_tlv[1] = v_l_tlv[pr1[1]]
-    WWZ_tlv[2] = v_l_tlv[pr1[2]]
-    WWZ_tlv[3] = v_l_tlv[W_id[1]]
-    WWZ_tlv[4] = v_l_tlv[W_id[2]]
-    chi2 = 999999.0
+    WWZ_tlv[1] = v_l_tlv[Z_pair[1]]
+    WWZ_tlv[2] = v_l_tlv[Z_pair[2]]
+    WWZ_tlv[3] = v_l_tlv[W_pair[1]]
+    WWZ_tlv[4] = v_l_tlv[W_pair[2]]
+    chi2 = Inf
     local temp
     Z1_tlv = zero(WWZ_tlv[1])
     Z2_tlv = zero(WWZ_tlv[1])
-    for i in 2:4
+    @inbounds for i in 2:4
         Z1_tlv = WWZ_tlv[1] + WWZ_tlv[i]
         for j in 2:4
             (j == i) && continue
@@ -28,8 +28,8 @@ end
 function WWZ_Cut(
     Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_medium, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_wgtIso, wgt
 )
-    chi2 = Inf
-    # chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
+    # chi2 = Inf
+    chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     FAIL = (false, wgt, Inf, W_pair)
     @inbounds for i in eachindex(v_l_tlv)
         for j in (i + 1):length(v_l_tlv)

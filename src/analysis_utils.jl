@@ -83,3 +83,28 @@ function sfsys_dir(dir_path; prog = nothing)
         r
     end
 end
+
+function arrow_making(tag)
+    dirs = root_dirs(tag; variation = "sf")
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.3)
+    println("$tag starting:")
+    res = ThreadsX.map(dirs) do d
+        arrow_making_dir(d; prog)
+    end
+    foldl((x,y) -> append!.(x,y), res)
+    first(res)
+end
+
+function arrow_making_dir(dir_path; prog = nothing)
+    files = filter!(endswith(".root"), readdir(dir_path; join = true))
+    sumWeight = sumsumWeight(files)
+    res = map(files) do F
+        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, arrow_making=true)
+        if prog !== nothing 
+            next!(prog)
+        end
+        r
+    end
+    foldl((x,y) -> append!.(x,y), res)
+    first(res)
+end

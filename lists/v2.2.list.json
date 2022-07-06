@@ -75,7 +75,7 @@
     ],
 
 
-    "Z + jets":[
+    "Zjets":[
         "mc16_13TeV.700320.Sh_2211_Zee_maxHTpTV2_BFilter.deriv.DAOD_STDM3.e8351_s3126_r9364_p4434",
         "mc16_13TeV.700320.Sh_2211_Zee_maxHTpTV2_BFilter.deriv.DAOD_STDM3.e8351_s3126_r10201_p4434",
         "mc16_13TeV.700320.Sh_2211_Zee_maxHTpTV2_BFilter.deriv.DAOD_STDM3.e8351_s3126_r10724_p4434",
@@ -122,7 +122,7 @@
         "mc16_13TeV.700334.Sh_2211_Ztautau_HH_maxHTpTV2_CVetoBVeto.deriv.DAOD_STDM3.e8351_s3126_r10201_p4434",
         "mc16_13TeV.700334.Sh_2211_Ztautau_HH_maxHTpTV2_CVetoBVeto.deriv.DAOD_STDM3.e8351_s3126_r10724_p4434"
     ],
-    "Z + gamma":[
+    "Zgamma":[
         "mc16_13TeV.364500.Sherpa_222_NNPDF30NNLO_eegamma_pty_7_15.deriv.DAOD_STDM3.e5928_s3126_r10201_p4434",
         "mc16_13TeV.364500.Sherpa_222_NNPDF30NNLO_eegamma_pty_7_15.deriv.DAOD_STDM3.e5928_s3126_r9364_p4434",
         "mc16_13TeV.364500.Sherpa_222_NNPDF30NNLO_eegamma_pty_7_15.deriv.DAOD_STDM3.e5928_s3126_r10724_p4434",
@@ -201,6 +201,14 @@
         "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r9364_p4434",
         "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10201_p4434",
         "mc16_13TeV.366089.Sh_222_NN30NNLO_llvvjj_Min_N_TChannel.deriv.DAOD_STDM3.e7448_s3126_r10724_p4434"
+    ],
+    "VH":[
+        "mc16_13TeV.342284.Pythia8EvtGen_A14NNPDF23LO_WH125_inc.deriv.DAOD_STDM3.e4246_s3126_r9364_p4434",
+        "mc16_13TeV.342284.Pythia8EvtGen_A14NNPDF23LO_WH125_inc.deriv.DAOD_STDM3.e4246_s3126_r10201_p4434",
+        "mc16_13TeV.342284.Pythia8EvtGen_A14NNPDF23LO_WH125_inc.deriv.DAOD_STDM3.e4246_s3126_r10724_p4434",
+        "mc16_13TeV.342285.Pythia8EvtGen_A14NNPDF23LO_ZH125_inc.deriv.DAOD_STDM3.e4246_s3126_r10201_p4434",
+        "mc16_13TeV.342285.Pythia8EvtGen_A14NNPDF23LO_ZH125_inc.deriv.DAOD_STDM3.e4246_s3126_r10724_p4434",
+        "mc16_13TeV.342285.Pythia8EvtGen_A14NNPDF23LO_ZH125_inc.deriv.DAOD_STDM3.e4246_s3126_r9364_p4434"
     ],
     "Others": [
         "mc16_13TeV.364254.Sherpa_222_NNPDF30NNLO_llvv.deriv.DAOD_STDM3.e5916_s3126_r9364_p4434",

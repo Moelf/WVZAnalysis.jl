@@ -9,6 +9,37 @@ mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
     return ifelse(ptot == 0.0, 1.0, fZ / ptot)
 end
 
+
+"""
+
+Example:
+
+```julia
+julia> dd = Dict(:Nlep => [], :lep1_pid=>[]);
+
+julia> Nlep = 10;
+
+julia> lep1_pid =11;
+
+julia> @fill_dict! dd push! Nlep,lep1_pid;
+
+# this expands to
+push!(dd[:Nlep], Nlep)
+push!(dd[:lep1_pid], lep1_pid)
+
+julia> dd
+Dict{Symbol, Vector{Any}} with 2 entries:
+  :Nlep     => [10]
+  :lep1_pid => [11]
+```
+
+"""
+macro fill_dict!(dict, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v) for v in vs]
+    esc(Expr(:block, exs...))
+end
+
 const _EISOS = (
     :HighPtCaloOnly,
     :TightTrackOnly_VarRad,
