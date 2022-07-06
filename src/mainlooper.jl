@@ -85,13 +85,13 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         l3, l4 = W_pair
 
         SR = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
-            !arrow_making && (push!(dict[Symbol(:NN_DF__NOMINAL)], 1, wgt))
+            !arrow_making && (atomic_push!(dict[Symbol(:NN_DF__NOMINAL)], 1, wgt))
             2
         elseif abs(other_mass - Z_m) < 20e3 # SF_inZ
-            !arrow_making && (push!(dict[Symbol(:NN_inZ__NOMINAL)], 1, wgt))
+            !arrow_making && (atomic_push!(dict[Symbol(:NN_inZ__NOMINAL)], 1, wgt))
             0
         else #SF_noZ
-            !arrow_making && (push!(dict[Symbol(:NN_noZ__NOMINAL)], 1, wgt))
+            !arrow_making && (atomic_push!(dict[Symbol(:NN_noZ__NOMINAL)], 1, wgt))
             1
         end
 
