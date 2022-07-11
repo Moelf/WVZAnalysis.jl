@@ -40,6 +40,12 @@ macro fill_dict!(dict, func, vars)
     esc(Expr(:block, exs...))
 end
 
+macro fill_dict!(dict, wgt, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v, wgt) for v in vs]
+    esc(Expr(:block, exs...))
+end
+
 const _EISOS = (
     :HighPtCaloOnly,
     :TightTrackOnly_VarRad,

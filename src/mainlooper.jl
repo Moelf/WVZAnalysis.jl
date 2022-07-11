@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false)
+function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false)
     _dict = Dict{Symbol, Hist1D{Float64, Tuple{UnitRange{Int64}}}}()
     for n in (:NN_inZ, :NN_noZ, :NN_DF)
         _dict[Symbol(n, :__NOMINAL)] = Hist1D(Float64; bins=1:2)
@@ -13,10 +13,12 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
     dict, executor = if arrow_making
         arrow_init(), NonThreadedEx()
     else
-        dictionary(_dict), ThreadedEx()
+        kinematic_hist_init(), ThreadedEx()
+        # dictionary(_dict), ThreadedEx()
     end
 
-    @floop executor for evt in mytree
+    # @floop executor for evt in mytree
+    for evt in mytree
         ### initial_cut
         v_l_pid = Vcat(evt.v_e_pid, evt.v_m_pid)
         Nlep = length(v_l_pid)
@@ -72,6 +74,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
                                                  v_l_passIso,
                                                  v_l_wgtIso,
                                                  wgt,
+                                                 isdata
                                                 )
         !pass_WWZ_cut && continue
         # in `b_veto == true` means we've passed the criterial,
@@ -85,54 +88,62 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         l3, l4 = W_pair
 
         SR = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
-            !arrow_making && (atomic_push!(dict[Symbol(:NN_DF__NOMINAL)], 1, wgt))
             2
         elseif abs(other_mass - Z_m) < 20e3 # SF_inZ
-            !arrow_making && (atomic_push!(dict[Symbol(:NN_inZ__NOMINAL)], 1, wgt))
             0
         else #SF_noZ
-            !arrow_making && (atomic_push!(dict[Symbol(:NN_noZ__NOMINAL)], 1, wgt))
             1
         end
 
-        !arrow_making && continue
 
+        # force wgt to 1 for data
+        if isdata
+            wgt = 1.0
+        end
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
-        pt_1, pt_2, pt_3, pt_4 = pt.(@view v_l_tlv[v_l_order])
+        pt_1, pt_2, pt_3, pt_4 = pt.(@view v_l_tlv[v_l_order]) ./ 1000
         eta_1, eta_2, eta_3, eta_4 = eta.(@view v_l_tlv[v_l_order])
         phi_1, phi_2, phi_3, phi_4 = phi.(@view v_l_tlv[v_l_order])
         phi_1, phi_2, phi_3, phi_4 = phi.(@view v_l_tlv[v_l_order])
         v_j_tlv = LorentzVectorCyl.(evt.v_j_pt, evt.v_j_eta, evt.v_j_phi, evt.v_j_m)
         v_j_order = sortperm(v_j_tlv; by=pt, rev=true)
         Njet = length(v_j_tlv)
-        Zcand_mass = best_Z_mass
+        Zcand_mass = best_Z_mass / 1000
         (; MET, METSig, METPhi) = evt
+        MET /= 1000
 
-        HT = sum(pt, v_j_tlv; init=0.f0) # hadronic HT
-        leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)
+        HT = sum(pt, v_j_tlv; init=0.f0)/1000 # hadronic HT
+        leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
 
+        other_mass /= 1000
+        mass_4l /= 1000
+        @fill_dict! dict wgt atomic_push! SR, pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
+        eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT
+
+        !arrow_making && continue
+
         Z_phi = phi(sum(@view v_l_tlv[Z_pair]))
-        Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair])
+        Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair]) ./ 1000
         Zlep1_eta, Zlep2_eta = eta.(@view v_l_tlv[Z_pair])
         Zlep1_phi, Zlep2_phi = phi.(@view v_l_tlv[Z_pair])
         Zlep1_pid, Zlep2_pid = @view v_l_pid[Z_pair]
         Zlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[1]]))
         Zlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[2]]))
 
-        Wlep1_pt, Wlep2_pt = pt.(@view v_l_tlv[W_pair])
+        Wlep1_pt, Wlep2_pt = pt.(@view v_l_tlv[W_pair]) ./ 1000
         Wlep1_eta, Wlep2_eta = eta.(@view v_l_tlv[W_pair])
         Wlep1_phi, Wlep2_phi = phi.(@view v_l_tlv[W_pair])
         Wlep1_pid, Wlep2_pid = @view v_l_pid[W_pair]
         Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[1]]))
         Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
 
-        pt_4l = pt(sum(v_l_tlv))
+        pt_4l = pt(sum(v_l_tlv)) / 1000
 
-        jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]])
-        jet_pt_2 = Njet < 2 ? 0.f0 : pt(v_j_tlv[v_j_order[2]])
-        jet_pt_3 = Njet < 3 ? 0.f0 : pt(v_j_tlv[v_j_order[3]])
-        jet_pt_4 = Njet < 4 ? 0.f0 : pt(v_j_tlv[v_j_order[4]])
+        jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]]) / 1000
+        jet_pt_2 = Njet < 2 ? 0.f0 : pt(v_j_tlv[v_j_order[2]]) / 1000
+        jet_pt_3 = Njet < 3 ? 0.f0 : pt(v_j_tlv[v_j_order[3]]) / 1000
+        jet_pt_4 = Njet < 4 ? 0.f0 : pt(v_j_tlv[v_j_order[4]]) / 1000
 
         jet_eta_1 = Njet < 1 ? -10.f0 : eta(v_j_tlv[v_j_order[1]])
         jet_eta_2 = Njet < 2 ? -10.f0 : eta(v_j_tlv[v_j_order[2]])
@@ -142,10 +153,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         jet_phi_2 = Njet < 2 ? -10.f0 : phi(v_j_tlv[v_j_order[2]])
         jet_phi_3 = Njet < 3 ? -10.f0 : phi(v_j_tlv[v_j_order[3]])
         jet_phi_4 = Njet < 4 ? -10.f0 : phi(v_j_tlv[v_j_order[4]])
-        jet_m_1 = Njet < 1 ? 0.f0 : mass(v_j_tlv[v_j_order[1]])
-        jet_m_2 = Njet < 2 ? 0.f0 : mass(v_j_tlv[v_j_order[2]])
-        jet_m_3 = Njet < 3 ? 0.f0 : mass(v_j_tlv[v_j_order[3]])
-        jet_m_4 = Njet < 4 ? 0.f0 : mass(v_j_tlv[v_j_order[4]])
+        jet_m_1 = Njet < 1 ? 0.f0 : mass(v_j_tlv[v_j_order[1]]) / 1000
+        jet_m_2 = Njet < 2 ? 0.f0 : mass(v_j_tlv[v_j_order[2]]) / 1000
+        jet_m_3 = Njet < 3 ? 0.f0 : mass(v_j_tlv[v_j_order[3]]) / 1000
+        jet_m_4 = Njet < 4 ? 0.f0 : mass(v_j_tlv[v_j_order[4]]) / 1000
 
         (; v_j_btag60, v_j_btag70, v_j_btag77, v_j_btag85, v_j_btagCont) = evt
         jet_btagCont_1 = Njet < 1 ? -2 : v_j_btagCont[1]

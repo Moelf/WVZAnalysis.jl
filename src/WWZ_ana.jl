@@ -26,7 +26,7 @@ function WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
 end
 
 function WWZ_Cut(
-    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_medium, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_wgtIso, wgt
+    Z_pair, W_pair, v_l_pid, v_l_order, v_l_wgtLoose, v_l_medium, v_l_wgtMedium, v_l_tlv, v_l_passIso, v_l_wgtIso, wgt, isdata=false
 )
     # chi2 = Inf
     chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
@@ -51,9 +51,6 @@ function WWZ_Cut(
         end
     end
 
-    chargesum = sum(sign, v_l_pid)
-    chargesum != 0 && return FAIL
-
     WWZ_wgt = wgt
     for i in 1:2
         ### for Z leptons
@@ -67,6 +64,7 @@ function WWZ_Cut(
         ( (abs(v_l_pid[W_pair[i]]) == 11) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
         ( (abs(v_l_pid[W_pair[i]]) == 13) && !v_l_passIso[W_pair[i]][1] ) && return FAIL
 
+        isdata && continue
         # quality weights
         WWZ_wgt *= v_l_wgtLoose[Z_pair[i]] * v_l_wgtMedium[W_pair[i]]
         # iso weights
