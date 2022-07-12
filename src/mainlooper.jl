@@ -16,7 +16,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         kinematic_hist_init(), ThreadedEx()
         # dictionary(_dict), ThreadedEx()
     end
-    dict = dictionary(Dict(:MET => Hist1D(Float64;bins=0:8:200), :Z_mass => Hist1D(Float64;bins=50:2:150), :Z_eta => Hist1D(Float64;bins=-4:0.4:4), :Z_phi => Hist1D(Float64;bins=-4:0.4:4), :Z_pt => Hist1D(Float64;bins=0:8:200), :Z_bad_mass => Hist1D(Float64;bins=50:2:150)))
 
     # @floop executor for evt in mytree
     for evt in mytree
@@ -114,6 +113,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         (; MET, METSig, METPhi) = evt
         MET /= 1000
 
+        Z_eta = eta(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
+        Z_phi = phi(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
+        Z_pt = pt(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])/1000
+
         HT = sum(pt, v_j_tlv; init=0.f0)/1000 # hadronic HT
         leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
@@ -121,7 +124,8 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         other_mass /= 1000
         mass_4l /= 1000
         @fill_dict! dict wgt atomic_push! SR, pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
-        eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT
+        eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT,
+        leptonic_HT, Z_eta, Z_phi, Z_pt
 
         !arrow_making && continue
 
@@ -174,7 +178,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,
         jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
         v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt
-end
     end
 
     return dict
