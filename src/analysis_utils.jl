@@ -93,20 +93,21 @@ end
 
 function arrow_making(tag)
     dirs = root_dirs(tag; variation = "sf")
+    isdata = lowercase(tag) == "data"
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.3)
     println("$tag starting:")
     res = ThreadsX.map(dirs) do d
-        arrow_making_dir(d; prog)
+        arrow_making_dir(d; prog, isdata)
     end
     foldl((x,y) -> append!.(x,y), res)
     first(res)
 end
 
-function arrow_making_dir(dir_path; prog = nothing)
+function arrow_making_dir(dir_path; prog = nothing, isdata)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumWeight = sumsumWeight(files)
     res = map(files) do F
-        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, arrow_making=true)
+        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, arrow_making=true, isdata)
         if prog !== nothing 
             next!(prog)
         end
