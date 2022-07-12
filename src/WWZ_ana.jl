@@ -50,6 +50,9 @@ function WWZ_Cut(
         end
     end
 
+    #chargesum = sum(sign, v_l_pid)
+    #chargesum != 0 && return FAIL
+
     WWZ_wgt = wgt
     for i in 1:2
         ### for Z leptons isolation: Loose(e) and Loose(mu)

@@ -30,19 +30,28 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_m_tlv = LorentzVectorCyl.(v_m_pt, v_m_eta, v_m_phi, v_m_m)
 
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
+        v_l_eta = Vcat(v_e_eta,v_m_eta)
+        v_l_phi = Vcat(v_e_phi,v_m_phi)
+        v_l_pt = Vcat(v_e_pt,v_m_pt)
+        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
 
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
 
-        abs(best_Z_mass - Z_m) > 20e3 && continue
+        wgt = evt.weight / sumWeight * wgt_factor
+
+        20e3 > abs(best_Z_mass - Z_m) && continue
+	    40e3 < abs(best_Z_mass - Z_m) && continue
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
         ### end of initial_cut
 
+        20e3 > abs(best_Z_mass - Z_m) && continue
+        40e3 < abs(best_Z_mass - Z_m) && continue
         !(evt.passTrig) && continue
-
+       
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         v_l_passIso, v_l_wgtIso = get_Isos(evt)
 
@@ -111,6 +120,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         (; MET, METSig, METPhi) = evt
         MET /= 1000
 
+        Z_eta = eta(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
+        Z_phi = phi(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
+        Z_pt = pt(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])/1000
+
         HT = sum(pt, v_j_tlv; init=0.f0)/1000 # hadronic HT
         leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
@@ -174,4 +187,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
     end
 
     return dict
+>>>>>>> temporary
 end
+
