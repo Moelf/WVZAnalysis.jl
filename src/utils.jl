@@ -1,51 +1,50 @@
 const Z_m = 91.1876 * 10^3 # in MeV
 
-#pt(lv::LorentzVectorCyl) = lv.pt
-#eta(lv::LorentzVectorCyl) = lv.eta
-#phi(lv::LorentzVectorCyl) = lv.phi
-#mass(lv::LorentzVectorCyl) = lv.mass
-#Base.zero(lv::T) where T<:LorentzVectorCyl = T(0,0,0,0)
-#
-#Base.zero(lv::T) where T<:LorentzVector = T(0,0,0,0)
-#mass(lv::LorentzVector) = sqrt(dot(lv, lv))
-#pt(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2)
-#mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
-#mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
-#mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
-#@inline function CosTheta(lv::LorentzVector)
-#    fZ = lv.z
-#    ptot = mag(lv)
-#    return ifelse(ptot == 0.0, 1.0, fZ / ptot)
-#end
-#function eta(lv::LorentzVector)
-#    cosTheta = CosTheta(lv)
-#    (cosTheta^2 < 1.0) && return -0.5 * log((1.0 - cosTheta) / (1.0 + cosTheta))
-#    fZ = lv.z
-#    iszero(fZ) && return 0.0
-#    # Warning("PseudoRapidity","transvers momentum = 0! return +/- 10e10");
-#    fZ > 0.0 && return 10e10
-#    return -10e10
-#end
-#function phi(lv::LorentzVector)
-#    return (lv.x == 0.0 && lv.y == 0.0) ? 0.0 : atan(lv.y, lv.x)
-#end
-#
-#function phi_mpi_pi(x)
-#    twopi = 2pi
-#    while (x >= pi)
-#        x -= twopi
-#    end
-#    while (x < -pi)
-#        x += twopi
-#    end
-#    return x
-#end
-#
-#function deltaR(lv1, lv2)
-#    deta = eta(lv1) - eta(lv2)
-#    dphi = phi_mpi_pi(phi(lv1) - phi(lv2))
-#    return sqrt(deta * deta + dphi * dphi)
-#end
+mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
+mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
+mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
+@inline function CosTheta(lv::LorentzVector)
+    fZ = lv.z
+    ptot = mag(lv)
+    return ifelse(ptot == 0.0, 1.0, fZ / ptot)
+end
+
+
+"""
+
+Example:
+
+```julia
+julia> dd = Dict(:Nlep => [], :lep1_pid=>[]);
+
+julia> Nlep = 10;
+
+julia> lep1_pid =11;
+
+julia> @fill_dict! dd push! Nlep,lep1_pid;
+
+# this expands to
+push!(dd[:Nlep], Nlep)
+push!(dd[:lep1_pid], lep1_pid)
+
+julia> dd
+Dict{Symbol, Vector{Any}} with 2 entries:
+  :Nlep     => [10]
+  :lep1_pid => [11]
+```
+
+"""
+macro fill_dict!(dict, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v) for v in vs]
+    esc(Expr(:block, exs...))
+end
+
+macro fill_dict!(dict, wgt, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v, wgt) for v in vs]
+    esc(Expr(:block, exs...))
+end
 
 const _EISOS = (
     :HighPtCaloOnly,
@@ -71,20 +70,33 @@ const _MISOS = (
 #FIXME thanks HEP, replace this with a @generated
 function get_Isos(evt)
     v_l_passIso = Vector{Bool}[]
+    v_l_wgtIso = Vector{Float64}[]
 
-    v_e_passIso_TightTrackOnly_VarRad = evt.v_e_passIso_TightTrackOnly_VarRad
-    v_e_passIso_Tight_VarRad = evt.v_e_passIso_Tight_VarRad
-    v_e_passIso_Loose_VarRad = evt.v_e_passIso_Loose_VarRad
-    v_m_passIso_PflowTight_VarRad = evt.v_m_passIso_PflowTight_VarRad
-    v_m_passIso_PflowLoose_VarRad = evt.v_m_passIso_PflowLoose_VarRad
+    (;
+     v_e_passIso_Tight_VarRad,
+     v_e_passIso_Loose_VarRad,
+     v_m_passIso_PflowTight_VarRad,
+     v_m_passIso_PflowLoose_VarRad,
+
+     v_e_wgtIso_Tight_VarRad_Tight,
+     v_e_wgtIso_Loose_VarRad_LooseBLayer,
+     v_m_wgtIso_PflowTight_VarRad,
+     v_m_wgtIso_PflowLoose_VarRad,
+    ) = evt
 
     @inbounds for i in eachindex(v_e_passIso_Loose_VarRad)
         push!(
             v_l_passIso,
             Bool[
-                v_e_passIso_TightTrackOnly_VarRad[i],
                 v_e_passIso_Tight_VarRad[i],
                 v_e_passIso_Loose_VarRad[i],
+            ],
+        )
+        push!(
+            v_l_wgtIso,
+            Float64[
+                v_e_wgtIso_Tight_VarRad_Tight[i],
+                v_e_wgtIso_Loose_VarRad_LooseBLayer[i],
             ],
         )
     end
@@ -96,9 +108,16 @@ function get_Isos(evt)
                  v_m_passIso_PflowLoose_VarRad[i],
             ],
         )
+        push!(
+            v_l_wgtIso,
+            Float64[
+                v_m_wgtIso_PflowTight_VarRad[i],
+                v_m_wgtIso_PflowLoose_VarRad[i],
+            ],
+        )
     end
 
-    return v_l_passIso
+    return v_l_passIso, v_l_wgtIso
 end
 
 const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR]
