@@ -71,24 +71,48 @@ end
 
 function sfsys(tag)
     dirs = root_dirs(tag; variation = "sf")
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.3)
-    println("$tag starting:")
+
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     isdata = (lowercase(tag) == "data")
-    mapreduce((.+), dirs) do d
+    files = mapreduce(vcat, dirs) do d
         sfsys_dir(d; prog, isdata)
     end
+    sort!(files; by=x->filesize(x[2]), rev=true)
+    println("$tag starting:")
+    # ex = ThreadedEx(; basesize = 1)
+    ex = WorkStealingEx(; basesize=length(files) ÷ 4)
+    @floop ex for (sumWeight, F) in files
+        x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
+        if prog !== nothing 
+            next!(prog)
+        end
+        @reduce(s .+= x)
+    end
+    return s
 end
 
 function sfsys_dir(dir_path; prog = nothing, isdata=false)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
-    sumWeight = sumsumWeight(files)
-    return mapreduce((.+), files) do F
-        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
-        if prog !== nothing 
-            next!(prog)
-        end
-        r
-    end
+    sumsum = sumsumWeight(files)
+    return (sumsum .=> files)
+    # sem = Base.Semaphore(3)
+    # @floop for F in files
+    #     # Base.acquire(sem)
+    #     x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
+    #     # Base.release(sem)
+    #     if prog !== nothing 
+    #         next!(prog)
+    #     end
+    #     @reduce(s .+= x)
+    # end
+    # return s
+    # return mapreduce((.+), files) do F
+    #     r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
+    #     if prog !== nothing 
+    #         next!(prog)
+    #     end
+    #     r
+    # end
 end
 
 function arrow_making(tag)

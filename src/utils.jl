@@ -67,59 +67,6 @@ const _MISOS = (
     :Loose_FixedRad,
 )
 
-#FIXME thanks HEP, replace this with a @generated
-function get_Isos(evt)
-    v_l_passIso = Vector{Bool}[]
-    v_l_wgtIso = Vector{Float64}[]
-
-    (;
-     v_e_passIso_Tight_VarRad,
-     v_e_passIso_Loose_VarRad,
-     v_m_passIso_PflowTight_VarRad,
-     v_m_passIso_PflowLoose_VarRad,
-
-     v_e_wgtIso_Tight_VarRad_Tight,
-     v_e_wgtIso_Loose_VarRad_LooseBLayer,
-     v_m_wgtIso_PflowTight_VarRad,
-     v_m_wgtIso_PflowLoose_VarRad,
-    ) = evt
-
-    @inbounds for i in eachindex(v_e_passIso_Loose_VarRad)
-        push!(
-            v_l_passIso,
-            Bool[
-                v_e_passIso_Tight_VarRad[i],
-                v_e_passIso_Loose_VarRad[i],
-            ],
-        )
-        push!(
-            v_l_wgtIso,
-            Float64[
-                v_e_wgtIso_Tight_VarRad_Tight[i],
-                v_e_wgtIso_Loose_VarRad_LooseBLayer[i],
-            ],
-        )
-    end
-    @inbounds for i in eachindex(v_m_passIso_PflowTight_VarRad)
-        push!(
-            v_l_passIso,
-            Bool[
-                 v_m_passIso_PflowTight_VarRad[i],
-                 v_m_passIso_PflowLoose_VarRad[i],
-            ],
-        )
-        push!(
-            v_l_wgtIso,
-            Float64[
-                v_m_wgtIso_PflowTight_VarRad[i],
-                v_m_wgtIso_PflowLoose_VarRad[i],
-            ],
-        )
-    end
-
-    return v_l_passIso, v_l_wgtIso
-end
-
 const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR]
 const m_wgt_list = [:MUON_EFF_RECO_STAT_LOWPT, :MUON_EFF_RECO_SYS, :MUON_EFF_RECO_SYS_LOWPT, :MUON_EFF_RECO_STAT]
 const btag_wgt_list = [
