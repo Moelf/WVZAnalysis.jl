@@ -14,20 +14,25 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         arrow_init(), NonThreadedEx()
     else
         kinematic_hist_init(), ThreadedEx()
-        # dictionary(_dict), ThreadedEx()
     end
 
     @floop executor for evt in mytree
+    # for evt in mytree
         ### initial_cut
-        v_l_pid = Vcat(evt.v_e_pid, evt.v_m_pid)
+        v_m_eta_orig, v_e_eta_orig = evt.v_m_eta, evt.v_e_eta
+        e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_eta_orig]
+        m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
+
+        v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
+
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
 
         (; v_e_pt, v_e_eta, v_e_phi, v_e_m,
          v_m_pt, v_m_eta, v_m_phi, v_m_m) = evt
 
-        v_e_tlv = LorentzVectorCyl.(v_e_pt, v_e_eta, v_e_phi, v_e_m)
-        v_m_tlv = LorentzVectorCyl.(v_m_pt, v_m_eta, v_m_phi, v_m_m)
+        v_e_tlv = @views LorentzVectorCyl.(v_e_pt[e_etamask], v_e_eta[e_etamask], v_e_phi[e_etamask], v_e_m[e_etamask])
+        v_m_tlv = @views LorentzVectorCyl.(v_m_pt[m_etamask], v_m_eta[m_etamask], v_m_phi[m_etamask], v_m_m[m_etamask])
 
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
         v_l_eta = Vcat(v_e_eta,v_m_eta)
@@ -53,22 +58,33 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         !(evt.passTrig) && continue
        
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
-        v_l_passIso, v_l_wgtIso = get_Isos(evt)
 
         wgt = evt.weight / sumWeight * wgt_factor
-        v_l_medium = Vcat(evt.v_e_LHMedium, evt.v_m_medium) #quality
-        v_l_wgtLoose = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose) # quality wgt
-        v_l_wgtMedium = Vcat(evt.v_e_wgtMedium, evt.v_m_wgtMedium) #quality wgt
+        v_l_medium =    @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
+        v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
+        v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) #quality wgt
 
         ############## use PLIV for W lepton ISO #################
-        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight, evt.v_m_passIso_PLImprovedTight)
+        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
         failed_PLTight = any(==(false), v_l_PLTight[W_pair])
         failed_PLTight && continue
-        v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium, evt.v_m_wgtIso_PLImprovedTight)
-        wgt *= reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+        v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+        wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
 
-        wgt *= reduce(*, evt.v_e_wgtReco)
-        wgt *= reduce(*, evt.v_m_wgtTTVA)
+        wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
+        wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
+
+
+        (;
+         v_e_passIso_Loose_VarRad,
+         v_m_passIso_PflowLoose_VarRad,
+
+         v_e_wgtIso_Loose_VarRad_LooseBLayer,
+         v_m_wgtIso_PflowLoose_VarRad,
+        ) = evt
+
+        v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
+        v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
 
         pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
                                                  Z_pair,

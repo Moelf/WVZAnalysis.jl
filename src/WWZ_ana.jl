@@ -56,8 +56,8 @@ function WWZ_Cut(
     WWZ_wgt = wgt
     for i in 1:2
         ### for Z leptons isolation: Loose(e) and Loose(mu)
-        ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]][2] ) && return FAIL
-        ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]][2] ) && return FAIL
+        ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]] ) && return FAIL
+        ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]] ) && return FAIL
 
         ### for W leptons, require medium quality and PLIV tight
         ( !v_l_medium[W_pair[i]] ) && return FAIL
@@ -65,7 +65,7 @@ function WWZ_Cut(
         # quality weights
         WWZ_wgt *= v_l_wgtLoose[Z_pair[i]] * v_l_wgtMedium[W_pair[i]]
         # iso weights
-        WWZ_wgt *= v_l_wgtIso[Z_pair[i]][2]
+        WWZ_wgt *= v_l_wgtIso[Z_pair[i]]
     end
 
     return true, WWZ_wgt, chi2, W_pair
