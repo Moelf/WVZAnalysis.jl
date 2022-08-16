@@ -143,12 +143,16 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         HT = sum(pt, v_j_tlv; init=0.f0)/1000 # hadronic HT
         leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
+        total_events = 1
+
+        Z_rapidity = 0.5 * log((energy(Z_tlv)+pz(Z_tlv))/(energy(Z_tlv)-pz(Z_tlv)))
 
         other_mass /= 1000
         mass_4l /= 1000
         if !arrow_making
             @fill_dict! dict wgt atomic_push! SR, pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
-            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT
+            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT,
+            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events
         else
             Z_phi = phi(sum(@view v_l_tlv[Z_pair]))
             Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair]) ./ 1000
@@ -203,6 +207,5 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
     end
 
     return dict
->>>>>>> temporary
 end
 
