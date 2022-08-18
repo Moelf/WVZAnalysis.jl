@@ -1,11 +1,10 @@
 """
 extract dsid from a file name, used to match with systematic files
 """
-const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.2")
+const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 
 function extrac_dsid(str)
     return match(r"(\d{6})", str).captures[1] #dsid
-    # match(r"e\d{4}_.*r\d+", str).match #amitag
 end
 
 """
@@ -25,7 +24,7 @@ function root_dirs(tag::AbstractString; variation = "sf")
         dsids = unique(map(extrac_dsid, folders))
         # folder_name needs to contain any one element of the dsids
         sel2 = filter(readdir(MINITREE_DIR[])) do folder_name
-            any(occursin(folder_name), dsids) && contains(folder_name, "v2.2"*variation)
+            any(occursin(folder_name), dsids) && contains(folder_name, variation)
         end
         return joinpath.(MINITREE_DIR[], sel2)
     end
@@ -50,23 +49,23 @@ end
 
 function shapesys(tag, treename)
     dirs = root_dirs(tag; variation = "shape")
-    println("$tag-$treename starting:")
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.3)
-    mapreduce((.+), dirs) do d
-        shapesys_dir(d, treename; prog)
-    end
-end
 
-function shapesys_dir(dir_path, treename; prog = nothing)
-    files = filter!(endswith(".root"), readdir(dir_path; join = true))
-    sumWeight = sumsumWeight(files)
-    return mapreduce((.+), files) do F
-        r = WVZAnalysis.main_looper(F; treename, sumWeight)
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
+    isdata = (lowercase(tag) == "data")
+    files = mapreduce(vcat, dirs) do d
+        sfsys_dir(d; prog, isdata)
+    end
+    sort!(files; by=x->filesize(x[2]), rev=true)
+    println("$tag starting:")
+    ex = WorkStealingEx(; basesize=length(files) ÷ 4)
+    @floop ex for (sumWeight, F) in files
+        x = WVZAnalysis.main_looper(F; treename, sfsyst=false, sumWeight, isdata)
         if prog !== nothing 
             next!(prog)
         end
-        r
+        @reduce(s .+= x)
     end
+    return s
 end
 
 function sfsys(tag)
@@ -95,24 +94,6 @@ function sfsys_dir(dir_path; prog = nothing, isdata=false)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumsum = sumsumWeight(files)
     return (sumsum .=> files)
-    # sem = Base.Semaphore(3)
-    # @floop for F in files
-    #     # Base.acquire(sem)
-    #     x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
-    #     # Base.release(sem)
-    #     if prog !== nothing 
-    #         next!(prog)
-    #     end
-    #     @reduce(s .+= x)
-    # end
-    # return s
-    # return mapreduce((.+), files) do F
-    #     r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
-    #     if prog !== nothing 
-    #         next!(prog)
-    #     end
-    #     r
-    # end
 end
 
 function arrow_making(tag)
