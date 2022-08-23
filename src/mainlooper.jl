@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false, controlregion=none)
+function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false)
     _dict = Dict{Symbol, Hist1D{Float64, Tuple{UnitRange{Int64}}}}()
     for n in (:NN_inZ, :NN_noZ, :NN_DF)
         _dict[Symbol(n, :__NOMINAL)] = Hist1D(Float64; bins=1:2)
@@ -19,8 +19,8 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
     @floop executor for evt in mytree
     # for evt in mytree
         ### initial_cut
-        v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
-        e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
+        v_m_eta_orig, v_e_eta_orig = evt.v_m_eta, evt.v_e_eta
+        e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_eta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
 
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
@@ -35,16 +35,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_m_tlv = @views LorentzVectorCyl.(v_m_pt[m_etamask], v_m_eta[m_etamask], v_m_phi[m_etamask], v_m_m[m_etamask])
 
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
-        v_l_eta = Vcat(v_e_eta,v_m_eta)
-        v_l_phi = Vcat(v_e_phi,v_m_phi)
-        v_l_pt = Vcat(v_e_pt,v_m_pt)
-        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
 
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
-
-        wgt = evt.weight / sumWeight * wgt_factor
 
         abs(best_Z_mass - Z_m) > 20e3 && continue
 
@@ -53,7 +47,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         ### end of initial_cut
 
         !(evt.passTrig) && continue
-       
+
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
 
         wgt = evt.weight / sumWeight * wgt_factor
@@ -62,23 +56,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) #quality wgt
 
         ############## use PLIV for W lepton ISO #################
-        if controlregion == :Zjets
-            v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-            failed_PLTight = any(==(true), v_l_PLTight[W_pair])
-            failed_PLTight && continue
-            v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
-            failed_Loose = all(==(true), v_l_Loose[W_pair])
-            failed_Loose && continue
-        else
-            v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-            failed_PLTight = any(==(false), v_l_PLTight[W_pair])
-            failed_PLTight && continue
-            v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-            wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
-        end
+        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
+        failed_PLTight = any(==(false), v_l_PLTight[W_pair])
+        failed_PLTight && continue
+        v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+        wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
 
         wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
         wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
+
 
         (;
          v_e_passIso_Loose_VarRad,
@@ -109,11 +95,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         # in `b_veto == true` means we've passed the criterial,
         # which means we didn't see a b-jet
         b_wgt, b_veto = Bjet_Cut(evt)
-        if controlregion == :ttZ
-            b_veto && continue
-        else
-            !b_veto && continue
-        end
+        !b_veto && continue
         wgt *= b_wgt
 
 
@@ -128,9 +110,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             1
         end
 
-        if controlregion == :ZZ
-            SR != 0 && continue
-        end
 
         # force wgt to 1 for data
         if isdata
@@ -148,29 +127,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         (; MET, METSig, METPhi) = evt
         MET /= 1000
 
-        Z_eta = eta(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
-        Z_phi = phi(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
-        Z_pt = pt(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])/1000
-
         HT = sum(pt, v_j_tlv; init=0.f0)/1000 # hadronic HT
         leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
-        total_events = 1
-  
-        Z_tlv = v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]]
-        Z_rapidity = 0.5 * log((energy(Z_tlv)+pz(Z_tlv))/(energy(Z_tlv)-pz(Z_tlv)))
 
         other_mass /= 1000
         mass_4l /= 1000
-
-        if controlregion == :ttZ
-            MET < 20 && continue
-            (other_mass > 80 && other_mass < 100) && continue
-        end
         if !arrow_making
-            @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
-            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
-            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events
+            @fill_dict! dict wgt atomic_push! SR, pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
+            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT
         else
             Z_phi = phi(sum(@view v_l_tlv[Z_pair]))
             Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair]) ./ 1000
@@ -226,4 +191,3 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
 
     return dict
 end
-

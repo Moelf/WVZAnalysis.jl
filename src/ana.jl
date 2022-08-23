@@ -44,7 +44,7 @@ function main_looper(files::Vector{<:AbstractString}; kws...)
     mapreduce(x->main_looper(x; kws...), (.+), files)
 end
 
-function main_looper(r::ROOTFile; sumWeight, treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0, arrow_making=false, isdata, controlregion=none)
+function main_looper(r::ROOTFile; sumWeight, treename = "tree_NOMINAL", sfsyst=false, wgt_factor = 1.0, arrow_making=false, isdata)
     mytree = LazyTree(r, treename)
-    return main_looper(mytree, sumWeight; sfsyst, wgt_factor, arrow_making, isdata, controlregion)
+    return main_looper(mytree, sumWeight; sfsyst, wgt_factor, arrow_making, isdata)
 end

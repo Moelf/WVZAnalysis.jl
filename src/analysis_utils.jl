@@ -68,7 +68,7 @@ function shapesys(tag, treename)
     return s
 end
 
-function sfsys(tag; controlregion = nothing)
+function sfsys(tag)
     dirs = root_dirs(tag; variation = "sf")
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
@@ -81,7 +81,7 @@ function sfsys(tag; controlregion = nothing)
     # ex = ThreadedEx(; basesize = 1)
     ex = WorkStealingEx(; basesize=length(files) ÷ 4)
     @floop ex for (sumWeight, F) in files
-        x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata, controlregion)
+        x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata)
         if prog !== nothing 
             next!(prog)
         end
