@@ -53,7 +53,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         ### end of initial_cut
 
         !(evt.passTrig) && continue
-       
+
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
 
         wgt = evt.weight / sumWeight * wgt_factor
@@ -226,4 +226,3 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
 
     return dict
 end
-
