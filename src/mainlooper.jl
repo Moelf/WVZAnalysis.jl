@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false)
+function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false, controlregion=none)
     _dict = Dict{Symbol, Hist1D{Float64, Tuple{UnitRange{Int64}}}}()
     for n in (:NN_inZ, :NN_noZ, :NN_DF)
         _dict[Symbol(n, :__NOMINAL)] = Hist1D(Float64; bins=1:2)
@@ -19,8 +19,8 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
     @floop executor for evt in mytree
     # for evt in mytree
         ### initial_cut
-        v_m_eta_orig, v_e_eta_orig = evt.v_m_eta, evt.v_e_eta
-        e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_eta_orig]
+        v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
+        e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
 
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
@@ -46,15 +46,12 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
 
         wgt = evt.weight / sumWeight * wgt_factor
 
-        20e3 > abs(best_Z_mass - Z_m) && continue
-	    40e3 < abs(best_Z_mass - Z_m) && continue
+        abs(best_Z_mass - Z_m) > 20e3 && continue
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
         ### end of initial_cut
 
-        20e3 > abs(best_Z_mass - Z_m) && continue
-        40e3 < abs(best_Z_mass - Z_m) && continue
         !(evt.passTrig) && continue
        
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
@@ -65,15 +62,23 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) #quality wgt
 
         ############## use PLIV for W lepton ISO #################
-        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        failed_PLTight = any(==(false), v_l_PLTight[W_pair])
-        failed_PLTight && continue
-        v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-        wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+        if controlregion == :Zjets
+            v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
+            failed_PLTight = any(==(true), v_l_PLTight[W_pair])
+            failed_PLTight && continue
+            v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
+            failed_Loose = all(==(true), v_l_Loose[W_pair])
+            failed_Loose && continue
+        else
+            v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
+            failed_PLTight = any(==(false), v_l_PLTight[W_pair])
+            failed_PLTight && continue
+            v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+            wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+        end
 
         wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
         wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
-
 
         (;
          v_e_passIso_Loose_VarRad,
@@ -104,7 +109,11 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         # in `b_veto == true` means we've passed the criterial,
         # which means we didn't see a b-jet
         b_wgt, b_veto = Bjet_Cut(evt)
-        !b_veto && continue
+        if controlregion == :ttZ
+            b_veto && continue
+        else
+            !b_veto && continue
+        end
         wgt *= b_wgt
 
 
@@ -119,6 +128,9 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             1
         end
 
+        if controlregion == :ZZ
+            SR != 0 && continue
+        end
 
         # force wgt to 1 for data
         if isdata
@@ -144,14 +156,20 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         leptonic_HT = sum(pt(v_l_tlv[v_l_order[x]]) for x in 1:4)/1000
         total_HT    = HT + leptonic_HT
         total_events = 1
-
+  
+        Z_tlv = v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]]
         Z_rapidity = 0.5 * log((energy(Z_tlv)+pz(Z_tlv))/(energy(Z_tlv)-pz(Z_tlv)))
 
         other_mass /= 1000
         mass_4l /= 1000
+
+        if controlregion == :ttZ
+            MET < 20 && continue
+            (other_mass > 80 && other_mass < 100) && continue
+        end
         if !arrow_making
-            @fill_dict! dict wgt atomic_push! SR, pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
-            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, MET, HT, METSig, total_HT, leptonic_HT,
+            @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
+            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
             Z_eta, Z_phi, Z_pt, Z_rapidity, total_events
         else
             Z_phi = phi(sum(@view v_l_tlv[Z_pair]))

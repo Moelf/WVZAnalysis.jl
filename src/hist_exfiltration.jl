@@ -11,7 +11,7 @@ function kinematic_hist_init()
                            :mass_4l => Hist1D(Float64; bins=0:30:1000, overflow=true),
                            :Zcand_mass => Hist1D(Float64; bins=50:2:150, overflow=true),
                            :other_mass => Hist1D(Float64; bins=0:4:500, overflow=true),
-                           :MET => Hist1D(Float64; bins=bins=0:8:200, overflow=true),
+                           :MET => Hist1D(Float64; bins=bins=0:1:1000, overflow=true),
                            :METSig => Hist1D(Float64; bins=0:0.2:20, overflow=true),
                            :HT => Hist1D(Float64; bins=0:10:800, overflow=true),
                            :leptonic_HT => Hist1D(Float64; bins=0:10:800, overflow=true),
@@ -19,7 +19,9 @@ function kinematic_hist_init()
                            :SR => Hist1D(Float64; bins=0:3),
                            :Z_eta => Hist1D(Float64; bins=-4:0.4:4, overflow=true),
                            :Z_phi => Hist1D(Float64; bins=-4:0.4:4, overflow=true),
-                           :Z_pt => Hist1D(Float64; bins=0:8:200, overflow=true),
+                           :Z_pt => Hist1D(Float64; bins=0:8:600, overflow=true),
+                           :Z_rapidity => Hist1D(Float64; bins=-4:0.4:4, overflow=true),
+                           :total_events => Hist1D(Float64; bins=0:1, overflow=true),
                           ])
 
 end
