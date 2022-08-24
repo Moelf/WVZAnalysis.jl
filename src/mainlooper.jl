@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false, controlregion=none)
+function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=false, isdata=false, controlregion=nothing)
     _dict = Dict{Symbol, Hist1D{Float64, Tuple{UnitRange{Int64}}}}()
     for n in (:NN_inZ, :NN_noZ, :NN_DF)
         _dict[Symbol(n, :__NOMINAL)] = Hist1D(Float64; bins=1:2)
