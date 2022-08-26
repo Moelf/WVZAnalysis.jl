@@ -63,13 +63,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
 
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        failed_PLTight = any(==(true), v_l_PLTight[W_pair])
-        failed_PLTight && continue
         if controlregion == :Zjets
+            failed_PLTight = any(==(true), v_l_PLTight[W_pair])
+            failed_PLTight && continue
             v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
             failed_Loose = all(==(true), v_l_Loose[W_pair])
             failed_Loose && continue
         else
+            failed_PLTight = any(==(false), v_l_PLTight[W_pair])
+            failed_PLTight && continue
             v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
             wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
         end
