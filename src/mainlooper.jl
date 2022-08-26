@@ -16,6 +16,8 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         kinematic_hist_init(), ThreadedEx()
     end
 
+    model, rescaling_parameters = init_ONNX()
+
     @floop executor for evt in mytree
     # for evt in mytree
         ### initial_cut
@@ -226,7 +228,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
                 "sr_SF_noZ"=>sr_SF_noZ,
                 "sr_DF"=>sr_DF)
 
-        NN_score = NN_calc(valuesdict)
+        NN_score = NN_calc(model, rescaling_parameters, valuesdict)
         if !arrow_making
             @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 

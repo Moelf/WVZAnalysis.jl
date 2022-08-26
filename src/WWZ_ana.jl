@@ -68,19 +68,3 @@ function WWZ_Cut(
     return true, WWZ_wgt, chi2, W_pair
 end
 
-function NN_calc(valuesdict)
-    rescaling_parameters["min"]["sr_SF_inZ"]=0
-    rescaling_parameters["min"]["sr_SF_noZ"]=0
-    rescaling_parameters["min"]["sr_DF"]=0
-    rescaling_parameters["scale"]["sr_SF_inZ"]=1
-    rescaling_parameters["scale"]["sr_SF_noZ"]=1
-    rescaling_parameters["scale"]["sr_DF"]=1
-    for i in keys(valuesdict)
-        valuesdict[i]=valuesdict[i]*rescaling_parameters["scale"][i]+rescaling_parameters["min"][i]
-    end
-    inputvector=zeros(Float64,30,1)
-    for i in 1:30
-        inputvector[i]=valuesdict[NN_order[i]]
-    end
-    return Ghost.play!(model, inputvector)[1]
-end
