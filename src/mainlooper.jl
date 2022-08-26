@@ -197,38 +197,14 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             sr_DF = 1
         end
 
-        valuesdict = Dict(  "HT"=>HT,
-                "MET"=>MET,
-                "METPhi"=>METPhi,
-                "METSig"=>METSig,
-                "Njet"=>Njet,
-                "Wlep1_dphi"=>Wlep1_dphi,
-                "Wlep1_eta"=>Wlep1_eta,
-                "Wlep1_phi"=>Wlep1_phi,
-                "Wlep1_pt"=>Wlep1_pt,
-                "Wlep2_dphi"=>Wlep2_dphi,
-                "Wlep2_eta"=>Wlep2_eta,
-                "Wlep2_phi"=>Wlep2_phi,
-                "Wlep2_pt"=>Wlep2_pt,
-                "Zcand_mass"=>Zcand_mass,
-                "Zlep1_dphi"=>Zlep1_dphi,
-                "Zlep1_eta"=>Zlep1_eta,
-                "Zlep1_phi"=>Zlep1_phi,
-                "Zlep1_pt"=>Zlep1_pt,
-                "Zlep2_dphi"=>Zlep2_dphi,
-                "Zlep2_eta"=>Zlep2_eta,
-                "Zlep2_phi"=>Zlep2_phi,
-                "Zlep2_pt"=>Zlep2_pt,
-                "leptonic_HT"=>leptonic_HT,
-                "mass_4l"=>mass_4l,
-                "other_mass"=>other_mass,
-                "pt_4l"=>pt_4l,
-                "total_HT"=>total_HT,
-                "sr_SF_inZ"=>sr_SF_inZ,
-                "sr_SF_noZ"=>sr_SF_noZ,
-                "sr_DF"=>sr_DF)
+        NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                    Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                    Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                    Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                    leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                    sr_SF_inZ, sr_SF_noZ, sr_DF]
 
-        NN_score = NN_calc(model, rescaling_parameters, valuesdict)
+        NN_score = NN_calc(model, rescaling_parameters, NN_input)
         if !arrow_making
             @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
