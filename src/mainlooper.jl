@@ -63,13 +63,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
 
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        failed_PLTight = any(==(true), v_l_PLTight[W_pair])
-        failed_PLTight && continue
         if controlregion == :Zjets
+            failed_PLTight = any(==(true), v_l_PLTight[W_pair])
+            failed_PLTight && continue
             v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
             failed_Loose = all(==(true), v_l_Loose[W_pair])
             failed_Loose && continue
         else
+            failed_PLTight = any(==(false), v_l_PLTight[W_pair])
+            failed_PLTight && continue
             v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
             wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
         end
@@ -160,32 +162,76 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         other_mass /= 1000
         mass_4l /= 1000
 
+        Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair]) ./ 1000
+        Zlep1_eta, Zlep2_eta = eta.(@view v_l_tlv[Z_pair])
+        Zlep1_phi, Zlep2_phi = phi.(@view v_l_tlv[Z_pair])
+        Zlep1_pid, Zlep2_pid = @view v_l_pid[Z_pair]
+        Zlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[1]]))
+        Zlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[2]]))
+
+        Wlep1_pt, Wlep2_pt = pt.(@view v_l_tlv[W_pair]) ./ 1000
+        Wlep1_eta, Wlep2_eta = eta.(@view v_l_tlv[W_pair])
+        Wlep1_phi, Wlep2_phi = phi.(@view v_l_tlv[W_pair])
+        Wlep1_pid, Wlep2_pid = @view v_l_pid[W_pair]
+        Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[1]]))
+        Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
+
+        pt_4l = pt(sum(v_l_tlv)) / 100
         if controlregion == :ttZ
             MET < 20 && continue
             (other_mass > 80 && other_mass < 100) && continue
         end
+        if SR == 0
+            sr_SF_inZ = 1
+            sr_SF_noZ = 0
+            sr_DF = 0
+        elseif SR == 1
+            sr_SF_inZ = 0
+            sr_SF_noZ = 1
+            sr_DF = 0
+        else
+            sr_SF_inZ = 0
+            sr_SF_noZ = 0
+            sr_DF = 1
+        end
+
+        valuesdict = Dict(  "HT"=>HT,
+                "MET"=>MET,
+                "METPhi"=>METPhi,
+                "METSig"=>METSig,
+                "Njet"=>Njet,
+                "Wlep1_dphi"=>Wlep1_dphi,
+                "Wlep1_eta"=>Wlep1_eta,
+                "Wlep1_phi"=>Wlep1_phi,
+                "Wlep1_pt"=>Wlep1_pt,
+                "Wlep2_dphi"=>Wlep2_dphi,
+                "Wlep2_eta"=>Wlep2_eta,
+                "Wlep2_phi"=>Wlep2_phi,
+                "Wlep2_pt"=>Wlep2_pt,
+                "Zcand_mass"=>Zcand_mass,
+                "Zlep1_dphi"=>Zlep1_dphi,
+                "Zlep1_eta"=>Zlep1_eta,
+                "Zlep1_phi"=>Zlep1_phi,
+                "Zlep1_pt"=>Zlep1_pt,
+                "Zlep2_dphi"=>Zlep2_dphi,
+                "Zlep2_eta"=>Zlep2_eta,
+                "Zlep2_phi"=>Zlep2_phi,
+                "Zlep2_pt"=>Zlep2_pt,
+                "leptonic_HT"=>leptonic_HT,
+                "mass_4l"=>mass_4l,
+                "other_mass"=>other_mass,
+                "pt_4l"=>pt_4l,
+                "total_HT"=>total_HT,
+                "sr_SF_inZ"=>sr_SF_inZ,
+                "sr_SF_noZ"=>sr_SF_noZ,
+                "sr_DF"=>sr_DF)
+
+        NN_score = NN_calc(valuesdict)
         if !arrow_making
             @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
-            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events
+            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events, NN_score
         else
-            Z_phi = phi(sum(@view v_l_tlv[Z_pair]))
-            Zlep1_pt, Zlep2_pt = pt.(@view v_l_tlv[Z_pair]) ./ 1000
-            Zlep1_eta, Zlep2_eta = eta.(@view v_l_tlv[Z_pair])
-            Zlep1_phi, Zlep2_phi = phi.(@view v_l_tlv[Z_pair])
-            Zlep1_pid, Zlep2_pid = @view v_l_pid[Z_pair]
-            Zlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[1]]))
-            Zlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[2]]))
-
-            Wlep1_pt, Wlep2_pt = pt.(@view v_l_tlv[W_pair]) ./ 1000
-            Wlep1_eta, Wlep2_eta = eta.(@view v_l_tlv[W_pair])
-            Wlep1_phi, Wlep2_phi = phi.(@view v_l_tlv[W_pair])
-            Wlep1_pid, Wlep2_pid = @view v_l_pid[W_pair]
-            Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[1]]))
-            Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
-
-            pt_4l = pt(sum(v_l_tlv)) / 1000
-
             jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]]) / 1000
             jet_pt_2 = Njet < 2 ? 0.f0 : pt(v_j_tlv[v_j_order[2]]) / 1000
             jet_pt_3 = Njet < 3 ? 0.f0 : pt(v_j_tlv[v_j_order[3]]) / 1000
