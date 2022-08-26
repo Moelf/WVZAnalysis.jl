@@ -1,12 +1,33 @@
 const Z_m = 91.1876 * 10^3 # in MeV
-model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
-rescaling_parameters = JSON.parsefile("/data/grabanal/NN/rescaling_parameters_NN_08_23.json")
-NN_order = ["HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
-    "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
-    "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
-    "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
-    "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
-    "sr_SF_inZ", "sr_SF_noZ", "sr_DF"]
+
+function init_ONNX()
+    model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
+    rescaling_parameters = JSON.parsefile("/data/grabanal/NN/rescaling_parameters_NN_08_23.json")
+    rescaling_parameters["min"]["sr_SF_inZ"]=0
+    rescaling_parameters["min"]["sr_SF_noZ"]=0
+    rescaling_parameters["min"]["sr_DF"]=0
+    rescaling_parameters["scale"]["sr_SF_inZ"]=1
+    rescaling_parameters["scale"]["sr_SF_noZ"]=1
+    rescaling_parameters["scale"]["sr_DF"]=1
+    return model, rescaling_parameters
+end
+
+function NN_calc(model, rescaling_parameters, valuesdict)
+    NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
+                "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
+                "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
+                "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
+                "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
+                "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
+    for i in keys(valuesdict)
+        valuesdict[i]=valuesdict[i]*rescaling_parameters["scale"][i]+rescaling_parameters["min"][i]
+    end
+    inputvector=zeros(Float32,30,1)
+    @inbounds for i in 1:30
+        inputvector[i]=valuesdict[NN_order[i]]
+    end
+    return Ghost.play!(model, inputvector)[1]
+end
 
 mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
 mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
