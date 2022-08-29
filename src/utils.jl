@@ -16,13 +16,13 @@ function init_ONNX()
                 "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
                 "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
     return model, 
-    [rescaling_parameters[name]["scale"] for name in NN_order],
-    [rescaling_parameters[name]["min"] for name in NN_order]
+    [rescaling_parameters["scale"][name] for name in NN_order],
+    [rescaling_parameters["min"][name] for name in NN_order]
 end
 
 function NN_calc(model, scales, minimums, NN_input)
     for i in eachindex(scales, minimums, NN_input)
-        NN_input[i] = NN_input[i]*scale[i] + minimums[i]
+        NN_input[i] = NN_input[i]*scales[i] + minimums[i]
     end
     return Ghost.play!(model, NN_input)[1]
 end

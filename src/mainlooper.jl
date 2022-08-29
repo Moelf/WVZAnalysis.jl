@@ -172,7 +172,12 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             sr_SF_noZ = 0
             sr_DF = 1
         end
-
+        NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                    Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                    Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                    Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                    leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                    sr_SF_inZ, sr_SF_noZ, sr_DF]
         NN_score = NN_calc(model, scales, minimums, NN_input)
         if controlregion == :ZZ
             SR != 0 && continue
