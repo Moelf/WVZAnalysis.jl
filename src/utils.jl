@@ -9,19 +9,20 @@ function init_ONNX()
     rescaling_parameters["scale"]["sr_SF_inZ"]=1
     rescaling_parameters["scale"]["sr_SF_noZ"]=1
     rescaling_parameters["scale"]["sr_DF"]=1
-    return model, rescaling_parameters
-end
-
-function NN_calc(model, rescaling_parameters, NN_input)
     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
                 "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
                 "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
                 "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
-    for i in eachindex(NN_input)
-        para_name = NN_order[i]
-        NN_input[i] = NN_input[i]*rescaling_parameters["scale"][para_name]+rescaling_parameters["min"][para_name]
+    return model, 
+    [rescaling_parameters[name]["scale"] for name in NN_order],
+    [rescaling_parameters[name]["min"] for name in NN_order]
+end
+
+function NN_calc(model, scales, minimums, NN_input)
+    for i in eachindex(scales, minimums, NN_input)
+        NN_input[i] = NN_input[i]*scale[i] + minimums[i]
     end
     return Ghost.play!(model, NN_input)[1]
 end

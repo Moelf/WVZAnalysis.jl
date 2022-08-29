@@ -15,7 +15,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         kinematic_hist_init(), ThreadedEx()
     end
 
-    model, rescaling_parameters = init_ONNX()
+    model, scales, minimums = init_ONNX()
 
     @floop executor for evt in mytree
     # for evt in mytree
@@ -91,7 +91,11 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         # in `b_veto == true` means we've passed the criterial,
         # which means we didn't see a b-jet
         b_wgt, b_veto = Bjet_Cut(evt)
+        (; MET, METSig, METPhi) = evt
+        MET /= 1000
         if controlregion == :ttZ
+            MET < 20 && continue
+            (other_mass > 80e3 && other_mass < 100e3) && continue
             b_veto && continue
         else
             !b_veto && continue
@@ -106,9 +110,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         else #SF_noZ
             1
         end
-        if controlregion == :ZZ
-            SR != 0 && continue
-        end
         # force wgt to 1 for data
         if isdata
             wgt = 1.0
@@ -122,8 +123,6 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_j_order = sortperm(v_j_tlv; by=pt, rev=true)
         Njet = length(v_j_tlv)
         Zcand_mass = best_Z_mass / 1000
-        (; MET, METSig, METPhi) = evt
-        MET /= 1000
         Z_eta = eta(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
         Z_phi = phi(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
         Z_pt = pt(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])/1000
@@ -148,11 +147,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         Wlep1_pid, Wlep2_pid = @view v_l_pid[W_pair]
         Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[1]]))
         Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
-        pt_4l = pt(sum(v_l_tlv)) / 100
-        if controlregion == :ttZ
-            MET < 20 && continue
-            (other_mass > 80 && other_mass < 100) && continue
-        end
+        pt_4l = pt(sum(v_l_tlv)) / 1000
         if SR == 0
             sr_SF_inZ = 1
             sr_SF_noZ = 0
@@ -167,45 +162,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             sr_DF = 1
         end
 
+        NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                    Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                    Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                    Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                    leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                    sr_SF_inZ, sr_SF_noZ, sr_DF]
+        NN_score = NN_calc(model, scales, minimums, NN_input)
         if controlregion == :ZZ
             SR != 0 && continue
-            valuesdict = Dict(  "HT"=>HT,
-                "MET"=>MET,
-                "METPhi"=>METPhi,
-                "METSig"=>METSig,
-                "Njet"=>Njet,
-                "Wlep1_dphi"=>Wlep1_dphi,
-                "Wlep1_eta"=>Wlep1_eta,
-                "Wlep1_phi"=>Wlep1_phi,
-                "Wlep1_pt"=>Wlep1_pt,
-                "Wlep2_dphi"=>Wlep2_dphi,
-                "Wlep2_eta"=>Wlep2_eta,
-               "Wlep2_phi"=>Wlep2_phi,
-                "Wlep2_pt"=>Wlep2_pt,
-                "Zcand_mass"=>Zcand_mass,
-                "Zlep1_dphi"=>Zlep1_dphi,
-                "Zlep1_eta"=>Zlep1_eta,
-                "Zlep1_phi"=>Zlep1_phi,
-                "Zlep1_pt"=>Zlep1_pt,
-                "Zlep2_dphi"=>Zlep2_dphi,
-                "Zlep2_eta"=>Zlep2_eta,
-                "Zlep2_phi"=>Zlep2_phi,
-                "Zlep2_pt"=>Zlep2_pt,
-                "leptonic_HT"=>leptonic_HT,
-                "mass_4l"=>mass_4l,
-                "other_mass"=>other_mass,
-                "pt_4l"=>pt_4l,
-                "total_HT"=>total_HT,
-                "sr_SF_inZ"=>sr_SF_inZ,
-                "sr_SF_noZ"=>sr_SF_noZ,
-                "sr_DF"=>sr_DF)
-            NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
-                        Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
-                        Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
-                        Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
-                        leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
-                        sr_SF_inZ, sr_SF_noZ, sr_DF]
-            NN_score = NN_calc(model, rescaling_parameters, NN_input)
             NN_score > 0.1 && continue
         end
         if !arrow_making
