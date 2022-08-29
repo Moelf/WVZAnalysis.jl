@@ -1,5 +1,32 @@
 const Z_m = 91.1876 * 10^3 # in MeV
 
+function init_ONNX()
+    model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
+    rescaling_parameters = JSON.parsefile("/data/grabanal/NN/NN_08_23_rescaling_parameters.json")
+    rescaling_parameters["min"]["sr_SF_inZ"]=0
+    rescaling_parameters["min"]["sr_SF_noZ"]=0
+    rescaling_parameters["min"]["sr_DF"]=0
+    rescaling_parameters["scale"]["sr_SF_inZ"]=1
+    rescaling_parameters["scale"]["sr_SF_noZ"]=1
+    rescaling_parameters["scale"]["sr_DF"]=1
+    NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
+                "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
+                "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
+                "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
+                "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
+                "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
+    return model, 
+    [rescaling_parameters["scale"][name] for name in NN_order],
+    [rescaling_parameters["min"][name] for name in NN_order]
+end
+
+function NN_calc(model, scales, minimums, NN_input)
+    for i in eachindex(scales, minimums, NN_input)
+        NN_input[i] = NN_input[i]*scales[i] + minimums[i]
+    end
+    return Ghost.play!(model, NN_input)[1]
+end
+
 mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
 mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
 mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
