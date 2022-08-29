@@ -23,6 +23,7 @@ function kinematic_hist_init()
                            :Z_rapidity => Hist1D(Float64; bins=-4:0.4:4, overflow=true),
                            :total_events => Hist1D(Float64; bins=0:1, overflow=true),
                            :NN_score => Hist1D(Float64; bins=0:0.01:1, overflow=true),
+                           :Njet => Hist1D(Float64; bins=0:10,overflow=true),
                           ])
 
 end

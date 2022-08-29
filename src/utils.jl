@@ -2,7 +2,7 @@ const Z_m = 91.1876 * 10^3 # in MeV
 
 function init_ONNX()
     model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
-    rescaling_parameters = JSON.parsefile("/data/grabanal/NN/rescaling_parameters_NN_08_23.json")
+    rescaling_parameters = JSON.parsefile("/data/grabanal/NN/NN_08_23_rescaling_parameters.json")
     rescaling_parameters["min"]["sr_SF_inZ"]=0
     rescaling_parameters["min"]["sr_SF_noZ"]=0
     rescaling_parameters["min"]["sr_DF"]=0

@@ -23,7 +23,10 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
+        #e_etamask = [true for η in evt.v_e_eta]
+        #m_etamask = [true for η in evt.v_m_eta]
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
+        
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
         (; v_e_pt, v_e_eta, v_e_phi, v_e_m,
@@ -47,8 +50,15 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         wgt = evt.weight / sumWeight * wgt_factor
         v_l_medium =    @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
-        v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
-        v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) #quality wgt
+        if isdata
+            v_l_wgtLoose = [1 for lepton in v_l_tlv]
+            v_l_wgtMedium = [1 for lepton in v_l_tlv]
+        else
+            v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
+            v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) #quality wgt
+            wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
+            wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
+        end
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
         if controlregion == :Zjets
@@ -60,11 +70,11 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         else
             failed_PLTight = any(==(false), v_l_PLTight[W_pair])
             failed_PLTight && continue
-            v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-            wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+            if !isdata
+                v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+                wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+            end
         end
-        wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
-        wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
         (;
          v_e_passIso_Loose_VarRad,
          v_m_passIso_PflowLoose_VarRad,
@@ -73,6 +83,7 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
         ) = evt
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
         v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
+        
         pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
                                                  Z_pair,
                                                  W_pair,
@@ -167,51 +178,53 @@ function main_looper(mytree, sumWeight; sfsyst, wgt_factor = 1.0, arrow_making=f
             sr_DF = 1
         end
 
+        valuesdict = Dict(  "HT"=>HT,
+                            "MET"=>MET,
+                            "METPhi"=>METPhi,
+                            "METSig"=>METSig,
+                            "Njet"=>Njet,
+                            "Wlep1_dphi"=>Wlep1_dphi,
+                            "Wlep1_eta"=>Wlep1_eta,
+                            "Wlep1_phi"=>Wlep1_phi,
+                            "Wlep1_pt"=>Wlep1_pt,
+                            "Wlep2_dphi"=>Wlep2_dphi,
+                            "Wlep2_eta"=>Wlep2_eta,
+                            "Wlep2_phi"=>Wlep2_phi,
+                            "Wlep2_pt"=>Wlep2_pt,
+                            "Zcand_mass"=>Zcand_mass,
+                            "Zlep1_dphi"=>Zlep1_dphi,
+                            "Zlep1_eta"=>Zlep1_eta,
+                            "Zlep1_phi"=>Zlep1_phi,
+                            "Zlep1_pt"=>Zlep1_pt,
+                            "Zlep2_dphi"=>Zlep2_dphi,
+                            "Zlep2_eta"=>Zlep2_eta,
+                            "Zlep2_phi"=>Zlep2_phi,
+                            "Zlep2_pt"=>Zlep2_pt,
+                            "leptonic_HT"=>leptonic_HT,
+                            "mass_4l"=>mass_4l,
+                            "other_mass"=>other_mass,
+                            "pt_4l"=>pt_4l,
+                            "total_HT"=>total_HT,
+                            "sr_SF_inZ"=>sr_SF_inZ,
+                            "sr_SF_noZ"=>sr_SF_noZ,
+                            "sr_DF"=>sr_DF)
+        NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                    Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                    Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                    Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                    leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                    sr_SF_inZ, sr_SF_noZ, sr_DF]
+        NN_score = NN_calc(model, rescaling_parameters, NN_input)
+        
         if controlregion == :ZZ
             SR != 0 && continue
-            valuesdict = Dict(  "HT"=>HT,
-                "MET"=>MET,
-                "METPhi"=>METPhi,
-                "METSig"=>METSig,
-                "Njet"=>Njet,
-                "Wlep1_dphi"=>Wlep1_dphi,
-                "Wlep1_eta"=>Wlep1_eta,
-                "Wlep1_phi"=>Wlep1_phi,
-                "Wlep1_pt"=>Wlep1_pt,
-                "Wlep2_dphi"=>Wlep2_dphi,
-                "Wlep2_eta"=>Wlep2_eta,
-               "Wlep2_phi"=>Wlep2_phi,
-                "Wlep2_pt"=>Wlep2_pt,
-                "Zcand_mass"=>Zcand_mass,
-                "Zlep1_dphi"=>Zlep1_dphi,
-                "Zlep1_eta"=>Zlep1_eta,
-                "Zlep1_phi"=>Zlep1_phi,
-                "Zlep1_pt"=>Zlep1_pt,
-                "Zlep2_dphi"=>Zlep2_dphi,
-                "Zlep2_eta"=>Zlep2_eta,
-                "Zlep2_phi"=>Zlep2_phi,
-                "Zlep2_pt"=>Zlep2_pt,
-                "leptonic_HT"=>leptonic_HT,
-                "mass_4l"=>mass_4l,
-                "other_mass"=>other_mass,
-                "pt_4l"=>pt_4l,
-                "total_HT"=>total_HT,
-                "sr_SF_inZ"=>sr_SF_inZ,
-                "sr_SF_noZ"=>sr_SF_noZ,
-                "sr_DF"=>sr_DF)
-            NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
-                        Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
-                        Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
-                        Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
-                        leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
-                        sr_SF_inZ, sr_SF_noZ, sr_DF]
-            NN_score = NN_calc(model, rescaling_parameters, NN_input)
             NN_score > 0.1 && continue
         end
+        
         if !arrow_making
             @fill_dict! dict wgt atomic_push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
-            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events, NN_score
+            Z_eta, Z_phi, Z_pt, Z_rapidity, total_events, NN_score, Njet
         else
             jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]]) / 1000
             jet_pt_2 = Njet < 2 ? 0.f0 : pt(v_j_tlv[v_j_order[2]]) / 1000
