@@ -2,13 +2,7 @@ const Z_m = 91.1876 * 10^3 # in MeV
 
 function init_ONNX()
     model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
-    rescaling_parameters = Dict(JSON3.read(read("/data/grabanal/NN/NN_08_23_rescaling_parameters.json")))
-    rescaling_parameters[:min][:sr_SF_inZ]=0
-    rescaling_parameters[:min][:sr_SF_noZ]=0
-    rescaling_parameters[:min][:sr_DF]=0
-    rescaling_parameters[:scale][:sr_SF_inZ]=1
-    rescaling_parameters[:scale][:sr_SF_noZ]=1
-    rescaling_parameters[:scale][:sr_DF]=1
+    rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
@@ -20,20 +14,11 @@ function init_ONNX()
     [rescaling_parameters["min"][name] for name in NN_order]
 end
 
-function NN_calc(model, scales, minimums, NN_input)
-    for i in eachindex(scales, minimums, NN_input)
+@inline function NN_calc(model, scales, minimums, NN_input)
+    @simd for i in eachindex(scales, minimums, NN_input)
         NN_input[i] = NN_input[i]*scales[i] + minimums[i]
     end
     return Ghost.play!(model, NN_input)[1]
-end
-
-mt2(lv::LorentzVector) = lv.t^2 - lv.z^2
-mt(lv::LorentzVector) = mt2(lv)<0 ? -sqrt(-mt2(lv)) : sqrt(mt2(lv))
-mag(lv::LorentzVector) = sqrt(lv.x^2 + lv.y^2 + lv.z^2)
-@inline function CosTheta(lv::LorentzVector)
-    fZ = lv.z
-    ptot = mag(lv)
-    return ifelse(ptot == 0.0, 1.0, fZ / ptot)
 end
 
 
