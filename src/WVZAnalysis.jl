@@ -1,6 +1,6 @@
 module WVZAnalysis
 
-using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, Dictionaries, Mixers, LazyArrays, JSON3, ProgressMeter
+using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, Dictionaries, LazyArrays, JSON3, ProgressMeter
 using ThreadsX, FoldsThreads, FLoops,ONNX, ONNX.Ghost
 
 include("./utils.jl")
