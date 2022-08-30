@@ -201,6 +201,8 @@ const SHAPE_TREE_NAMES = [
                           "tree_MET_SoftTrk_ResoPerp",
                           "tree_MET_SoftTrk_Scale__1down",
                           "tree_MET_SoftTrk_Scale__1up",
+                          "tree_MUON_CB__1down",
+                          "tree_MUON_CB__1up",
                           "tree_MUON_ID__1down",
                           "tree_MUON_ID__1up",
                           "tree_MUON_MS__1down",
