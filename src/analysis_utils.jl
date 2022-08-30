@@ -13,7 +13,7 @@ end
 Reutrn a list of dir paths associated with a `tag` and variation.
 """
 function root_dirs(tag::AbstractString; variation = "sf")
-    _LIST = joinpath(dirname(@__DIR__), "lists/v2.2.list.json") |> read |> JSON3.read
+    _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
     folders = _LIST[tag]
     if lowercase(tag) == "data"
         sel1 = filter(readdir(MINITREE_DIR[])) do folder_name
