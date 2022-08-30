@@ -58,27 +58,6 @@ macro fill_dict!(dict, wgt, func, vars)
     esc(Expr(:block, exs...))
 end
 
-const _EISOS = (
-    :HighPtCaloOnly,
-    :TightTrackOnly_VarRad,
-    :TightTrackOnly_FixedRad,
-    :Tight_VarRad,
-    :Loose_VarRad,
-)
-const _MISOS = (
-    :PflowTight_VarRad,
-    :PflowTight_FixedRad,
-    :PflowLoose_VarRad,
-    :PflowLoose_FixedRad,
-    :HighPtTrackOnly,
-    :TightTrackOnly_VarRad,
-    :TightTrackOnly_FixedRad,
-    :Tight_VarRad,
-    :Tight_FixedRad,
-    :Loose_VarRad,
-    :Loose_FixedRad,
-)
-
 const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR]
 const m_wgt_list = [:MUON_EFF_RECO_STAT_LOWPT, :MUON_EFF_RECO_SYS, :MUON_EFF_RECO_SYS_LOWPT, :MUON_EFF_RECO_STAT]
 const btag_wgt_list = [
