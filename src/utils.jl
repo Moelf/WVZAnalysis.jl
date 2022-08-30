@@ -2,13 +2,13 @@ const Z_m = 91.1876 * 10^3 # in MeV
 
 function init_ONNX()
     model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
-    rescaling_parameters = JSON.parsefile("/data/grabanal/NN/NN_08_23_rescaling_parameters.json")
-    rescaling_parameters["min"]["sr_SF_inZ"]=0
-    rescaling_parameters["min"]["sr_SF_noZ"]=0
-    rescaling_parameters["min"]["sr_DF"]=0
-    rescaling_parameters["scale"]["sr_SF_inZ"]=1
-    rescaling_parameters["scale"]["sr_SF_noZ"]=1
-    rescaling_parameters["scale"]["sr_DF"]=1
+    rescaling_parameters = Dict(JSON3.read(read("/data/grabanal/NN/NN_08_23_rescaling_parameters.json")))
+    rescaling_parameters[:min][:sr_SF_inZ]=0
+    rescaling_parameters[:min][:sr_SF_noZ]=0
+    rescaling_parameters[:min][:sr_DF]=0
+    rescaling_parameters[:scale][:sr_SF_inZ]=1
+    rescaling_parameters[:scale][:sr_SF_noZ]=1
+    rescaling_parameters[:scale][:sr_DF]=1
     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
