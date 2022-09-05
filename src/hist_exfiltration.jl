@@ -13,7 +13,7 @@ function kinematic_hist_init()
                            :other_mass => Hist1D(Float64; bins=0:4:500, overflow=true),
                            :MET => Hist1D(Float64; bins=bins=0:1:1000, overflow=true),
                            :METSig => Hist1D(Float64; bins=0:0.2:20, overflow=true),
-                           :HT => Hist1D(Float64; bins=0:10:800, overflow=true),
+                           :HT => Hist1D(Float64; bins=0:1:200, overflow=true),
                            :leptonic_HT => Hist1D(Float64; bins=0:10:800, overflow=true),
                            :total_HT => Hist1D(Float64; bins=0:10:2000, overflow=true),
                            :SR => Hist1D(Float64; bins=0:3),
@@ -24,6 +24,8 @@ function kinematic_hist_init()
                            :total_events => Hist1D(Float64; bins=0:1, overflow=true),
                            :NN_score => Hist1D(Float64; bins=0:0.01:1, overflow=true),
                            :Njet => Hist1D(Float64; bins=0:10,overflow=true),
+                           :cut => Hist1D(Float64; bins=0:15,overflow=true),
+                           :SRcut => Hist2D(Float64; bins=(0:3,0:15))
                           ])
 
 end
