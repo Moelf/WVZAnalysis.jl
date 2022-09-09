@@ -148,7 +148,7 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
 
         sr_SF_inZ, sr_SF_noZ, sr_DF = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
             false, false, true
-        elseif abs(other_mass - Z_m) < 20e3 # SF_inZ
+        elseif abs(other_mass - Z_m) < 20 # SF_inZ, already GeV
             true, false, false
         else #SF_noZ
             false, true, false
