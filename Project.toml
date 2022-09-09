@@ -20,6 +20,7 @@ Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 ONNX = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
 PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 

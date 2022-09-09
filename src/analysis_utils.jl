@@ -47,9 +47,9 @@ function sumsumWeight(paths)
     return res
 end
 
-function _runwork(files, prog; treename, sfsyst=false, isdata, controlregion)
+function _runwork(files, prog; kw...)
     s = mapreduce((.+), files) do (sumWeight, F)
-        x = WVZAnalysis.main_looper(F; treename, sumWeight, isdata, controlregion)
+        x = WVZAnalysis.main_looper(F, sumWeight; kw...)
         if prog !== nothing 
             next!(prog)
         end
@@ -58,7 +58,7 @@ function _runwork(files, prog; treename, sfsyst=false, isdata, controlregion)
     return s
 end
 
-function shapesys(tag, treename)
+function shapesys(tag, shape_variation; kw...)
     dirs = root_dirs(tag; variation = "shape")
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
@@ -67,10 +67,10 @@ function shapesys(tag, treename)
         sfsys_dir(d)
     end
     println("$tag starting:")
-    return _runwork(files, prog; treename, isdata)
+    return _runwork(files, prog; shape_variation, isdata, kw...)
 end
 
-function sfsys(tag; controlregion = nothing)
+function sfsys(tag; kw...)
     dirs = root_dirs(tag; variation = "sf")
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
@@ -79,7 +79,7 @@ function sfsys(tag; controlregion = nothing)
         sfsys_dir(d)
     end
     println("$tag starting:")
-    return _runwork(files, prog, ; treename = "tree_NOMINAL", isdata, controlregion)
+    return _runwork(files, prog; isdata, kw...)
 end
 
 function sfsys_dir(dir_path)
@@ -104,7 +104,7 @@ function arrow_making_dir(dir_path; prog = nothing, isdata)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumWeight = sumsumWeight(files)
     res = map(files) do F
-        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, arrow_making=true, isdata)
+        r = WVZAnalysis.main_looper(F; sumWeight, arrow_making=true, isdata)
         if prog !== nothing 
             next!(prog)
         end

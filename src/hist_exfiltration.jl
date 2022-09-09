@@ -1,3 +1,21 @@
+function NN_hist_init(; sfsyst, shape_variation)
+    if sfsyst && (shape_variation != "NOMINAL")
+        error("can't do sfsyst and shape syst at the same time")
+    end
+    _dict = Dict()
+    for n in (:SFinZ__NN, :SFnoZ__NN, :DF__NN)
+        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins=0:0.01:1)
+
+        !sfsyst && continue
+        for (_,vs) in SF_BRANCH_DICT
+            for v in vs, ud in ("1up", "1down")
+                _dict[Symbol(n, :__, v, :__, ud)] = Hist1D(Float64; bins=0:0.01:1)
+            end
+        end
+    end
+    return dictionary(_dict)
+end
+
 function kinematic_hist_init()
     return dictionary([
                            :pt_1 => Hist1D(Float64; bins=0:5:300, overflow=true),
