@@ -33,15 +33,15 @@ ALL_TAGS = ("Signal", BKG_TAGS...)
 
 ### Shape syst:
 ```julia
-Hs_up = WVZAnalysis.shapesys("Signal", "tree_EG_SCALE_ALL__1up")
+Hs_up = WVZAnalysis.shapesys("Signal", "EG_SCALE_ALL__1up")
 Hs_nominal = WVZAnalysis.sfsys("Signal")
-Hs_down = WVZAnalysis.shapesys("Signal", "tree_EG_SCALE_ALL__1down");
+Hs_down = WVZAnalysis.shapesys("Signal", "EG_SCALE_ALL__1down");
 ```
 
 ### Filling Arrow files
 ```julia
 for tag in ALL_TAGS
-    fname = "/data/jiling/WVZ/v2.2_arrow/$tag.arrow"
+    fname = "/data/jiling/WVZ/v2.3_arrow/$tag.arrow"
     data = WVZAnalysis.arrow_making(tag)
     Arrow.write(fname, Dict(pairs(data)))
 end
@@ -52,16 +52,18 @@ end
 function significance_table()
     proc_names = ("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "Others")
     M = mapreduce(vcat, proc_names) do tag
+        # re-make or read from serialized cache
         # res = WVZAnalysis.sfsys(tag)
         res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
-        hists = integral.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]])
+        N = nbins(res[:DF__NN__NOMINAL])
+        hists = rebin.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]], N)
         permutedims(hists) 
     end
     proc_names, M
 end
 
 function significance_table(proc_names, M)
-    body = @. M ± (sqrt(abs(M)))
+    body = @. integral(M) ± (only(binerrors(M)))
     total_sig = body[1:1, :] #first row
     total_bkg = sum(body[2:end, :]; dims = 1) #2:end row
     naive_significance = @. total_sig / sqrt(total_bkg)
@@ -116,3 +118,5 @@ pretty_table(
 │ Combined Sig. │   NaN ± 0.0    │  1.81 ± 0.53   │  NaN ± 0.0   │
 └───────────────┴────────────────┴────────────────┴──────────────┘
 ```
+
+### 
