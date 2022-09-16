@@ -53,7 +53,7 @@ function significance_table()
     proc_names = ("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "Others")
     M = mapreduce(vcat, proc_names) do tag
         # re-make or read from serialized cache
-        # res = WVZAnalysis.sfsys(tag)
+        # res = WVZAnalysis.sfsys(tag; NN_hist=true)
         res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
         N = nbins(res[:DF__NN__NOMINAL])
         hists = rebin.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]], N)
