@@ -33,15 +33,15 @@ ALL_TAGS = ("Signal", BKG_TAGS...)
 
 ### Shape syst:
 ```julia
-Hs_up = WVZAnalysis.shapesys("Signal", "tree_EG_SCALE_ALL__1up")
+Hs_up = WVZAnalysis.shapesys("Signal", "EG_SCALE_ALL__1up")
 Hs_nominal = WVZAnalysis.sfsys("Signal")
-Hs_down = WVZAnalysis.shapesys("Signal", "tree_EG_SCALE_ALL__1down");
+Hs_down = WVZAnalysis.shapesys("Signal", "EG_SCALE_ALL__1down");
 ```
 
 ### Filling Arrow files
 ```julia
 for tag in ALL_TAGS
-    fname = "/data/jiling/WVZ/v2.2_arrow/$tag.arrow"
+    fname = "/data/jiling/WVZ/v2.3_arrow/$tag.arrow"
     data = WVZAnalysis.arrow_making(tag)
     Arrow.write(fname, Dict(pairs(data)))
 end
@@ -50,11 +50,14 @@ end
 ### Making Significance table
 ```julia
 function significance_table()
-    proc_names = ALL_TAGS
+    proc_names = ("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "Others")
     M = mapreduce(vcat, proc_names) do tag
-        res = WVZAnalysis.sfsys(tag)
-        hists = [res[:NN_inZ__NOMINAL], res[:NN_noZ__NOMINAL], res[:NN_DF__NOMINAL]]
-        permutedims(hists) # make each sample a row
+        # re-make or read from serialized cache
+        # res = WVZAnalysis.sfsys(tag; NN_hist=true)
+        res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
+        N = nbins(res[:DF__NN__NOMINAL])
+        hists = rebin.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]], N)
+        permutedims(hists) 
     end
     proc_names, M
 end
@@ -94,25 +97,26 @@ pretty_table(
     alignment=:c,
     #backend = Val(:html)
 )
-┌───────────────┬────────────────┬───────────────┬──────────────┐
-│               │     SF-inZ     │    SF-noZ     │      DF      │
-├───────────────┼────────────────┼───────────────┼──────────────┤
-│    Signal     │  13.35 ± 0.07  │ 10.69 ± 0.11  │ 12.26 ± 0.15 │
-│      ZZ       │ 2049.2 ± 6.13  │ 541.18 ± 2.59 │ 23.16 ± 0.48 │
-│     Zjets     │  0.64 ± 0.34   │  3.67 ± 2.22  │ 6.72 ± 5.16  │
-│    Zgamma     │   0.0 ± 0.0    │  0.31 ± 0.31  │  0.2 ± 0.31  │
-│     ttbar     │  0.00 ± 0.00   │  0.96 ± 0.21  │ 0.55 ± 0.14  │
-│      WZ       │  0.68 ± 0.14   │  3.28 ± 0.31  │ 3.72 ± 0.35  │
-│      tZ       │  0.04 ± 0.02   │  0.17 ± 0.05  │ 0.11 ± 0.03  │
-│      ttZ      │  1.46 ± 0.09   │  5.41 ± 0.17  │ 6.61 ± 0.19  │
-│      tWZ      │  0.71 ± 0.57   │  2.39 ± 0.24  │ 3.09 ± 0.26  │
-│      VBS      │  13.22 ± 0.1   │  7.12 ± 0.08  │ 0.23 ± 0.01  │
-│      VH       │  1.29 ± 0.71   │  5.9 ± 1.41   │ 6.32 ± 1.35  │
-│    Others     │  0.07 ± 0.01   │  0.6 ± 0.2    │  0.6 ± 0.08  │
-├───────────────┼────────────────┼───────────────┼──────────────┤
-│   Bkg Tot.    │ 2067.37 ± 7.88 │ 570.99 ± 7.79 │ 51.33 ± 8.37 │
-├───────────────┼────────────────┼───────────────┼──────────────┤
-│ Significance  │   0.29 ± 0.0   │  0.45 ± 0.0   │ 1.71 ± 0.07  │
-│ Combined Sig. │   NaN ± 0.0    │  1.6 ± 0.06   │  NaN ± 0.0   │
-└───────────────┴────────────────┴───────────────┴──────────────┘
+┌───────────────┬────────────────┬────────────────┬──────────────┐
+│               │     SF-inZ     │     SF-noZ     │      DF      │
+├───────────────┼────────────────┼────────────────┼──────────────┤
+│    Signal     │  11.73 ± 3.43  │  9.31 ± 3.05   │ 10.73 ± 3.28 │
+│      ZZ       │ 1775.6 ± 42.14 │ 469.06 ± 21.66 │ 19.78 ± 4.45 │
+│     Zjets     │  -0.02 ± 0.14  │   2.6 ± 1.61   │ 6.47 ± 2.54  │
+│    Zgamma     │   0.0 ± 0.0    │   0.0 ± 0.0    │  0.3 ± 0.55  │
+│     ttbar     │   0.0 ± 0.0    │  0.63 ± 0.79   │ 0.28 ± 0.53  │
+│      WZ       │   0.36 ± 0.6   │  1.79 ± 1.34   │  2.24 ± 1.5  │
+│      tZ       │  0.01 ± 0.11   │  0.07 ± 0.27   │ 0.06 ± 0.25  │
+│      ttZ      │  1.24 ± 1.11   │  4.71 ± 2.17   │  5.74 ± 2.4  │
+│      tWZ      │  0.57 ± 0.75   │  2.16 ± 1.47   │  2.5 ± 1.58  │
+│      VBS      │  11.71 ± 3.42  │   6.4 ± 2.53   │ 0.18 ± 0.43  │
+│    Others     │  0.06 ± 0.24   │   0.4 ± 0.63   │ 0.56 ± 0.75  │
+├───────────────┼────────────────┼────────────────┼──────────────┤
+│   Bkg Tot.    │ 1789.53 ± 42.3 │ 487.81 ± 22.09 │ 38.11 ± 6.17 │
+├───────────────┼────────────────┼────────────────┼──────────────┤
+│ Significance  │  0.28 ± 0.08   │  0.42 ± 0.14   │ 1.74 ± 0.55  │
+│ Combined Sig. │   NaN ± 0.0    │  1.81 ± 0.53   │  NaN ± 0.0   │
+└───────────────┴────────────────┴────────────────┴──────────────┘
 ```
+
+### 

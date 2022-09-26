@@ -47,50 +47,42 @@ function sumsumWeight(paths)
     return res
 end
 
-function shapesys(tag, treename)
+function _runwork(files, prog; kw...)
+    s = mapreduce((.+), files) do (sumWeight, F)
+        x = WVZAnalysis.main_looper(F, sumWeight; kw...)
+        if prog !== nothing 
+            next!(prog)
+        end
+        x
+    end
+    return s
+end
+
+function shapesys(tag, shape_variation; kw...)
     dirs = root_dirs(tag; variation = "shape")
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     isdata = (lowercase(tag) == "data")
     files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d; prog, isdata)
+        sfsys_dir(d)
     end
-    sort!(files; by=x->filesize(x[2]), rev=true)
     println("$tag starting:")
-    ex = WorkStealingEx(; basesize=length(files) ÷ 4)
-    @floop ex for (sumWeight, F) in files
-        x = WVZAnalysis.main_looper(F; treename, sfsyst=false, sumWeight, isdata)
-        if prog !== nothing 
-            next!(prog)
-        end
-        @reduce(s .+= x)
-    end
-    return s
+    return _runwork(files, prog; shape_variation, isdata, kw...)
 end
 
-function sfsys(tag; controlregion = nothing)
+function sfsys(tag; kw...)
     dirs = root_dirs(tag; variation = "sf")
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     isdata = (lowercase(tag) == "data")
     files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d; prog, isdata)
+        sfsys_dir(d)
     end
-    sort!(files; by=x->filesize(x[2]), rev=true)
     println("$tag starting:")
-    # ex = ThreadedEx(; basesize = 1)
-    ex = WorkStealingEx(; basesize=length(files) ÷ 4)
-    @floop ex for (sumWeight, F) in files
-        x = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, isdata, controlregion)
-        if prog !== nothing 
-            next!(prog)
-        end
-        @reduce(s .+= x)
-    end
-    return s
+    return _runwork(files, prog; isdata, kw...)
 end
 
-function sfsys_dir(dir_path; prog = nothing, isdata=false)
+function sfsys_dir(dir_path)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumsum = sumsumWeight(files)
     return (sumsum .=> files)
@@ -112,7 +104,7 @@ function arrow_making_dir(dir_path; prog = nothing, isdata)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumWeight = sumsumWeight(files)
     res = map(files) do F
-        r = WVZAnalysis.main_looper(F; sfsyst=false, sumWeight, arrow_making=true, isdata)
+        r = WVZAnalysis.main_looper(F; sumWeight, arrow_making=true, isdata)
         if prog !== nothing 
             next!(prog)
         end
