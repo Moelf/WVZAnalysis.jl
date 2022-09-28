@@ -1,7 +1,74 @@
+
 """
 extract dsid from a file name, used to match with systematic files
 """
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
+
+const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
+
+function init_ONNX()
+    model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
+    rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
+    NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
+                "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
+                "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
+                "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
+                "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
+                "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
+    return model, 
+    [rescaling_parameters["scale"][name] for name in NN_order],
+    [rescaling_parameters["min"][name] for name in NN_order]
+end
+
+function init_BDT()
+    bst = Booster(; model_file = "/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
+    return ary->(predict(bst, permutedims(ary))[1])::Float32
+end
+
+
+function NN_calc(model, scales, minimums, NN_input)::Float32
+    @inbounds @simd for i in eachindex(NN_input, scales, minimums)
+        NN_input[i] = fma(NN_input[i], scales[i], minimums[i])
+    end
+    return Ghost.play!(model, NN_input)[1]
+end
+
+
+"""
+
+Example:
+
+```julia
+julia> dd = Dict(:Nlep => [], :lep1_pid=>[]);
+
+julia> Nlep = 10;
+
+julia> lep1_pid =11;
+
+julia> @fill_dict! dd push! Nlep,lep1_pid;
+
+# this expands to
+push!(dd[:Nlep], Nlep)
+push!(dd[:lep1_pid], lep1_pid)
+
+julia> dd
+Dict{Symbol, Vector{Any}} with 2 entries:
+  :Nlep     => [10]
+  :lep1_pid => [11]
+```
+
+"""
+macro fill_dict!(dict, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v) for v in vs]
+    esc(Expr(:block, exs...))
+end
+
+macro fill_dict!(dict, wgt, func, vars)
+    vs = unique(vars.args)
+    exs = [Expr(:call, func, Expr(:ref, dict, QuoteNode(v)), v, wgt) for v in vs]
+    esc(Expr(:block, exs...))
+end
 
 function extrac_dsid(str)
     return match(r"(\d{6})", str).captures[1] #dsid
@@ -47,43 +114,57 @@ function sumsumWeight(paths)
     return res
 end
 
+<<<<<<< HEAD
 function _runwork(files, prog; kw...)
-    s = mapreduce((.+), files) do (sumWeight, F)
+    println("processing $(length(files)) root files in total.")
+    s = ThreadsX.map(files) do (sumWeight, F)
+        next!(prog)
         x = WVZAnalysis.main_looper(F, sumWeight; kw...)
-        if prog !== nothing 
-            next!(prog)
-        end
         x
     end
-    return s
+    finish!(prog)
+    return foldl((.+), s)
 end
 
-function shapesys(tag, shape_variation; kw...)
+function shapesys(tag, shape_variation; scouting=false, kw...)
+    println("$tag ($shape_variation)")
     dirs = root_dirs(tag; variation = "shape")
 
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     isdata = (lowercase(tag) == "data")
-    files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d)
+    if scouting
+        @info "scounting"
+        dirs = first(dirs, 2)
     end
-    println("$tag starting:")
+
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.1)
+    files = mapreduce(vcat, dirs) do d
+        sfsys_dir(d; scouting)
+    end
     return _runwork(files, prog; shape_variation, isdata, kw...)
 end
 
-function sfsys(tag; kw...)
+function sfsys(tag; scouting=false, kw...)
+    println("$tag (SF)")
     dirs = root_dirs(tag; variation = "sf")
 
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     isdata = (lowercase(tag) == "data")
-    files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d)
+    if scouting
+        @info "scounting"
+        dirs = first(dirs, 2)
     end
-    println("$tag starting:")
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.1)
+    files = mapreduce(vcat, dirs) do d
+        sfsys_dir(d; scouting)
+    end
     return _runwork(files, prog; isdata, kw...)
 end
 
-function sfsys_dir(dir_path)
+function sfsys_dir(dir_path; scouting = false)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
+    if scouting
+        @info "scounting"
+        files = first(files, 2)
+    end
     sumsum = sumsumWeight(files)
     return (sumsum .=> files)
 end
@@ -91,7 +172,7 @@ end
 function arrow_making(tag)
     dirs = root_dirs(tag; variation = "sf")
     isdata = lowercase(tag) == "data"
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.3)
+    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
     println("$tag starting:")
     res = ThreadsX.map(dirs) do d
         arrow_making_dir(d; prog, isdata)
@@ -100,11 +181,11 @@ function arrow_making(tag)
     first(res)
 end
 
-function arrow_making_dir(dir_path; prog = nothing, isdata)
+function arrow_making_dir(dir_path; prog = nothing, isdata, kw...)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     sumWeight = sumsumWeight(files)
     res = map(files) do F
-        r = WVZAnalysis.main_looper(F; sumWeight, arrow_making=true, isdata)
+        r = WVZAnalysis.main_looper(F, sumWeight; arrow_making=true, isdata, kw...)
         if prog !== nothing 
             next!(prog)
         end
