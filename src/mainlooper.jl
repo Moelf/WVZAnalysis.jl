@@ -1,5 +1,4 @@
 function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, wgt_factor = 1.0, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
-
     # basesize = length(mytree) ÷ 4
     # dict, executor = if arrow_making
     dict = if arrow_making
