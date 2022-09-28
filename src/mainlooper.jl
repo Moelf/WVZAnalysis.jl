@@ -1,4 +1,5 @@
-function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, wgt_factor = 1.0, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
+function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, NN_hist=false, 
+        arrow_making=false, isdata=false, controlregion=:none)
     # basesize = length(mytree) ÷ 4
     # dict, executor = if arrow_making
     dict = if arrow_making
@@ -35,25 +36,14 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
-        wgt = evt.weight / sumWeight * wgt_factor
         abs(best_Z_mass - Z_m) > 20 && continue
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
         ### end of initial_cut
         !(evt.passTrig) && continue
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
-        wgt = evt.weight / sumWeight * wgt_factor
         v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
 
-        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
-        if isdata
-            v_l_wgtLoose = v_l_wgtLoose = fill(1.f0, length(v_l_tlv))
-        else
-            v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
-            v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
-            wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
-            wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
-        end
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
         if controlregion == :Zjets
@@ -65,10 +55,6 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
         else
             failed_PLTight = any(==(false), v_l_PLTight[W_pair])
             failed_PLTight && continue
-            if !isdata
-                v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-                wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
-            end
         end
         (;
          v_e_passIso_Loose_VarRad,
@@ -79,23 +65,35 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
         v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
         
-        pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
-                                                 Z_pair,
-                                                 W_pair,
-                                                 v_l_pid,
-                                                 v_l_order,
-                                                 v_l_wgtLoose,
-                                                 v_l_medium,
-                                                 v_l_wgtMedium,
-                                                 v_l_tlv,
-                                                 v_l_passIso,
-                                                 v_l_wgtIso,
-                                                 wgt,
-                                                 isdata
-                                                )
+        wgt = evt.weight / sumWeight
+        pass_WWZ_cut, chisq, W_id = WWZ_Cut(
+                                            Z_pair,
+                                            W_pair,
+                                            v_l_pid,
+                                            v_l_order,
+                                            v_l_medium,
+                                            v_l_tlv,
+                                            v_l_passIso,
+                                           )
         !pass_WWZ_cut && continue
         # in `b_veto == true` means we've passed the criterial,
         # which means we didn't see a b-jet
+        if !isdata && controlregion == :none
+            v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+            wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+        end
+        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
+        if !isdata
+            v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
+            v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
+            for i in 1:2
+                wgt *= v_l_wgtLoose[Z_pair[i]] * v_l_wgtMedium[W_pair[i]]
+                # iso weights
+                wgt *= v_l_wgtIso[Z_pair[i]]
+            end
+            wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
+            wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
+        end
         b_wgt, b_veto = Bjet_Cut(evt)
         (; MET, METSig, METPhi) = evt
         MET /= 1000

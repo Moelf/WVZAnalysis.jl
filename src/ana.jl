@@ -31,15 +31,6 @@ function Bjet_Cut(evt)
     return b_wgt, btag_veto
 end
 
-function main_looper(s::AbstractString, sumWeight; kws...) 
-    wgt_factor = if occursin(r"346645|346646|346647", s)
-        2.745e-4
-    else
-        1.0
-    end
-    main_looper(ROOTFile(s), sumWeight; wgt_factor, kws...)
-end
-
 function main_looper(r::ROOTFile, sumWeight; shape_variation = "NOMINAL", kw...)
     mytree = LazyTree(r, "tree_" * shape_variation)
     return main_looper(mytree, sumWeight; shape_variation, kw...)

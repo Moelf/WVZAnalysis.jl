@@ -103,9 +103,17 @@ multiple tags
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
 function sumsumWeight(paths)
+    wgt_factor = if occursin(r"346645|346646|346647", paths[1])
+        2.745e-4
+    else
+        1.0
+    end
+    return sumsumWeight(ROOTFile.(paths))*wgt_factor
+end
+
+function sumsumWeight(RFiles::Vector{ROOTFile})::Float64
     res = 0.0
-    for p in paths
-        r = ROOTFile(p)
+    for r in RFiles
         if !haskey(r, "sumWeight")
             return 1.0
         end
@@ -114,33 +122,32 @@ function sumsumWeight(paths)
     return res
 end
 
-<<<<<<< HEAD
-function _runwork(files, prog; kw...)
-    println("processing $(length(files)) root files in total.")
-    s = ThreadsX.map(files) do (sumWeight, F)
+function _runwork(RFiles, prog; kw...)
+    println("processing $(length(RFiles)) root files in total.")
+    s = ThreadsX.map(RFiles) do (sumWeight, R)
         next!(prog)
-        x = WVZAnalysis.main_looper(F, sumWeight; kw...)
+        x = WVZAnalysis.main_looper(R, sumWeight; kw...)
         x
     end
     finish!(prog)
     return foldl((.+), s)
 end
 
-function shapesys(tag, shape_variation; scouting=false, kw...)
-    println("$tag ($shape_variation)")
+function shapesys(tag, shape_variations::Vector; scouting=false, kw...)
+    println("$tag ($shape_variations)")
     dirs = root_dirs(tag; variation = "shape")
 
     isdata = (lowercase(tag) == "data")
     if scouting
-        @info "scounting"
         dirs = first(dirs, 2)
     end
 
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.1)
-    files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d; scouting)
+    sum_and_RFiles = mapreduce(vcat, dirs) do d
+        process_dir(d; scouting)
     end
-    return _runwork(files, prog; shape_variation, isdata, kw...)
+
+    return _runwork(sum_and_RFiles, prog; shape_variation, isdata, kw...)
 end
 
 function sfsys(tag; scouting=false, kw...)
@@ -149,24 +156,24 @@ function sfsys(tag; scouting=false, kw...)
 
     isdata = (lowercase(tag) == "data")
     if scouting
-        @info "scounting"
         dirs = first(dirs, 2)
     end
     prog = Progress(mapreduce(length∘readdir, +, dirs), 0.1)
     files = mapreduce(vcat, dirs) do d
-        sfsys_dir(d; scouting)
+        process_dir(d; scouting)
     end
     return _runwork(files, prog; isdata, kw...)
 end
 
-function sfsys_dir(dir_path; scouting = false)
+function process_dir(dir_path; scouting = false)
     files = filter!(endswith(".root"), readdir(dir_path; join = true))
     if scouting
-        @info "scounting"
         files = first(files, 2)
     end
+    # keep file handles
+    RFiles = ROOTFile.(files)
     sumsum = sumsumWeight(files)
-    return (sumsum .=> files)
+    return (sumsum .=> RFiles)
 end
 
 function arrow_making(tag)
