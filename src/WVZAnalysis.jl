@@ -3,7 +3,7 @@ module WVZAnalysis
 using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, Dictionaries, LazyArrays, JSON3, ProgressMeter
 using ThreadsX, FoldsThreads, FLoops, ONNX, ONNX.Ghost, XGBoost
 
-export sfsyst, significance_table, print_sigtable, shapesys
+export sfsyst, significance_table, print_sigtable, shapesys, arrow_making
 
 include("./analysis_utils.jl")
 include("./constants.jl")

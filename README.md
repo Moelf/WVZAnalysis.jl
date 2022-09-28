@@ -2,9 +2,11 @@
 
 ## Words for Devs
 1. Main looper logic is in `src/mainlooper.jl`
-2. Cuts logic for different channel are in `src/ZZZ WZZ WWZ`
+2. Cuts logic for different channel are in `src/{ZZZ, WZZ, WWZ}.jl`
 3. For histogram we use https://github.com/Moelf/FHist.jl
 4. I would recomment to use https://github.com/andyferris/Dictionaries.jl for in-memory "hadd" when combining results from different files.
+5. all public / user-facing functions are in `analysis_utils.jl`
+6. all supporting for printing reports and plotting are in `reporting_utils.jl`
 
 ## Install the dependencies:
 ### Already cloned
@@ -22,6 +24,9 @@ julia --project=.
 using Pkg, WVZAnalysis
 
 Pkg.activate(pathof(WVZAnalysis) |> dirname |> dirname)
+
+using ProgressMeter, PrettyTables, UnROOT, FHist, JSON3, CairoMakie,
+      ThreadsX, Measurements, Arrow, Serialization
 ```
 
 ## Example Usage:
@@ -37,7 +42,7 @@ Hs_down = shapesys("Signal", "EG_SCALE_ALL__1down");
 ```julia
 for tag in WVZAnalysis.ALL_TAGS
     fname = "/data/jiling/WVZ/v2.3_arrow/$tag.arrow"
-    data = WVZAnalysis.arrow_making(tag)
+    data = arrow_making(tag)
     Arrow.write(fname, Dict(pairs(data)))
 end
 ```
