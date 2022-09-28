@@ -33,9 +33,11 @@ using ProgressMeter, PrettyTables, UnROOT, FHist, JSON3, CairoMakie,
 
 ### Shape syst:
 ```julia
-Hs_up = shapesys("Signal", "EG_SCALE_ALL__1up")
-Hs_nominal = sfsys("Signal")
-Hs_down = shapesys("Signal", "EG_SCALE_ALL__1down");
+Hs_up = shapesys("Signal", "EG_SCALE_ALL__1up"; NN_hist=true)
+Hs_nominal = sfsys("Signal"; NN_hist=true)
+Hs_down = shapesys("Signal", "EG_SCALE_ALL__1down"; NN_hist=true;
+
+Hs = merge(Hs_up, Hs_nominal, Hs_down)
 ```
 
 ### Filling Arrow files
