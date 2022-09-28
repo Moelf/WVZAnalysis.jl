@@ -33,14 +33,14 @@ function WWZ_Cut(
     @inbounds for i in eachindex(v_l_tlv)
         for j in (i + 1):length(v_l_tlv)
             v_l_pid[i] + v_l_pid[j] != 0 && continue
-            WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j]) / 1000
+            WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j])
             WWZ_dilepton_mass < 12 && return FAIL
         end
     end
-    @inbounds pt(v_l_tlv[v_l_order[1]]) < 30e3 && return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[2]]) < 15e3 && return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[3]]) < 8e3 &&  return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[4]]) < 6e3 &&  return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[1]]) < 30 && return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[2]]) < 15 && return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[3]]) < 8 &&  return FAIL
+    @inbounds pt(v_l_tlv[v_l_order[4]]) < 6 &&  return FAIL
 
     # selected lepton min dR
     @inbounds for i in 1:4

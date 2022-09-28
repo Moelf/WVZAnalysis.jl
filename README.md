@@ -52,9 +52,11 @@ end
 function significance_table()
     proc_names = ("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "Others")
     M = mapreduce(vcat, proc_names) do tag
-        # re-make or read from serialized cache
-        # res = WVZAnalysis.sfsys(tag; NN_hist=true)
-        res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
+        ## re-make
+        res = WVZAnalysis.sfsys(tag; NN_hist=true)
+        serialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize", res)
+        ## load from serialization
+        # res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
         N = nbins(res[:DF__NN__NOMINAL])
         hists = rebin.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]], N)
         permutedims(hists) 
@@ -63,7 +65,7 @@ function significance_table()
 end
 
 function significance_table(proc_names, M)
-    body = @. integral(M) ± (only(binerrors(M)))
+    body = @. integral(M) ± only(binerrors(M))
     total_sig = body[1:1, :] #first row
     total_bkg = sum(body[2:end, :]; dims = 1) #2:end row
     naive_significance = @. total_sig / sqrt(total_bkg)

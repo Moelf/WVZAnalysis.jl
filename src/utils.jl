@@ -1,4 +1,4 @@
-const Z_m = 91.1876 * 10^3 # in MeV
+const Z_m = 91.1876 # everything in GeV
 
 function init_ONNX()
     model=ONNX.load("/data/grabanal/NN/NN_08_23.onnx",zeros(Float32, 30, 1))
