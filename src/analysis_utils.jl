@@ -114,7 +114,6 @@ function sumsumWeight(paths)
     return res
 end
 
-<<<<<<< HEAD
 function _runwork(files, prog; kw...)
     println("processing $(length(files)) root files in total.")
     s = ThreadsX.map(files) do (sumWeight, F)
