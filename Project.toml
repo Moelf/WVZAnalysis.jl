@@ -31,7 +31,7 @@ XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 
 [compat]
 Arrow = "^2"
-CairoMakie = "=0.8.12"
+CairoMakie = "=0.8.12, 0.8"
 DataFrames = "^1"
 Dictionaries = "^0.3.24"
 FHist = "0.8"
