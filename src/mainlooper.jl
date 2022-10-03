@@ -1,18 +1,15 @@
 function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, wgt_factor = 1.0, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
-    # basesize = length(mytree) ÷ 4
-    # dict, executor = if arrow_making
-    dict = if arrow_making
-        arrow_init()#, NonThreadedEx()
+    dict, pusher! = if arrow_making
+        arrow_init(), push!
     elseif NN_hist
-        NN_hist_init(; sfsyst, shape_variation)#, ThreadedEx(; basesize)
+        NN_hist_init(; sfsyst, shape_variation), push!
     else
-        kinematic_hist_init()#, ThreadedEx(; basesize)
+        kinematic_hist_init(), push!
     end
 
     model, scales, minimums = init_ONNX()
     BDT_predict = init_BDT()
 
-    # @floop executor for evt in mytree
     for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
@@ -155,36 +152,36 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         if controlregion == :ZZ || NN_hist
-            # NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
-            #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
-            #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
-            #             Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
-            #             leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
-            #             sr_SF_inZ, sr_SF_noZ, sr_DF]
-            BDT_input = Float32[METSig,
-                         other_mass,
-                         SR,
-                         HT,
-                         MET,
-                         total_HT,
-                         Njet,
-                         pt_4l,
-                         Wlep2_pt,
-                         mass_4l,
-                         Wlep1_pt,
-                         Wlep2_dphi,
-                         Wlep1_dphi,
-                         Zlep1_pt,
-                         Wlep1_eta,
-                         leptonic_HT,
-                         Wlep2_eta,
-                         Zcand_mass,
-                         METPhi,
-                         Zlep2_pt,
-                        ]
+            NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                        Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                        Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                        Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                        leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                        sr_SF_inZ, sr_SF_noZ, sr_DF]
+            # BDT_input = Float32[METSig,
+            #              other_mass,
+            #              SR,
+            #              HT,
+            #              MET,
+            #              total_HT,
+            #              Njet,
+            #              pt_4l,
+            #              Wlep2_pt,
+            #              mass_4l,
+            #              Wlep1_pt,
+            #              Wlep2_dphi,
+            #              Wlep1_dphi,
+            #              Zlep1_pt,
+            #              Wlep1_eta,
+            #              leptonic_HT,
+            #              Wlep2_eta,
+            #              Zcand_mass,
+            #              METPhi,
+            #              Zlep2_pt,
+            #             ]
 
-            # NN_score = NN_calc(model, scales, minimums, NN_input)
-            NN_score = BDT_predict(BDT_input)
+            NN_score = NN_calc(model, scales, minimums, NN_input)
+            # NN_score = BDT_predict(BDT_input)
         end
 
         if controlregion == :ZZ
@@ -200,7 +197,7 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
             else
                 :DF
             end
-            push!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score, wgt)
+            pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score, wgt)
 
         elseif arrow_making
             jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]])
@@ -224,7 +221,7 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
             jet_btagCont_2 = Njet < 2 ? -2 : v_j_btagCont[2]
             jet_btagCont_3 = Njet < 3 ? -2 : v_j_btagCont[3]
             jet_btagCont_4 = Njet < 4 ? -2 : v_j_btagCont[4]
-            @fill_dict! dict push! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
+            @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
             Zlep2_pt, Zlep2_eta, Zlep2_phi, Zlep2_dphi, Zlep2_pid, Wlep1_pt, Wlep1_eta, Wlep1_phi, Wlep1_dphi,
@@ -233,7 +230,7 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
             jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt
         else
-            @fill_dict! dict wgt push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
+            @fill_dict! dict wgt pusher! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
             Z_eta, Z_phi, Z_pt, Z_rapidity, Njet
         end

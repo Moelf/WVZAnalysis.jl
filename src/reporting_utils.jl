@@ -29,6 +29,31 @@ function significance_matrix(proc_names; recreate)
     M
 end
 
+"""
+    significance_table(proc_names = ALL_TAGS; recreate=false)
+
+    ## Example
+
+```julia-repl
+julia> M = significance_table()
+15×4 Matrix{Any}:
+ "Signal"         11.509±0.068     9.18±0.1     10.14±0.14
+ "ZZ"             1709.1±5.5      389.2±2.3      19.1±0.44
+ "Zjets"           -0.02±0.13       1.9±1.1       5.9±5.5
+ "Zgamma"            0.0±0.0        0.0±0.0       0.3±0.29
+ "ttbar"             0.0±0.0       0.63±0.18     0.28±0.1
+ "WZ"              0.362±0.096     1.72±0.22     2.13±0.28
+ "tZ"                0.0±0.0      0.059±0.025    0.06±0.025
+ "ttZ"             1.227±0.08      4.66±0.16     5.68±0.17
+ "tWZ"              0.58±0.11      2.15±0.23     2.51±0.24
+ "VBS"            11.682±0.092    5.239±0.073   0.182±0.011
+ "VH"               1.29±0.71       5.6±1.4       5.4±1.2
+ "Others"         0.0584±0.0089    0.38±0.13    0.549±0.082
+ "Bkg Tot."       1724.3±5.6      411.5±2.9      42.1±5.7
+ "Significance"   0.2768±0.0017  0.4508±0.0053  1.505±0.096
+ "Combined Sig."     NaN±0.0      1.595±0.091     NaN±0.0
+ ```
+"""
 function significance_table(proc_names = ALL_TAGS; recreate=false)
     body = significance_matrix(proc_names; recreate)
     total_sig = body[1:1, :] #first row
