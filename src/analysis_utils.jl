@@ -102,10 +102,9 @@ multiple tags
 """
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
-function sumsumWeight(paths)
+function sumsumWeight(Rfiles)
     res = 0.0
-    for p in paths
-        r = ROOTFile(p)
+    for r in Rfiles
         if !haskey(r, "sumWeight")
             return 1.0
         end
@@ -114,14 +113,22 @@ function sumsumWeight(paths)
     return res
 end
 
-function _runwork(files, prog; kw...)
+function _runwork(files, prog=Progress(length(files), 0.1); kw...)
     println("processing $(length(files)) root files in total.")
     s = ThreadsX.map(files) do (sumWeight, F)
         next!(prog)
-        x = WVZAnalysis.main_looper(F, sumWeight; kw...)
+        x = main_looper(F, sumWeight; kw...)
         x
     end
     finish!(prog)
+    return foldl((.+), s)
+end
+
+function _runwork_pmap(files; kw...)
+    println("processing $(length(files)) root files in total.")
+    s = @showprogress pmap(files) do (sumWeight, F)
+        main_looper(F, sumWeight; kw...)
+    end
     return foldl((.+), s)
 end
 
@@ -142,19 +149,24 @@ function shapesys(tag, shape_variation; scouting=false, kw...)
     return _runwork(files, prog; shape_variation, isdata, kw...)
 end
 
-function sfsys(tag; scouting=false, kw...)
+function prep_sfsys(tag; scouting=false)
     println("$tag (SF)")
     dirs = root_dirs(tag; variation = "sf")
 
-    isdata = (lowercase(tag) == "data")
     if scouting
         @info "scounting"
         dirs = first(dirs, 2)
     end
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.1)
     files = mapreduce(vcat, dirs) do d
         sfsys_dir(d; scouting)
     end
+    files
+end
+
+function sfsys(tag; scouting=false, kw...)
+    isdata = (lowercase(tag) == "data")
+    files = prep_sfsys(tag)
+    prog = Progress(length(files), 0.1)
     return _runwork(files, prog; isdata, kw...)
 end
 
@@ -164,8 +176,13 @@ function sfsys_dir(dir_path; scouting = false)
         @info "scounting"
         files = first(files, 2)
     end
-    sumsum = sumsumWeight(files)
-    return (sumsum .=> files)
+    Rfiles = ROOTFile.(files)
+    sumsum = sumsumWeight(Rfiles)
+    if occursin(r"346645|346646|346647", dir_path)
+        @show dir_path
+        sumsum *= 2.745e-4
+    end
+    return (sumsum .=> Rfiles)
 end
 
 function arrow_making(tag)

@@ -12,8 +12,8 @@ function significance(signal, bkg)
     return Sig ± err
 end
 
-function significance_matrix(proc_names; recreate)
-    M = mapreduce(vcat, proc_names) do tag
+function significance_matrix(; recreate)
+    Ms = map(ALL_TAGS) do tag
         ## re-make
         if recreate
             res = WVZAnalysis.sfsys(tag; NN_hist=true)
@@ -22,15 +22,22 @@ function significance_matrix(proc_names; recreate)
             #load from serialization
             res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
         end
-        N = nbins(res[:DF__NN__NOMINAL])
-        hists = rebin.([res[:SFinZ__NN__NOMINAL], res[:SFnoZ__NN__NOMINAL], res[:DF__NN__NOMINAL]], N)
+    end
+    significance_matrix(Ms)
+end
+
+function significance_matrix(Ms)
+    res = mapreduce(vcat, Ms) do M
+        N = nbins(M[:DF__NN__NOMINAL])
+        hists = rebin.([M[:SFinZ__NN__NOMINAL], M[:SFnoZ__NN__NOMINAL], M[:DF__NN__NOMINAL]], N)
         permutedims(hists) 
     end
-    M
+    res
 end
 
 """
-    significance_table(proc_names = ALL_TAGS; recreate=false)
+    significance_table(; recreate=false)
+    significance_table(significance_matrix(); recreate=false)
 
     ## Example
 
@@ -54,8 +61,12 @@ julia> M = significance_table()
  "Combined Sig."     NaN±0.0      1.595±0.091     NaN±0.0
  ```
 """
-function significance_table(proc_names = ALL_TAGS; recreate=false)
-    body = significance_matrix(proc_names; recreate)
+function significance_table(; recreate=false)
+    body = significance_matrix(ALL_TAGS; recreate)
+    significance_table(body)
+end
+
+function significance_table(body::Matrix; recreate=false)
     total_sig = body[1:1, :] #first row
     total_bkg = mapreduce(sum, hcat, eachcol(body[2:end, :])) #2:end row
     sig_errors = significance.(total_sig, total_bkg)
@@ -68,7 +79,7 @@ function significance_table(proc_names = ALL_TAGS; recreate=false)
         [NaN combined_sig NaN]
     ]
 
-    full_body = [collect(proc_names)
+    full_body = [collect(ALL_TAGS)
                  "Bkg Tot."
                  "Significance"
                  "Combined Sig.";; full_nums
