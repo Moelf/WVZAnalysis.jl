@@ -102,9 +102,10 @@ multiple tags
 """
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
-function sumsumWeight(Rfiles)
+function sumsumWeight(paths)
     res = 0.0
-    for r in Rfiles
+    for p in paths
+        r = ROOTFile(p)
         if !haskey(r, "sumWeight")
             return 1.0
         end
@@ -176,13 +177,12 @@ function sfsys_dir(dir_path; scouting = false)
         @info "scounting"
         files = first(files, 2)
     end
-    Rfiles = ROOTFile.(files)
-    sumsum = sumsumWeight(Rfiles)
+    sumsum = sumsumWeight(files)
     if occursin(r"346645|346646|346647", dir_path)
         @show dir_path
         sumsum *= 2.745e-4
     end
-    return (sumsum .=> Rfiles)
+    return (sumsum .=> files)
 end
 
 function arrow_making(tag)

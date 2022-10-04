@@ -1,4 +1,4 @@
-function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, wgt_factor = 1.0, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
+function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
     dict, pusher! = if arrow_making
         arrow_init(), push!
     elseif NN_hist
@@ -32,14 +32,13 @@ function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false,
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
-        wgt = evt.weight / sumWeight * wgt_factor
+        wgt = evt.weight / sumWeight
         abs(best_Z_mass - Z_m) > 20 && continue
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
         ### end of initial_cut
         !(evt.passTrig) && continue
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
-        wgt = evt.weight / sumWeight * wgt_factor
         v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
 
         v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)

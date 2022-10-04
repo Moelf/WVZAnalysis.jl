@@ -22,6 +22,7 @@ function significance_matrix(; recreate)
             #load from serialization
             res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
         end
+        return res
     end
     significance_matrix(Ms)
 end
@@ -62,7 +63,7 @@ julia> M = significance_table()
  ```
 """
 function significance_table(; recreate=false)
-    body = significance_matrix(ALL_TAGS; recreate)
+    body = significance_matrix(; recreate)
     significance_table(body)
 end
 
