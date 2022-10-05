@@ -30,12 +30,3 @@ function Bjet_Cut(evt)
     end
     return b_wgt, btag_veto
 end
-
-function main_looper(s::AbstractString, sumWeight; kws...) 
-    main_looper(ROOTFile(s), sumWeight; kws...)
-end
-
-function main_looper(r::ROOTFile, sumWeight; shape_variation = "NOMINAL", kw...)
-    mytree = LazyTree(r, "tree_" * shape_variation)
-    return main_looper(mytree, sumWeight; shape_variation, kw...)
-end

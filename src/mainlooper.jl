@@ -1,15 +1,24 @@
-function main_looper(mytree, sumWeight; shape_variation="NOMINAL", sfsyst=false, NN_hist=false, arrow_making=false, isdata=false, controlregion=:none)
+function main_looper(task::AnalysisTask)
+    (; path, sumWeight, arrow_making, NN_hist, isdata, 
+     shape_variation, controlregion, sfsys) = task
+
     dict, pusher! = if arrow_making
         arrow_init(), push!
     elseif NN_hist
-        NN_hist_init(; sfsyst, shape_variation), push!
+        NN_hist_init(; sfsys, shape_variation), push!
     else
         kinematic_hist_init(), push!
     end
+    mytree = LazyTree(path, "tree_" * shape_variation)
 
-    model, scales, minimums = init_ONNX()
     BDT_predict = init_BDT()
+    main_looper(mytree, sumWeight, dict, pusher!, 
+                BDT_predict, shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
+end
 
+# above is function barrier
+function main_looper(mytree, sumWeight, dict, pusher!, BDT_predict, 
+        shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
     for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta

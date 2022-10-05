@@ -1,5 +1,5 @@
 function arrow_init()
-    return Dictionary(Dict(
+    return Dict(
                            #lep 1,2,3,4 ordered by decending Pt 
                            :SR => Int32[],
                            :Nlep => Int32[],
@@ -78,5 +78,5 @@ function arrow_init()
                            :jet_btagCont_2 => Int32[],
                            :jet_btagCont_3 => Int32[],
                            :jet_btagCont_4 => Int32[],
-                          ))
+                          )
 end
