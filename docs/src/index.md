@@ -1,7 +1,7 @@
 ## The Big Picture
 
-- like any Julia package, the source files are under [/src](./src)
-- meta data files such as tag -> DSID mapping are under [/config](./config)
+- like any Julia package, the source files are under [/src](https://github.com/Moelf/WVZAnalysis.jl/tree/master/src)
+- meta data files such as tag -> DSID mapping are under [/config](https://github.com/Moelf/WVZAnalysis.jl/tree/master/config)
 - the main looper is called `main_looper()` and all the real actions are in there
 - the atomic unit of runnable task is called `AnalysisTask`
 
@@ -32,7 +32,7 @@ These functions/types and the direct callees are more documented than the rest o
 ```@docs
 AnalysisTask
 prep_tasks
-main_looper
+main_looper(t::AnalysisTask)
 arrow_making
 hist_root
 hist_root_pmap

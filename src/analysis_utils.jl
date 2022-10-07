@@ -34,7 +34,8 @@ const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
         controlregion::Symbol = :none
     end
 
-Fully define a task to be run on an executor, via `main_looper(job::AnalysisTask)`
+Fully define a task to be run on an executor, via `main_looper(job::AnalysisTask)`; see also
+[`main_looper`](@ref).
 """
 struct AnalysisTask
     path::String
@@ -179,6 +180,12 @@ function _runwork(tasks; mapper=map)
     return mergewith((.+), s...)
 end
 
+"""
+    prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
+    
+For construction a collection of `AnalysisTask`s given tag and job options,
+check out [@AnalysisTask]
+"""
 function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     dirs = if shape_variation == "NOMINAL"
         root_dirs(tag; variation = "sf")
@@ -229,6 +236,12 @@ function dir_to_paths(dir_path; scouting = false)
     return paths
 end
 
+"""
+    arrow_making(tasks)
+
+Take a collection of tasks, run them via `ThreadsX.map` and `mergewith(append!)`.
+Returns a `dict` of vectors representing the datas after filtering.
+"""
 function arrow_making(tasks)
     res = ThreadsX.map(tasks) do t
         main_looper(t)
@@ -238,6 +251,13 @@ function arrow_making(tasks)
 end
 
 
+"""
+    hist_root(tag; output_dir, kw...)
+
+return a dictionary of all systematics histograms for a given tag, the `output_dir` is
+used to store Julia Serializatio files as a backup measure, and for later conversion to
+`.root` histograms via `PythonCall.jl` + `uproot`.
+"""
 function hist_root(tag; output_dir, kw...)
     p = output_dir
     if !isdir(p)
@@ -252,6 +272,12 @@ function hist_root(tag; output_dir, kw...)
     Hs
 end
 
+"""
+    hist_root_pmap(tag; output_dir, kw...)
+
+Similar to the one without `pmap`, except uses pmap for everything. Checkout `ClusterManager.jl`
+and be sure to have a handful of workers before running this.
+"""
 function hist_root_pmap(tag; output_dir, kw...)
     p = output_dir
     if !isdir(p)

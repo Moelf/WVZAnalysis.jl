@@ -1,3 +1,19 @@
+"""
+    main_looper(task::AnalysisTask)
+
+The main entry point for running the main looper for a given task, it's done in steps:
+
+1. destruct all the options from the `task` (see [`AnalysisTask`](@ref)):
+```
+    (; path, sumWeight, arrow_making, NN_hist, isdata, 
+     shape_variation, controlregion, sfsys) = task
+```
+2. determine what output `dict` to prepare.
+3. call the lower level `main_looper` (which has all arguments explicitly laied out)
+
+This function also serves a [function barrier](https://docs.julialang.org/en/v1/manual/performance-tips/#kernel-functions)
+for performance reason, because we have so many different behaviors in the same loop function.
+"""
 function main_looper(task::AnalysisTask)
     (; path, sumWeight, arrow_making, NN_hist, isdata, 
      shape_variation, controlregion, sfsys) = task
