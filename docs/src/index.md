@@ -9,8 +9,7 @@
 Say we're trying to produce BDT score histogram for process `ZZ`:
 
 1. call `prep_tasks("ZZ")` (this returns a vector of `AnalysisTasks`)
-2. run `main_looper` over each of the tasks, you can use threading, or distributed
-parallelism.
+2. run `main_looper` over each of the tasks, you can use threading, or distributed parallelism.
 3. each `main_looper` would would return a dictionary of histograms
 4. `merge` all the result (`reduce(mergewith(+), results_from_3)`)
 5. profit

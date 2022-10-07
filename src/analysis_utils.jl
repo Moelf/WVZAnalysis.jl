@@ -23,7 +23,7 @@ const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.mod
 
 
 """
-    Base.@kwdef struct AnalysisTask
+    struct AnalysisTask
         path::String
         sumWeight::Float64
         isdata::Bool = false
@@ -34,8 +34,39 @@ const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.mod
         controlregion::Symbol = :none
     end
 
-Fully define a task to be run on an executor, via `main_looper(job::AnalysisTask)`; see also
+Fully define a task to be run on an executor, by calling `main_looper(task::AnalysisTask)`; see also
 [`main_looper`](@ref).
+
+You most likely don't need to construct it manually, see [`prep_tasks`](@ref):
+
+# Example
+
+```
+julia> prep_tasks("Signal") |> first
+path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.363507.e6379_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896106._000001.ANALYSIS.root"
+sumWeight=13812.79638671875
+isdata=false
+NN_hist=true
+arrow_making=false
+sfsys=false
+shape_variation="NOMINAL"
+controlregion=:none
+
+julia> prep_tasks("Signal"; arrow_making=true) |> first
+ERROR: can't do produce arrow and NN histograms at the same time
+Stacktrace:
+...
+..
+
+julia> prep_tasks("Signal"; arrow_making=true, NN_hist=false) |> first
+path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.363507.e6379_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896106._000001.ANALYSIS.root"
+sumWeight=13812.79638671875
+isdata=false
+NN_hist=false
+arrow_making=true
+sfsys=false
+shape_variation="NOMINAL"
+controlregion=:none
 """
 struct AnalysisTask
     path::String
@@ -52,10 +83,8 @@ struct AnalysisTask
         shapesys = (shape_variation != "NOMINAL")
         if sfsys && shapesys
             error("can't do SF systematic and Shape systematic at the same time")
-        elseif arrow_making && sfsys
-            error("can't do produce arrow and SF systematic at the same time")
-        elseif arrow_making && shapesys
-            error("can't do produce arrow and shape systematic at the same time")
+        elseif arrow_making && NN_hist
+            error("can't produce arrow and NN histograms at the same time")
         else
             new(path, sumWeight, isdata, NN_hist, arrow_making, sfsys, shape_variation, controlregion)
         end
@@ -186,7 +215,23 @@ end
     prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     
 For construction a collection of `AnalysisTask`s given tag and job options,
-check out [@AnalysisTask]
+check out [@AnalysisTask].
+
+All posible tags can be found in `config/file_list.json`, there's also a convinient
+variable `WVZAnalysis.ALL_TAGS` that keeps track of all processes in an exclusive mannar:
+```
+julia> WVZAnalysis.ALL_TAGS
+("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
+```
+
+# Example
+
+```
+julia> all_nominal_tasks = mapreduce(prep_tasks, vcat, WVZAnalysis.ALL_TAGS);
+
+julia> length(all_nominal_tasks)
+768
+```
 """
 function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     dirs = if shape_variation == "NOMINAL"
