@@ -40,9 +40,8 @@ end
     significance_table(; recreate=false)
     significance_table(significance_matrix(); recreate=false)
 
-    ## Example
-
-```julia-repl
+# Examples
+```
 julia> M = significance_table()
 15×4 Matrix{Any}:
  "Signal"         11.509±0.068     9.18±0.1     10.14±0.14
@@ -60,7 +59,8 @@ julia> M = significance_table()
  "Bkg Tot."       1724.3±5.6      411.5±2.9      42.1±5.7
  "Significance"   0.2768±0.0017  0.4508±0.0053  1.505±0.096
  "Combined Sig."     NaN±0.0      1.595±0.091     NaN±0.0
- ```
+
+```
 """
 function significance_table(; recreate=false)
     body = significance_matrix(; recreate)
@@ -88,6 +88,14 @@ function significance_table(body::Matrix; recreate=false)
 end
 
 const sigtable_fmt = (v, i, j) -> v isa Number ? "$(round(Measurements.value(v); digits=2)) ± $(round(Measurements.uncertainty(v); digits=2))" : v
+
+"""
+    print_sigtable(full_table)
+
+Takes the output of [`significance_table`](@ref) and pretty print it:
+
+# Example
+"""
 print_sigtable(full_table) = pretty_table(
     full_table;
     header = ["", "SF-inZ", "SF-noZ", "DF"], 

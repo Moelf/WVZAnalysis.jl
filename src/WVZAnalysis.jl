@@ -6,7 +6,8 @@ using ONNX, ONNX.Umlaut
 
 using Distributed
 
-export sfsys, significance_table, print_sigtable, shapesys, arrow_making
+export AnalysisTask
+export prep_tasks, main_looper, significance_table, print_sigtable, arrow_making, hist_root, hist_root_pmap
 
 include("./analysis_utils.jl")
 include("./constants.jl")
