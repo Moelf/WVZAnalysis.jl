@@ -36,15 +36,37 @@ const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
 
 Fully define a task to be run on an executor, via `main_looper(job::AnalysisTask)`
 """
-Base.@kwdef struct AnalysisTask
+struct AnalysisTask
     path::String
     sumWeight::Float64
-    isdata::Bool = false
-    NN_hist::Bool = true
-    arrow_making::Bool = false
-    sfsys::Bool = false
-    shape_variation::String = "NOMINAL"
-    controlregion::Symbol = :none
+    isdata::Bool
+    NN_hist::Bool
+    arrow_making::Bool
+    sfsys::Bool
+    shape_variation::String
+    controlregion::Symbol
+    function AnalysisTask(; path, sumWeight, isdata=false, NN_hist=true,
+            arrow_making=false, sfsys=false, shape_variation="NOMINAL",
+            controlregion=:none)
+        shapesys = (shape_variation != "NOMINAL")
+        if sfsys && shapesys
+            error("can't do SF systematic and Shape systematic at the same time")
+        elseif arrow_making && sfsys
+            error("can't do produce arrow and SF systematic at the same time")
+        elseif arrow_making && shapesys
+            error("can't do produce arrow and shape systematic at the same time")
+        else
+            new(path, sumWeight, isdata, NN_hist, arrow_making, sfsys, shape_variation, controlregion)
+        end
+    end
+end
+
+function Base.show(io::IO, a::AnalysisTask)
+    for n in propertynames(a)
+        print(io, "$n=")
+        show(io, getproperty(a, n))
+        println(io)
+    end
 end
 
 function init_BDT()
@@ -207,62 +229,44 @@ function dir_to_paths(dir_path; scouting = false)
     return paths
 end
 
-function arrow_making(tag)
-    dirs = root_dirs(tag; variation = "sf")
-    isdata = lowercase(tag) == "data"
-    prog = Progress(mapreduce(length∘readdir, +, dirs), 0.5)
-    println("$tag starting:")
-    res = ThreadsX.map(dirs) do d
-        arrow_making_dir(d; prog, isdata)
+function arrow_making(tasks)
+    res = ThreadsX.map(tasks) do t
+        main_looper(t)
     end
     foldl((x,y) -> mergewith(append!, x, y), res)
     first(res)
 end
 
-function arrow_making_dir(dir_path; prog = nothing, isdata, kw...)
-    files = filter!(endswith(".root"), readdir(dir_path; join = true))
-    sumWeight = sumsumWeight(files)
-    res = map(files) do F
-        r = WVZAnalysis.main_looper(F, sumWeight; arrow_making=true, isdata, kw...)
-        if prog !== nothing 
-            next!(prog)
-        end
-        r
-    end
-    foldl((x,y) -> append!.(x,y), res)
-    first(res)
-end
 
-
-function hist_root(tag; kw...)
-    p = "/data/jiling/WVZ/v2.3_hists_uproot_oct4"
+function hist_root(tag; output_dir, kw...)
+    p = output_dir
     if !isdir(p)
         mkdir(p)
     end
     sf1 = sfsys(tag; NN_hist=true, kw...);
     shape_list = [WVZAnalysis.shapesys(tag, variation; NN_hist=true, kw...)
-                  for variation in WVZAnalysis.SHAPE_TREE_NAMES
+                  for variation in SHAPE_TREE_NAMES
             ]
     Hs = merge(sf1, shape_list...)
     serialize(joinpath(p, "$(tag).jlserialize"), Hs)
     Hs
 end
 
-function hist_root_pmap(tag; kw...)
-    p = "/data/jiling/WVZ/v2.3_hists_uproot_oct6NN"
+function hist_root_pmap(tag; output_dir, kw...)
+    p = output_dir
     if !isdir(p)
         mkdir(p)
     end
     @show nworkers()
     @info "-------------- $tag SF begin ------------ "
-    sf_tasks = WVZAnalysis.prep_tasks(tag)
+    sf_tasks = prep_tasks(tag)
     println("$(length(sf_tasks)) tasks in total")
     sf_list = @showprogress pmap(main_looper, sf_tasks)
     sf_hist = reduce(mergewith(+), sf_list)
 
     @info "-------------- $tag shapes begin ------------ "
-    shape_tasks = mapreduce(shape_variation -> WVZAnalysis.prep_tasks(tag; shape_variation), vcat,
-                                 WVZAnalysis.SHAPE_TREE_NAMES)
+    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation), vcat,
+                                 SHAPE_TREE_NAMES)
     sort!(shape_tasks; by = x->x.path)
     println("$(length(shape_tasks)) tasks in total")
     shape_list = @showprogress pmap(main_looper, shape_tasks)

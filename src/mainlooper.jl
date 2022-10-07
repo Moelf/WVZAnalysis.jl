@@ -198,7 +198,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, #model,
             NN_score > 0.1 && continue
         end
 
-        if NN_hist
+        if NN_hist && !arrow_making
             SR_prefix = if sr_SF_inZ
                 :SFinZ
             elseif sr_SF_noZ
