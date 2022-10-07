@@ -172,12 +172,14 @@ function sumsumWeight(dir_path)::Float64
     return res
 end
 
-function _runwork(tasks; mapper=map)
+function _runwork(tasks; mapper=ThreadsX.map)
     println("processing $(length(tasks)) root files in total.")
-    s = @showprogress map(tasks) do t
+    P = Progress(length(tasks))
+    s = mapper(tasks) do t
         main_looper(t)
+        next!(P)
     end
-    return mergewith((.+), s...)
+    return reduce(mergewith(+), s)
 end
 
 """

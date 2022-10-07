@@ -15,12 +15,15 @@ end
 function significance_matrix(; recreate)
     Ms = map(ALL_TAGS) do tag
         ## re-make
-        if recreate
-            res = WVZAnalysis.sfsys(tag; NN_hist=true)
+        res = if recreate
+            tasks = prep_tasks(tag; NN_hist=true)
+            s = ThreadsX.map(main_looper, tasks)
+            res = reduce(mergewith(+), s)
             serialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize", res)
+            res
         else
             #load from serialization
-            res = deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
+            deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
         end
         return res
     end
