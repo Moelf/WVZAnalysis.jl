@@ -5,7 +5,7 @@ extract dsid from a file name, used to match with systematic files
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-# const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
+const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
 
  function init_ONNX()
      model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
@@ -78,7 +78,7 @@ end
 
 function NN_calc(model, scales, minimums, NN_input)::Float32
     @. NN_input = fma(NN_input, scales, minimums)
-    return Umlaut.play!(model, NN_input)[1]
+    return Ghost.play!(model, NN_input)[1]
 end
 
 

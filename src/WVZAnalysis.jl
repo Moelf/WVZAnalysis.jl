@@ -2,7 +2,7 @@ module WVZAnalysis
 
 using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, LazyArrays, JSON3, ProgressMeter
 using ThreadsX, FoldsThreads, XGBoost
-using ONNX, ONNX.Umlaut 
+using ONNX, ONNX.Ghost 
 
 using Distributed
 
