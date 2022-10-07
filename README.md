@@ -1,5 +1,8 @@
 # WVZAnalysis
 
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://moelf.github.io/WVZAnalysis.jl/dev)
+
+
 ## Words for Devs
 1. Main looper logic is in `src/mainlooper.jl`
 2. Cuts logic for different channel are in `src/{ZZZ, WZZ, WWZ}.jl`
