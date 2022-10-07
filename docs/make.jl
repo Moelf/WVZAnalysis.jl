@@ -8,13 +8,12 @@ makedocs(;
     ),
     pages=[
         "Introduction" => "index.md",
-        "APIs" => "internalapis.md",
     ],
-    repo="https://gitlab.cern.ch/jiling/WVZAnalysis.jl/blob/{commit}{path}#L{line}",
+    repo="https://github.com/Moelf/WVZAnalysis.jl/blob/{commit}{path}#L{line}",
     sitename="WVZAnalysis.jl",
-    authors="Jerry Ling and contributors",
+    authors="Harvard ATLAS",
 )
 
 deploydocs(;
-    repo="gitlab.cern.ch/jiling/WVZAnalysis.jl",
+    repo="https://github.com/Moelf/WVZAnalysis.jl",
 )
