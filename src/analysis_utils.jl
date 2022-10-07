@@ -4,23 +4,23 @@ extract dsid from a file name, used to match with systematic files
 """
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 
-# const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
+const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
+# const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
 
-# function init_ONNX()
-#     model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
-#     rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
-#     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
-#                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
-#                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
-#                 "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
-#                 "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
-#                 "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
-#     return model, 
-#     [rescaling_parameters["scale"][name] for name in NN_order],
-#     [rescaling_parameters["min"][name] for name in NN_order]
-# end
-#
+ function init_ONNX()
+     model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
+     rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
+     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
+                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
+                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
+                 "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
+                 "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
+                 "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
+     return model, 
+     [rescaling_parameters["scale"][name] for name in NN_order],
+     [rescaling_parameters["min"][name] for name in NN_order]
+ end
+
 
 """
     Base.@kwdef struct AnalysisTask
@@ -53,12 +53,10 @@ function init_BDT()
 end
 
 
-# function NN_calc(model, scales, minimums, NN_input)::Float32
-#     @inbounds @simd for i in eachindex(NN_input, scales, minimums)
-#         NN_input[i] = fma(NN_input[i], scales[i], minimums[i])
-#     end
-#     return Ghost.play!(model, NN_input)[1]
-# end
+function NN_calc(model, scales, minimums, NN_input)::Float32
+    @. NN_input = fma(NN_input, scales, minimums)
+    return Umlaut.play!(model, NN_input)[1]
+end
 
 
 """
@@ -251,7 +249,7 @@ function hist_root(tag; kw...)
 end
 
 function hist_root_pmap(tag; kw...)
-    p = "/data/jiling/WVZ/v2.3_hists_uproot_oct5"
+    p = "/data/jiling/WVZ/v2.3_hists_uproot_oct6NN"
     if !isdir(p)
         mkdir(p)
     end
@@ -265,6 +263,7 @@ function hist_root_pmap(tag; kw...)
     @info "-------------- $tag shapes begin ------------ "
     shape_tasks = mapreduce(shape_variation -> WVZAnalysis.prep_tasks(tag; shape_variation), vcat,
                                  WVZAnalysis.SHAPE_TREE_NAMES)
+    sort!(shape_tasks; by = x->x.path)
     println("$(length(shape_tasks)) tasks in total")
     shape_list = @showprogress pmap(main_looper, shape_tasks)
     shape_hist = reduce(mergewith(+), shape_list)

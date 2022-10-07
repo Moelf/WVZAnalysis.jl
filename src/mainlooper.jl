@@ -11,14 +11,15 @@ function main_looper(task::AnalysisTask)
     end
     mytree = LazyTree(path, "tree_" * shape_variation)
 
-    BDT_predict = init_BDT()
-    main_looper(mytree, sumWeight, dict, pusher!, 
-                BDT_predict, shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
+    # model = init_BDT()
+    main_looper(mytree, sumWeight, dict, pusher!, #model,
+                shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
 end
 
 # above is function barrier
-function main_looper(mytree, sumWeight, dict, pusher!, BDT_predict, 
+function main_looper(mytree, sumWeight, dict, pusher!, #model, 
         shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
+    model, scales, minimums = init_ONNX()
     for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
@@ -160,36 +161,36 @@ function main_looper(mytree, sumWeight, dict, pusher!, BDT_predict,
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         if controlregion == :ZZ || NN_hist
-            # NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
-            #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
-            #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
-            #             Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
-            #             leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
-            #             sr_SF_inZ, sr_SF_noZ, sr_DF]
-            BDT_input = Float32[METSig,
-                         other_mass,
-                         SR,
-                         HT,
-                         MET,
-                         total_HT,
-                         Njet,
-                         pt_4l,
-                         Wlep2_pt,
-                         mass_4l,
-                         Wlep1_pt,
-                         Wlep2_dphi,
-                         Wlep1_dphi,
-                         Zlep1_pt,
-                         Wlep1_eta,
-                         leptonic_HT,
-                         Wlep2_eta,
-                         Zcand_mass,
-                         METPhi,
-                         Zlep2_pt,
-                        ]
+            NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+                        Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
+                        Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
+                        Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
+                        leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
+                        sr_SF_inZ, sr_SF_noZ, sr_DF]
+            # BDT_input = Float32[METSig,
+            #              other_mass,
+            #              SR,
+            #              HT,
+            #              MET,
+            #              total_HT,
+            #              Njet,
+            #              pt_4l,
+            #              Wlep2_pt,
+            #              mass_4l,
+            #              Wlep1_pt,
+            #              Wlep2_dphi,
+            #              Wlep1_dphi,
+            #              Zlep1_pt,
+            #              Wlep1_eta,
+            #              leptonic_HT,
+            #              Wlep2_eta,
+            #              Zcand_mass,
+            #              METPhi,
+            #              Zlep2_pt,
+            #             ]
 
-            # NN_score = NN_calc(model, scales, minimums, NN_input)
-            NN_score = BDT_predict(BDT_input)
+            NN_score = NN_calc(model, scales, minimums, NN_input)
+            # NN_score = model(BDT_input)
         end
 
         if controlregion == :ZZ
