@@ -41,7 +41,7 @@ You most likely don't need to construct it manually, see [`prep_tasks`](@ref):
 
 # Example
 
-```
+```julia
 julia> prep_tasks("Signal") |> first
 path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.363507.e6379_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896106._000001.ANALYSIS.root"
 sumWeight=13812.79638671875
@@ -115,7 +115,7 @@ end
 
 """
 
-Example:
+# Example:
 
 ```julia
 julia> dd = Dict(:Nlep => [], :lep1_pid=>[]);
@@ -221,14 +221,15 @@ check out [@AnalysisTask].
 
 All posible tags can be found in `config/file_list.json`, there's also a convinient
 variable `WVZAnalysis.ALL_TAGS` that keeps track of all processes in an exclusive mannar:
-```
+
+# Example
+
+```julia
 julia> WVZAnalysis.ALL_TAGS
 ("Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
 ```
 
-# Example
-
-```
+```julia
 julia> all_nominal_tasks = mapreduce(prep_tasks, vcat, WVZAnalysis.ALL_TAGS);
 
 julia> length(all_nominal_tasks)

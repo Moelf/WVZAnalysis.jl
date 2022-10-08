@@ -44,7 +44,8 @@ end
     significance_table(significance_matrix(); recreate=false)
 
 # Examples
-```
+
+```julia
 julia> M = significance_table()
 15×4 Matrix{Any}:
  "Signal"         11.509±0.068     9.18±0.1     10.14±0.14
@@ -98,7 +99,8 @@ const sigtable_fmt = (v, i, j) -> v isa Number ? "$(round(Measurements.value(v);
 Takes the output of [`significance_table`](@ref) and pretty print it:
 
 # Example
-```
+
+```julia
 julia> M = significance_table(; recreate=true);
 
 julia> print_sigtable(M)
