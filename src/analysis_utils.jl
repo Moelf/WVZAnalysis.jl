@@ -313,11 +313,32 @@ function hist_root(tag; output_dir, kw...)
     if !isdir(p)
         mkdir(p)
     end
-    sf1 = sfsys(tag; NN_hist=true, kw...);
-    shape_list = [WVZAnalysis.shapesys(tag, variation; NN_hist=true, kw...)
-                  for variation in SHAPE_TREE_NAMES
-            ]
-    Hs = merge(sf1, shape_list...)
+    @show Threads.nthreads()
+    @info "-------------- $tag SF begin ------------ "
+    sf_tasks = prep_tasks(tag)
+    println("$(length(sf_tasks)) tasks in total")
+    p1 = Progress(length(sf_tasks))
+    sf_list = ThreadsX.map(sf_tasks) do t
+        x = main_looper(t)
+        next!(p1)
+        x
+    end
+    sf_hist = reduce(mergewith(+), sf_list)
+
+    @info "-------------- $tag shapes begin ------------ "
+    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation), vcat,
+                                 SHAPE_TREE_NAMES)
+    sort!(shape_tasks; by = x->x.path)
+    println("$(length(shape_tasks)) tasks in total")
+    p2 = Progress(length(shape_tasks))
+    shape_list = ThreadsX.map(shape_tasks) do t
+        x = main_looper(t)
+        next!(p2)
+        x
+    end
+    shape_hist = reduce(mergewith(+), shape_list)
+
+    Hs = merge(sf_hist, shape_hist)
     serialize(joinpath(p, "$(tag).jlserialize"), Hs)
     Hs
 end

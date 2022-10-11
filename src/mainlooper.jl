@@ -21,9 +21,9 @@ function main_looper(task::AnalysisTask)
     dict, pusher! = if arrow_making
         arrow_init(), push!
     elseif NN_hist
-        NN_hist_init(; sfsys, shape_variation), push!
+        NN_hist_init(; sfsys, shape_variation), atomic_push!
     else
-        kinematic_hist_init(), push!
+        kinematic_hist_init(), atomic_push!
     end
     mytree = LazyTree(path, "tree_" * shape_variation)
 
@@ -36,7 +36,8 @@ end
 function main_looper(mytree, sumWeight, dict, pusher!, model, 
         shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
     # model, scales, minimums = init_ONNX()
-    for evt in mytree
+    # for evt in mytree
+    Threads.@threads for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
