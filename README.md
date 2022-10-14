@@ -1,6 +1,8 @@
 # WVZAnalysis
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://moelf.github.io/WVZAnalysis.jl/dev)
+[![DOI](https://zenodo.org/badge/388537649.svg)](https://zenodo.org/badge/latestdoi/388537649)
+
 
 ## Words for Devs
 If you're familiar with basic Julia workflow, check out the [documentation](https://moelf.github.io/WVZAnalysis.jl/dev)
