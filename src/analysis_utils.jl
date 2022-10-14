@@ -293,11 +293,14 @@ Take a collection of tasks, run them via `ThreadsX.map` and `mergewith(append!)`
 Returns a `dict` of vectors representing the datas after filtering.
 """
 function arrow_making(tasks)
+    p = Progress(length(tasks))
     res = ThreadsX.map(tasks) do t
-        main_looper(t)
+        x = main_looper(t)
+        next!(p)
+        x
     end
-    foldl((x,y) -> mergewith(append!, x, y), res)
-    first(res)
+    
+    return reduce(mergewith(append!), res)
 end
 
 
