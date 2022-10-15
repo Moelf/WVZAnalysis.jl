@@ -5,7 +5,8 @@ extract dsid from a file name, used to match with systematic files
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
+# const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
+const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/bestbdt.model")
 
  function init_ONNX()
      model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
@@ -103,7 +104,7 @@ end
 
 function init_BDT()
     bst = Booster(; model_file = BDT_MODEL_PATH[])
-    return ary->Float32(predict(bst, permutedims(ary))[1])
+    return ary->Float32(1.0 - predict(bst, permutedims(ary))[1])
 end
 
 
@@ -372,6 +373,7 @@ function hist_root_pmap(tag; output_dir, kw...)
     shape_list = @showprogress pmap(main_looper, shape_tasks)
     shape_hist = reduce(mergewith(+), shape_list)
 
+    # Hs = sf_hist
     Hs = merge(sf_hist, shape_hist)
     serialize(joinpath(p, "$(tag)_pmap.jlserialize"), Hs)
     Hs

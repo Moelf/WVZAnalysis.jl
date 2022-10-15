@@ -19,5 +19,6 @@ include("./arrow_exfiltration.jl")
 include("./hist_exfiltration.jl")
 include("./mainlooper.jl")
 include("./reporting_utils.jl")
+include("./python_utils.jl")
 
 end

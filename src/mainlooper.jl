@@ -177,33 +177,18 @@ function main_looper(mytree, sumWeight, dict, pusher!, model,
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         if controlregion == :ZZ || NN_hist
-            # NN_input = [HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
+            # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
             #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
             #             Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
             #             leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
             #             sr_SF_inZ, sr_SF_noZ, sr_DF]
-            BDT_input = Float32[METSig,
-                         other_mass,
-                         SR,
-                         HT,
-                         MET,
-                         total_HT,
-                         Njet,
-                         pt_4l,
-                         Wlep2_pt,
-                         mass_4l,
-                         Wlep1_pt,
-                         Wlep2_dphi,
-                         Wlep1_dphi,
-                         Zlep1_pt,
-                         Wlep1_eta,
-                         leptonic_HT,
-                         Wlep2_eta,
-                         Zcand_mass,
-                         METPhi,
-                         Zlep2_pt,
-                        ]
+            BDT_input = Float32[Zlep1_phi, leptonic_HT, Zlep2_phi, MET, Zlep1_dphi,
+              Wlep1_pt, total_HT, Zlep2_dphi, Zlep2_eta, Njet, Wlep2_eta,
+              Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt, METPhi,
+              mass_4l, pt_4l, Wlep2_phi, Zlep1_eta, HT, Wlep1_eta,
+              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, sr_SF_inZ,
+              sr_SF_noZ, sr_DF]
 
             # NN_score = NN_calc(model, scales, minimums, NN_input)
             NN_score = model(BDT_input)
