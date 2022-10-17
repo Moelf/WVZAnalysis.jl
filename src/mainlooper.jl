@@ -27,15 +27,17 @@ function main_looper(task::AnalysisTask)
     end
     mytree = LazyTree(path, "tree_" * shape_variation)
 
-    model = init_BDT()
-    main_looper(mytree, sumWeight, dict, pusher!, model,
+    models = init_BDT()
+    # models = init_ONNX()
+    main_looper(mytree, sumWeight, dict, pusher!, models,
                 shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
 end
 
 # above is function barrier
-function main_looper(mytree, sumWeight, dict, pusher!, model, 
+function main_looper(mytree, sumWeight, dict, pusher!, models, 
         shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
-    # model, scales, minimums = init_ONNX()
+    model = models # for BDT
+    # model, scales, minimums = models #for NN
     for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
@@ -187,8 +189,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, model,
               Wlep1_pt, total_HT, Zlep2_dphi, Zlep2_eta, Njet, Wlep2_eta,
               Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt, METPhi,
               mass_4l, pt_4l, Wlep2_phi, Zlep1_eta, HT, Wlep1_eta,
-              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, sr_SF_inZ,
-              sr_SF_noZ, sr_DF]
+              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, SR]
 
             # NN_score = NN_calc(model, scales, minimums, NN_input)
             NN_score = model(BDT_input)

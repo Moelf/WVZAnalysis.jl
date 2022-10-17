@@ -1,5 +1,51 @@
 using PrettyTables, Serialization, Measurements
 
+"""
+    rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
+
+Take two `Hist1D`, try to find the best bin-edges for rebinning, given these two conditions:
+
+- a metric to maximize, `s` and `b` are signal counts and background counts in each new bin
+- `atleast` specifcy the minimal number of `s+b` in each newly formed bin
+
+`from` keyword argument can be used to specifcy the direction of the scan, defautls to `:right` assuming
+the high-er end of the histogram is signal-like and one of the histograms is monotonic.
+
+The function returns the values of new bin-edges including both ends (of course, the ends are identical to before).
+"""
+function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
+    _binedges = binedges(S)
+    _binedges == binedges(B) || error("Bin edges aren't compatible")
+    Scounts = bincounts(S)
+    Bcounts = bincounts(B)
+    if from == :right
+        Scounts = reverse(Scounts)
+        BCounts = reverse(Bcounts)
+    end
+
+    tempS = tempB = 0.0
+    score = -Inf
+    newEdges = [1] # first edge at the beginning
+    for i = 2:lastindex(_binedges) # one more edge than bins
+        s = Scounts[i-1]
+        b = Bcounts[i-1]
+        tempS += s
+        tempB += b
+
+        tempS + tempB < atleast && continue # not enough statistics
+        newScore = by(tempS, tempB)
+        if newScore < score # score starts to drop
+            push!(newEdges, i)
+            tempS = s
+            tempB = b
+            score = -Inf
+        end
+        score = newScore
+    end
+    push!(newEdges, lastindex(_binedges))
+    return _binedges[newEdges]
+end
+
 function significance(signal, bkg)
     S = integral(signal)
     B = integral(bkg)
