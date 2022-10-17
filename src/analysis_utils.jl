@@ -6,7 +6,7 @@ const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
 # const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
-const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/bestbdt.model")
+const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-10-17_jerry.model")
 
  function init_ONNX()
      model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
