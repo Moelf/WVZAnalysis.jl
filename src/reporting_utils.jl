@@ -35,7 +35,7 @@ function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
         tempS + tempB < atleast && continue # not enough statistics
         newScore = by(tempS, tempB)
         if newScore < score # score starts to drop
-            push!(newEdges, i)
+            push!(newEdges, i-1)
             tempS = s
             tempB = b
             score = -Inf
