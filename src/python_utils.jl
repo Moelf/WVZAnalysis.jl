@@ -1,3 +1,5 @@
+delete!(ENV, "PYTHONPATH")
+delete!(ENV, "PYTHONHOME")
 using PythonCall, Serialization
 
 function make_TH1D(h)
