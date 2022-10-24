@@ -282,7 +282,7 @@ function dir_to_paths(dir_path; scouting = false)
     paths = filter!(endswith(".root"), readdir(dir_path; join = true))
     if scouting
         @info "scounting"
-        paths = first(files, 2)
+        paths = first(paths, 2)
     end
     return paths
 end
@@ -359,22 +359,21 @@ function hist_root_pmap(tag; output_dir, kw...)
         mkdir(p)
     end
     @show nworkers()
-    @info "-------------- $tag SF begin ------------ "
+    # @info "-------------- $tag SF begin ------------ "
     sf_tasks = prep_tasks(tag)
-    println("$(length(sf_tasks)) tasks in total")
-    sf_list = @showprogress pmap(main_looper, sf_tasks)
-    sf_hist = reduce(mergewith(+), sf_list)
+    # println("$(length(sf_tasks)) tasks in total")
+    # sf_list = @showprogress pmap(main_looper, sf_tasks)
+    # sf_hist = reduce(mergewith(+), sf_list)
 
-    @info "-------------- $tag shapes begin ------------ "
+    @info "-------------- $tag SF + shapes ------------ "
     shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation), vcat,
                                  SHAPE_TREE_NAMES)
     sort!(shape_tasks; by = x->x.path)
-    println("$(length(shape_tasks)) tasks in total")
-    shape_list = @showprogress pmap(main_looper, shape_tasks)
-    shape_hist = reduce(mergewith(+), shape_list)
+    all_tasks = vcat(sf_tasks, shape_tasks)
+    println("$(length(all_tasks)) tasks in total")
+    all_list = @showprogress pmap(main_looper, all_tasks)
+    Hs = reduce(mergewith(+), all_list)
 
-    # Hs = sf_hist
-    Hs = merge(sf_hist, shape_hist)
     serialize(joinpath(p, "$(tag)_pmap.jlserialize"), Hs)
     Hs
 end
