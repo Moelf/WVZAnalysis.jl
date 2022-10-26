@@ -104,7 +104,7 @@ end
 
 function init_BDT()
     bst = Booster(; model_file = BDT_MODEL_PATH[])
-    return ary->Float32(1.0 - predict(bst, permutedims(ary))[1])
+    return ary->Float32(predict(bst, permutedims(ary))[1])
 end
 
 
