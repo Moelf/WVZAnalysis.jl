@@ -13,7 +13,7 @@ the high-er end of the histogram is signal-like and one of the histograms is mon
 
 The function returns the values of new bin-edges including both ends (of course, the ends are identical to before).
 """
-function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
+function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> sqrt(2((s+b)*ln(1+s/b)-s ))) 
     _binedges = binedges(S)
     _binedges == binedges(B) || error("Bin edges aren't compatible")
     Scounts = bincounts(S)

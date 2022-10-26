@@ -282,7 +282,7 @@ end
 function dir_to_paths(dir_path; scouting = false)
     paths = filter!(endswith(".root"), readdir(dir_path; join = true))
     if scouting
-        @info "scounting"
+        @info "scouting"
         paths = first(paths, 2)
     end
     return paths
