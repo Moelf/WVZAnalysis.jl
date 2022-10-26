@@ -204,16 +204,6 @@ function sumsumWeight(dir_path)::Float64
     return res
 end
 
-function _runwork(tasks; mapper=ThreadsX.map)
-    println("processing $(length(tasks)) root files in total.")
-    P = Progress(length(tasks))
-    s = mapper(tasks) do t
-        main_looper(t)
-        next!(P)
-    end
-    return reduce(mergewith(+), s)
-end
-
 """
     prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     
@@ -287,21 +277,23 @@ function dir_to_paths(dir_path; scouting = false)
     return paths
 end
 
+_merger(x::AbstractArray, y::AbstractArray) = append!(x,y)
+_merger(x::FHist.Hist1D, y::FHist.Hist1D) = +(x,y)
 """
-    arrow_making(tasks)
+    run_tasks(tasks; mapper=ThreadsX.map)
 
-Take a collection of tasks, run them via `ThreadsX.map` and `mergewith(append!)`.
-Returns a `dict` of vectors representing the datas after filtering.
+Take a collection of tasks, run them via `ThreadsX.map`.
+Returns a `dict` of vectors or histograms depending on task options.
 """
-function arrow_making(tasks)
+function run_tasks(tasks)
     p = Progress(length(tasks))
-    res = ThreadsX.map(tasks) do t
+    res = mapper(tasks) do t
         x = main_looper(t)
         next!(p)
         x
     end
     
-    return reduce(mergewith(append!), res)
+    return reduce(mergewith(_merger), res)
 end
 
 
