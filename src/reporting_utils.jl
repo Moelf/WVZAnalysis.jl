@@ -66,11 +66,11 @@ function significance_matrix(; recreate)
             tasks = prep_tasks(tag; NN_hist=true)
             s = ThreadsX.map(main_looper, tasks)
             res = reduce(mergewith(+), s)
-            serialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize", res)
+            serialize(joinpath(ANALYSIS_DIR[],"$(tag).jlserialize"), res)
             res
         else
             #load from serialization
-            deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
+            deserialize(joinpath(ANALYSIS_DIR[],"$(tag).jlserialize"))
         end
         return res
     end
