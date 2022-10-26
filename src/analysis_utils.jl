@@ -3,6 +3,7 @@
 extract dsid from a file name, used to match with systematic files
 """
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
+const ANALYSIS_DIR = Ref("/data/jiling/WVZ/v2.3_hists")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
 # const BDT_MODEL_PATH = Ref("/data/jiling/WVZ/v2.3-beta2_arrow/xgb_2022-09-27.model")
@@ -281,7 +282,7 @@ end
 function dir_to_paths(dir_path; scouting = false)
     paths = filter!(endswith(".root"), readdir(dir_path; join = true))
     if scouting
-        @info "scounting"
+        @info "scouting"
         paths = first(paths, 2)
     end
     return paths

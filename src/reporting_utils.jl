@@ -12,6 +12,8 @@ Take two `Hist1D`, try to find the best bin-edges for rebinning, given these two
 the high-er end of the histogram is signal-like and one of the histograms is monotonic.
 
 The function returns the values of new bin-edges including both ends (of course, the ends are identical to before).
+
+The metric can also be replaced by the more accurate `sqrt(2*((s + b) * log(1 + s/b) - s ))`.
 """
 function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
     _binedges = binedges(S)
@@ -66,11 +68,11 @@ function significance_matrix(; recreate)
             tasks = prep_tasks(tag; NN_hist=true)
             s = ThreadsX.map(main_looper, tasks)
             res = reduce(mergewith(+), s)
-            serialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize", res)
+            serialize(joinpath(ANALYSIS_DIR[],"$(tag).jlserialize"), res)
             res
         else
             #load from serialization
-            deserialize("/data/jiling/WVZ/v2.3_hists/$(tag).jlserialize")
+            deserialize(joinpath(ANALYSIS_DIR[],"$(tag).jlserialize"))
         end
         return res
     end
