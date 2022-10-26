@@ -12,8 +12,10 @@ Take two `Hist1D`, try to find the best bin-edges for rebinning, given these two
 the high-er end of the histogram is signal-like and one of the histograms is monotonic.
 
 The function returns the values of new bin-edges including both ends (of course, the ends are identical to before).
+
+The metric can also be replaced by the more accurate `sqrt(2*((s + b) * log(1 + s/b) - s ))`.
 """
-function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> sqrt(2((s+b)*ln(1+s/b)-s ))) 
+function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b)) 
     _binedges = binedges(S)
     _binedges == binedges(B) || error("Bin edges aren't compatible")
     Scounts = bincounts(S)
