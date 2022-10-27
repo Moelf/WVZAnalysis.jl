@@ -18,15 +18,3 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv)
     return Z_pair, setdiff(1:4, Z_pair), M
 end
 
-function Bjet_Cut(evt)
-    b = evt.v_j_btag77
-    w = evt.v_j_wgt_btag77
-
-    b_wgt = one(eltype(w))
-    btag_veto = true
-    for (b, w) in zip(b, w)
-        b > 0 && (btag_veto = false)
-        b_wgt *= w
-    end
-    return b_wgt, btag_veto
-end

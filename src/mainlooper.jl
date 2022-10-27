@@ -27,7 +27,7 @@ function main_looper(task::AnalysisTask)
     end
     mytree = LazyTree(path, "tree_" * shape_variation)
 
-    models = init_BDT()
+    models = arrow_making ? nothing : init_BDT()
     # models = init_ONNX()
     main_looper(mytree, sumWeight, dict, pusher!, models,
                 shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
@@ -102,25 +102,44 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         ) = evt
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
         v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
-        
-        pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
-                                                 Z_pair,
-                                                 W_pair,
-                                                 v_l_pid,
-                                                 v_l_order,
-                                                 v_l_wgtLoose,
-                                                 v_l_medium,
-                                                 v_l_wgtMedium,
-                                                 v_l_tlv,
-                                                 v_l_passIso,
-                                                 v_l_wgtIso,
-                                                 wgt,
-                                                 isdata
-                                                )
+
+        pass_WWZ_cut, chisq, W_id = WWZ_Cut(
+                                            Z_pair,
+                                            W_pair,
+                                            v_l_pid,
+                                            v_l_order,
+                                            v_l_tlv
+                                           )
+        for i in 1:2
+            ### for Z leptons isolation: Loose(e) and Loose(mu)
+            ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]] ) && (pass_WWZ_cut = false)
+            ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]] ) && (pass_WWZ_cut = false)
+
+            ### for W leptons, require medium quality and PLIV tight
+            ( !v_l_medium[W_pair[i]] ) && (pass_WWZ_cut = false)
+            isdata && break
+            # quality weights
+            wgt *= v_l_wgtLoose[Z_pair[i]] * v_l_wgtMedium[W_pair[i]]
+            # iso weights
+            wgt *= v_l_wgtIso[Z_pair[i]]
+        end
+
         !pass_WWZ_cut && continue
+        
         # in `b_veto == true` means we've passed the criterial,
         # which means we didn't see a b-jet
-        b_wgt, b_veto = Bjet_Cut(evt)
+        b_wgt, b_veto = begin
+            b = evt.v_j_btag77
+            w = evt.v_j_wgt_btag77
+
+            b_wgt = one(eltype(w))
+            btag_veto = true
+            for (b, w) in zip(b, w)
+                b > 0 && (btag_veto = false)
+                b_wgt *= w
+            end
+            b_wgt, btag_veto
+        end
         (; MET, METSig, METPhi) = evt
         MET /= 1000
         if controlregion == :ttZ
@@ -178,7 +197,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
-        if controlregion == :ZZ || NN_hist
+        if !arrow_making && (controlregion == :ZZ || NN_hist)
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
             #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
