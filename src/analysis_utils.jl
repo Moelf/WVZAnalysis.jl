@@ -379,3 +379,28 @@ function hist_root_pmap(tag; output_dir, kw...)
     Hs
 end
 
+"""
+    make_sfsys_wgt!(evt, wgt, nominal_branch, wgt_name, wgt_idx=1)
+
+1. use `wgt_name` to find alternative branch names
+2. For every variation, make a new entry in `wgt::Dict`.
+3. Also multiply nominal for `wgt[:NOMINAL]`
+
+"""
+function make_sfsys_wgt!(evt, wgt, nominal_branch, wgt_name, wgt_idx=1; pre_mask=Colon())
+    orig_wgt = wgt[:NOMINAL]
+    variation_names = SF_BRANCH_DICT[wgt_name]
+    for vn in variation_names, ud in (:__1up, :__1down)
+        key_name = Symbol(vn, ud)
+        full_name = Symbol(wgt_name, :__, key_name)
+        var_branch = getproperty(evt, full_name)
+        var_wgt = reduce(*, @views(var_branch[pre_mask][wgt_idx]))
+        # default get orig_wgt when first access
+        wgt[key_name] = get(wgt, key_name, orig_wgt) * var_wgt
+    end
+    nominal_new = reduce(*, @views(nominal_branch[pre_mask][wgt_idx]))
+    wgt[:NOMINAL] *= nominal_new
+end
+
+
+

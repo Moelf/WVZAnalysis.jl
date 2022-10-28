@@ -4,8 +4,12 @@ const ALL_TAGS = (SIG_TAGS..., BKG_TAGS...)
 const Z_m = 91.1876 # everything in GeV
 const e_mass = 0.51099885 / 1000
 const m_mass = 105.65837 / 1000
+const e_pliv = [:EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR]
+const m_pliv = [:MUON_EFF_ISO_SYS, :MUON_EFF_ISO_STAT]
 const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR]
+const e_recowgt_list = [:EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR]
 const m_wgt_list = [:MUON_EFF_RECO_STAT_LOWPT, :MUON_EFF_RECO_SYS, :MUON_EFF_RECO_SYS_LOWPT, :MUON_EFF_RECO_STAT]
+const m_ttva_list = [:MUON_EFF_TTVA_STAT, :MUON_EFF_TTVA_SYS]
 const btag_wgt_list = [
                        :FT_EFF_Eigen_C_1,
                        :FT_EFF_Eigen_B_0,
@@ -21,12 +25,18 @@ const btag_wgt_list = [
                       ]
 
 const SF_BRANCH_DICT = Dict(
-     :v_e_wgtLoose  => e_wgt_list,
-     :v_e_wgtMedium => e_wgt_list,
-     :v_m_wgtLoose  => m_wgt_list,
-     :v_m_wgtMedium => m_wgt_list,
-     :v_j_wgt_btag77 => btag_wgt_list,
-    )
+                            :v_m_wgtIso_PflowLoose_VarRad => m_pliv,
+                            :v_e_wgtIso_PLImprovedTight_Medium => e_pliv,
+                            :v_e_wgtIso_Loose_VarRad_LooseBLayer => e_pliv,
+                            :v_m_wgtIso_PLImprovedTight => m_pliv,
+                            :v_e_wgtReco  => e_recowgt_list,
+                            :v_e_wgtLoose  => e_wgt_list,
+                            :v_e_wgtMedium => e_wgt_list,
+                            :v_m_wgtLoose  => m_wgt_list,
+                            :v_m_wgtMedium => m_wgt_list,
+                            :v_j_wgt_btag77 => btag_wgt_list,
+                            :v_m_wgtTTVA => m_ttva_list,
+                           )
 const SHAPE_TREE_NAMES = [
                           "EG_RESOLUTION_ALL__1down",
                           "EG_RESOLUTION_ALL__1up",

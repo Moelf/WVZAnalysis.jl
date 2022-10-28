@@ -18,3 +18,10 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv)
     return Z_pair, setdiff(1:4, Z_pair), M
 end
 
+function Bjet_cut(evt; sfsys=false)
+    b = evt.v_j_btag77
+    b_idx = b .> 0
+    has_b = any(b_idx)
+
+    return b_idx, has_b
+end
