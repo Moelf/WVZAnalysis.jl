@@ -360,14 +360,10 @@ function hist_root_pmap(tag; output_dir, kw...)
         mkdir(p)
     end
     @show nworkers()
-    # @info "-------------- $tag SF begin ------------ "
-    sf_tasks = prep_tasks(tag)
-    # println("$(length(sf_tasks)) tasks in total")
-    # sf_list = @showprogress pmap(main_looper, sf_tasks)
-    # sf_hist = reduce(mergewith(+), sf_list)
 
     @info "-------------- $tag SF + shapes ------------ "
-    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation), vcat,
+    sf_tasks = prep_tasks(tag; sfsys=true)
+    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation, sfsys=false), vcat,
                                  SHAPE_TREE_NAMES)
     sort!(shape_tasks; by = x->x.path)
     all_tasks = vcat(sf_tasks, shape_tasks)
@@ -379,3 +375,28 @@ function hist_root_pmap(tag; output_dir, kw...)
     Hs
 end
 
+"""
+    make_sfsys_wgt!(evt, wgt, nominal_branch, wgt_name, wgt_idx=1)
+
+1. use `wgt_name` to find alternative branch names
+2. For every variation, make a new entry in `wgt::Dict`.
+3. Also multiply nominal for `wgt[:NOMINAL]`
+
+"""
+function make_sfsys_wgt!(evt, wgt, wgt_name, wgt_idx=1; pre_mask=Colon(), sfsys)
+    orig_wgt = wgt[:NOMINAL]
+    nominal_branch = getproperty(evt, wgt_name)
+    if sfsys
+        variation_names = SF_BRANCH_DICT[wgt_name]
+        for vn in variation_names, ud in (:__1up, :__1down)
+            key_name = Symbol(vn, ud)
+            full_name = Symbol(wgt_name, :__, key_name)
+            var_branch = getproperty(evt, full_name)
+            var_wgt = reduce(*, @views(var_branch[pre_mask][wgt_idx]))
+            # default get orig_wgt when first access
+            wgt[key_name] = get(wgt, key_name, orig_wgt) * var_wgt
+        end
+    end
+    nominal_new = reduce(*, @views(nominal_branch[pre_mask][wgt_idx]))
+    wgt[:NOMINAL] *= nominal_new
+end

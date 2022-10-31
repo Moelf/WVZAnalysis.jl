@@ -27,7 +27,7 @@ function main_looper(task::AnalysisTask)
     end
     mytree = LazyTree(path, "tree_" * shape_variation)
 
-    models = init_BDT()
+    models = arrow_making ? nothing : init_BDT()
     # models = init_ONNX()
     main_looper(mytree, sumWeight, dict, pusher!, models,
                 shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
@@ -47,6 +47,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
+        Nelec = count(e_etamask)
+        Nmuon = Nlep - Nelec
         (; v_e_pt, v_e_eta, v_e_phi,
          v_m_pt, v_m_eta, v_m_phi) = evt
         v_e_pt = v_e_pt ./ 1000
@@ -60,7 +62,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
-        wgt = evt.weight / sumWeight
         abs(best_Z_mass - Z_m) > 20 && continue
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -69,15 +70,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
 
-        v_l_wgt = Vcat(evt.v_e_wgtLoose, evt.v_m_wgtLoose)
-        if isdata
-            v_l_wgtLoose = v_l_wgtLoose = fill(1.f0, length(v_l_tlv))
-        else
-            v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
-            v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
-            wgt *= @views reduce(*, evt.v_e_wgtReco[e_etamask])
-            wgt *= @views reduce(*, evt.v_m_wgtTTVA[m_etamask])
-        end
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
         if controlregion == :Zjets
@@ -89,54 +81,99 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         else
             failed_PLTight = any(==(false), v_l_PLTight[W_pair])
             failed_PLTight && continue
-            if !isdata
-                v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-                wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
-            end
         end
         (;
          v_e_passIso_Loose_VarRad,
          v_m_passIso_PflowLoose_VarRad,
-         v_e_wgtIso_Loose_VarRad_LooseBLayer,
-         v_m_wgtIso_PflowLoose_VarRad,
         ) = evt
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
-        v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
-        
-        pass_WWZ_cut, wgt, chisq, W_id = WWZ_Cut(
-                                                 Z_pair,
-                                                 W_pair,
-                                                 v_l_pid,
-                                                 v_l_order,
-                                                 v_l_wgtLoose,
-                                                 v_l_medium,
-                                                 v_l_wgtMedium,
-                                                 v_l_tlv,
-                                                 v_l_passIso,
-                                                 v_l_wgtIso,
-                                                 wgt,
-                                                 isdata
-                                                )
+
+        pass_WWZ_cut, chisq, W_id = WWZ_Cut(
+                                            Z_pair,
+                                            W_pair,
+                                            v_l_pid,
+                                            v_l_order,
+                                            v_l_tlv
+                                           )
+        for i in 1:2
+            ### for Z leptons isolation: Loose(e) and Loose(mu)
+            ( (abs(v_l_pid[Z_pair[i]]) == 11) && !v_l_passIso[Z_pair[i]] ) && (pass_WWZ_cut = false)
+            ( (abs(v_l_pid[Z_pair[i]]) == 13) && !v_l_passIso[Z_pair[i]] ) && (pass_WWZ_cut = false)
+
+            ### for W leptons, require medium quality and PLIV tight
+            ( !v_l_medium[W_pair[i]] ) && (pass_WWZ_cut = false)
+            isdata && break
+        end
+
         !pass_WWZ_cut && continue
-        # in `b_veto == true` means we've passed the criterial,
-        # which means we didn't see a b-jet
-        b_wgt, b_veto = Bjet_Cut(evt)
+        
+        b_idx, has_b = Bjet_cut(evt)
         (; MET, METSig, METPhi) = evt
         MET /= 1000
         if controlregion == :ttZ
             MET < 20 && continue
             (other_mass > 80 && other_mass < 100) && continue
-            b_veto && continue
+            !has_b && continue
         else
-            !b_veto && continue
+            has_b && continue
         end
-        wgt *= b_wgt
-        # Distinguish 3 signal channel: inZ, noZ, DF
+        wgt = Dict(:NOMINAL => 1 / sumWeight)
+        make_sfsys_wgt!(evt, wgt, 
+                        :weight; sfsys, pre_mask=1)
+        make_sfsys_wgt!(evt, wgt, 
+                        :v_j_wgt_btag77, b_idx; sfsys)
+
         l3, l4 = W_pair
         # force wgt to 1 for data
         if isdata
             wgt = 1.0
+        else
+            # I hate indexing
+            Z_pair_in_e = filter(<=(Nelec), Z_pair)
+            Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
+            W_pair_in_e = filter(<=(Nelec), W_pair)
+            W_pair_in_m = filter!(>(0), W_pair .- Nelec)
+
+            make_sfsys_wgt!(evt, wgt, 
+                            :v_e_wgtReco, e_etamask; sfsys)
+            make_sfsys_wgt!(evt, wgt, 
+                            :v_m_wgtTTVA, m_etamask; sfsys)
+            if controlregion!=:ZJets
+                # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], 
+                # evt.v_m_wgtIso_PLImprovedTight[m_etamask])
+                # wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
+                make_sfsys_wgt!(evt, wgt, 
+                                :v_e_wgtIso_PLImprovedTight_Medium, 
+                                W_pair_in_e; pre_mask = e_etamask, sfsys)
+                make_sfsys_wgt!(evt, wgt, 
+                                :v_m_wgtIso_PLImprovedTight, 
+                                W_pair_in_m; pre_mask = m_etamask, sfsys)
+            end
+            # quality weights
+            # v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
+            # v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
+            make_sfsys_wgt!(evt, wgt,
+                            :v_e_wgtLoose,
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt,
+                            :v_m_wgtLoose,
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt,
+                            :v_e_wgtMedium,
+                            W_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt,
+                            :v_m_wgtMedium,
+                            W_pair_in_m; pre_mask = m_etamask, sfsys)
+            # iso weights
+            # v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
+            make_sfsys_wgt!(evt, wgt,
+                            :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt,
+                            :v_m_wgtIso_PflowLoose_VarRad,
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
         end
+
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
         pt_1, pt_2, pt_3, pt_4 = pt.(@view v_l_tlv[v_l_order])
         eta_1, eta_2, eta_3, eta_4 = eta.(@view v_l_tlv[v_l_order])
@@ -178,7 +215,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
-        if controlregion == :ZZ || NN_hist
+        if !arrow_making && (controlregion == :ZZ || NN_hist)
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
             #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
@@ -208,7 +245,14 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             else
                 :DF
             end
-            pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score, wgt)
+            if sfsys
+                for k in keys(wgt)
+                    pusher!(dict[Symbol(SR_prefix, :__NN, :__, k)], NN_score, wgt[k])
+                end
+            else
+
+                pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score, wgt[:NOMINAL])
+            end
 
         elseif arrow_making
             jet_pt_1 = Njet < 1 ? 0.f0 : pt(v_j_tlv[v_j_order[1]])

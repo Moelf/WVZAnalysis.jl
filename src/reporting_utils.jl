@@ -60,13 +60,13 @@ function significance(signal, bkg)
     return Sig ± err
 end
 
-function significance_matrix(; recreate)
+function significance_matrix(; recreate, mapper=ThreadsX.map)
     Ms = map(ALL_TAGS) do tag
         ## re-make
         res = if recreate
             @info tag
             tasks = prep_tasks(tag; NN_hist=true)
-            s = ThreadsX.map(main_looper, tasks)
+            s = mapper(main_looper, tasks)
             res = reduce(mergewith(+), s)
             serialize(joinpath(ANALYSIS_DIR[],"$(tag).jlserialize"), res)
             res
