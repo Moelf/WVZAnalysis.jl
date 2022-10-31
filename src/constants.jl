@@ -24,7 +24,9 @@ const btag_wgt_list = [
                        :FT_EFF_Eigen_Light_1,
                       ]
 
+const weight_sf = [:JET_JvtEfficiency, :PRW_DATASF]
 const SF_BRANCH_DICT = Dict(
+                            :weight => weight_sf,
                             :v_m_wgtIso_PflowLoose_VarRad => m_pliv,
                             :v_e_wgtIso_PLImprovedTight_Medium => e_pliv,
                             :v_e_wgtIso_Loose_VarRad_LooseBLayer => e_pliv,

@@ -117,9 +117,11 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         else
             has_b && continue
         end
-        wgt = Dict(:NOMINAL => evt.weight / sumWeight)
+        wgt = Dict(:NOMINAL => 1 / sumWeight)
         make_sfsys_wgt!(evt, wgt, 
-                        evt.v_j_wgt_btag77, :v_j_wgt_btag77, b_idx)
+                        :weight; sfsys, pre_mask=1)
+        make_sfsys_wgt!(evt, wgt, 
+                        :v_j_wgt_btag77, b_idx; sfsys)
 
         l3, l4 = W_pair
         # force wgt to 1 for data
@@ -133,51 +135,43 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             W_pair_in_m = filter!(>(0), W_pair .- Nelec)
 
             make_sfsys_wgt!(evt, wgt, 
-                            evt.v_e_wgtReco, :v_e_wgtReco, e_etamask)
+                            :v_e_wgtReco, e_etamask; sfsys)
             make_sfsys_wgt!(evt, wgt, 
-                            evt.v_m_wgtTTVA, :v_m_wgtTTVA, m_etamask)
+                            :v_m_wgtTTVA, m_etamask; sfsys)
             if controlregion!=:ZJets
                 # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], 
                 # evt.v_m_wgtIso_PLImprovedTight[m_etamask])
                 # wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
                 make_sfsys_wgt!(evt, wgt, 
-                                evt.v_e_wgtIso_PLImprovedTight_Medium, 
                                 :v_e_wgtIso_PLImprovedTight_Medium, 
-                                W_pair_in_e; pre_mask = e_etamask)
+                                W_pair_in_e; pre_mask = e_etamask, sfsys)
                 make_sfsys_wgt!(evt, wgt, 
-                                evt.v_m_wgtIso_PLImprovedTight, 
                                 :v_m_wgtIso_PLImprovedTight, 
-                                W_pair_in_m; pre_mask = m_etamask)
+                                W_pair_in_m; pre_mask = m_etamask, sfsys)
             end
             # quality weights
             # v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
             # v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_e_wgtLoose,
                             :v_e_wgtLoose,
-                            Z_pair_in_e; pre_mask = e_etamask)
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_m_wgtLoose,
                             :v_m_wgtLoose,
-                            Z_pair_in_m; pre_mask = m_etamask)
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_e_wgtMedium,
                             :v_e_wgtMedium,
-                            W_pair_in_e; pre_mask = e_etamask)
+                            W_pair_in_e; pre_mask = e_etamask, sfsys)
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_m_wgtMedium,
                             :v_m_wgtMedium,
-                            W_pair_in_m; pre_mask = m_etamask)
+                            W_pair_in_m; pre_mask = m_etamask, sfsys)
             # iso weights
             # v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_e_wgtIso_Loose_VarRad_LooseBLayer, 
                             :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
-                            Z_pair_in_e; pre_mask = e_etamask)
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
             make_sfsys_wgt!(evt, wgt,
-                            evt.v_m_wgtIso_PflowLoose_VarRad,
                             :v_m_wgtIso_PflowLoose_VarRad,
-                            Z_pair_in_m; pre_mask = m_etamask)
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
         end
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
