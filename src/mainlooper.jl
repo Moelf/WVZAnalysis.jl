@@ -117,16 +117,16 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         else
             has_b && continue
         end
-        wgt = Dict(:NOMINAL => 1 / sumWeight)
-        make_sfsys_wgt!(evt, wgt, 
+        wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
+        make_sfsys_wgt!(evt, wgt_dict,
                         :weight; sfsys, pre_mask=1)
-        make_sfsys_wgt!(evt, wgt, 
+        make_sfsys_wgt!(evt, wgt_dict, 
                         :v_j_wgt_btag77, b_idx; sfsys)
 
         l3, l4 = W_pair
         # force wgt to 1 for data
         if isdata
-            wgt = 1.0
+            wgt_dict[:NOMINAL] = 1.0
         else
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
@@ -134,42 +134,42 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             W_pair_in_e = filter(<=(Nelec), W_pair)
             W_pair_in_m = filter!(>(0), W_pair .- Nelec)
 
-            make_sfsys_wgt!(evt, wgt, 
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtReco, e_etamask; sfsys)
-            make_sfsys_wgt!(evt, wgt, 
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtTTVA, m_etamask; sfsys)
             if controlregion!=:ZJets
                 # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], 
                 # evt.v_m_wgtIso_PLImprovedTight[m_etamask])
                 # wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
-                make_sfsys_wgt!(evt, wgt, 
+                make_sfsys_wgt!(evt, wgt_dict,
                                 :v_e_wgtIso_PLImprovedTight_Medium, 
                                 W_pair_in_e; pre_mask = e_etamask, sfsys)
-                make_sfsys_wgt!(evt, wgt, 
+                make_sfsys_wgt!(evt, wgt_dict,
                                 :v_m_wgtIso_PLImprovedTight, 
                                 W_pair_in_m; pre_mask = m_etamask, sfsys)
             end
             # quality weights
             # v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
             # v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtLoose,
                             Z_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtLoose,
                             Z_pair_in_m; pre_mask = m_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtMedium,
                             W_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtMedium,
                             W_pair_in_m; pre_mask = m_etamask, sfsys)
             # iso weights
             # v_l_wgtIso =  @views Vcat(v_e_wgtIso_Loose_VarRad_LooseBLayer[e_etamask], v_m_wgtIso_PflowLoose_VarRad[m_etamask])
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
                             Z_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt,
+            make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtIso_PflowLoose_VarRad,
                             Z_pair_in_m; pre_mask = m_etamask, sfsys)
         end
@@ -215,6 +215,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
+        wgt = wgt_dict[:NOMINAL]
         if !arrow_making && (controlregion == :ZZ || NN_hist)
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
@@ -226,7 +227,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
               Wlep1_pt, total_HT, Zlep2_dphi, Zlep2_eta, Njet, Wlep2_eta,
               Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt, METPhi,
               mass_4l, pt_4l, Wlep2_phi, Zlep1_eta, HT, Wlep1_eta,
-              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, SR]
+              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, sr_SF_inZ,
+              sr_SF_noZ, sr_DF]
 
             # NN_score = NN_calc(model, scales, minimums, NN_input)
             NN_score = model(BDT_input)
@@ -246,8 +248,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 :DF
             end
             if sfsys
-                for k in keys(wgt)
-                    pusher!(dict[Symbol(SR_prefix, :__NN, :__, k)], NN_score, wgt[k])
+                for (k,v) in wgt_dict
+                    pusher!(dict[Symbol(SR_prefix, :__NN, :__, k)], NN_score, v)
                 end
             else
 
@@ -276,6 +278,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             jet_btagCont_2 = Njet < 2 ? -2 : v_j_btagCont[2]
             jet_btagCont_3 = Njet < 3 ? -2 : v_j_btagCont[3]
             jet_btagCont_4 = Njet < 4 ? -2 : v_j_btagCont[4]
+            mcGenWgt = first(evt.v_mcGenWgt)
             @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
@@ -283,7 +286,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, chisq, pt_4l, jet_pt_1,
             jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,
             jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
-            v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt
+            v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,
+            sr_SF_inZ, sr_SF_noZ, sr_DF
         else
             @fill_dict! dict wgt pusher! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 

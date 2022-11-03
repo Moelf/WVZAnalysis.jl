@@ -1,0 +1,9 @@
+[deps]
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+EvoTrees = "f6006082-12f8-11e9-0c9c-0d5d367ab1e5"
+FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
+MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
+WVZAnalysis = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"

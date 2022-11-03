@@ -2,6 +2,9 @@ function arrow_init()
     return Dict(
                            #lep 1,2,3,4 ordered by decending Pt 
                            :SR => Int32[],
+                           :sr_SF_inZ => Int32[],
+                           :sr_SF_noZ => Int32[],
+                           :sr_DF => Int32[],
                            :Nlep => Int32[],
                            :lep1_pid => Int32[], 
                            :lep2_pid => Int32[],
@@ -52,6 +55,7 @@ function arrow_init()
                            :chisq => Float32[],
                            :pt_4l => Float32[],
                            :wgt => Float64[],
+                           :mcGenWgt => Float32[],
                            :jet_pt_1 => Float32[],
                            :jet_pt_2 => Float32[],
                            :jet_pt_3 => Float32[],
