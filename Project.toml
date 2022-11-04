@@ -36,6 +36,7 @@ ProgressMeter = "^1.7"
 PythonCall = "0.9"
 ThreadsX = "0.1"
 UnROOT = "0.8"
+XGBoost = "2"
 julia = "1.7"
 
 [extras]
