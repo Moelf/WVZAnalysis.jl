@@ -82,5 +82,7 @@ function arrow_init()
                            :jet_btagCont_2 => Int32[],
                            :jet_btagCont_3 => Int32[],
                            :jet_btagCont_4 => Int32[],
+                           :wgt_PRW_DATASF__1up => Float32[],
+                           :wgt_PRW_DATASF__1down => Float32[],
                           )
 end
