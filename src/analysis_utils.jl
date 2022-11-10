@@ -395,6 +395,12 @@ function make_sfsys_wgt!(evt, wgt, wgt_name, wgt_idx=1; pre_mask=Colon(), sfsys)
             # default get orig_wgt when first access
             wgt[key_name] = get(wgt, key_name, orig_wgt) * var_wgt
         end
+        for key_name in keys(wgt)
+            key_name ∈ variation_names && continue
+            wgt[key_name] *= nominal_new
+        end
+    else
+        wgt[:NOMINAL] *= nominal_new
     end
-    wgt[:NOMINAL] *= nominal_new
+    nothing
 end
