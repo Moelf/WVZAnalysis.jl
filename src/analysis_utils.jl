@@ -103,7 +103,7 @@ function Base.show(io::IO, a::AnalysisTask)
 end
 
 function init_BDT()
-    bst = Booster(; model_file = BDT_MODEL_PATH[])
+    bst = XGBoost.Booster(XGBoost.DMatrix[],  model_file = BDT_MODEL_PATH[])
     return ary->Float32(predict(bst, permutedims(ary))[1])
 end
 
@@ -385,10 +385,10 @@ end
 function make_sfsys_wgt!(evt, wgt, wgt_name, wgt_idx=1; pre_mask=Colon(), sfsys)
     orig_wgt = wgt[:NOMINAL]
     nominal_branch = getproperty(evt, wgt_name)
+    nominal_new = reduce(*, @views(nominal_branch[pre_mask][wgt_idx]))
     if sfsys
         variation_names = SF_BRANCH_DICT[wgt_name]
-        for vn in variation_names, ud in (:__1up, :__1down)
-            key_name = Symbol(vn, ud)
+        for key_name in variation_names
             full_name = Symbol(wgt_name, :__, key_name)
             var_branch = getproperty(evt, full_name)
             var_wgt = reduce(*, @views(var_branch[pre_mask][wgt_idx]))
@@ -396,6 +396,5 @@ function make_sfsys_wgt!(evt, wgt, wgt_name, wgt_idx=1; pre_mask=Colon(), sfsys)
             wgt[key_name] = get(wgt, key_name, orig_wgt) * var_wgt
         end
     end
-    nominal_new = reduce(*, @views(nominal_branch[pre_mask][wgt_idx]))
     wgt[:NOMINAL] *= nominal_new
 end

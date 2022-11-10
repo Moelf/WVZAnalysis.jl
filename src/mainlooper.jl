@@ -279,6 +279,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             jet_btagCont_3 = Njet < 3 ? -2 : v_j_btagCont[3]
             jet_btagCont_4 = Njet < 4 ? -2 : v_j_btagCont[4]
             mcGenWgt = first(evt.v_mcGenWgt)
+            event = evt.event
             @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
@@ -287,7 +288,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,
             jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,
-            sr_SF_inZ, sr_SF_noZ, sr_DF
+            sr_SF_inZ, sr_SF_noZ, sr_DF, event
         else
             @fill_dict! dict wgt pusher! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
