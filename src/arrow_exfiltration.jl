@@ -2,6 +2,7 @@ function arrow_init()
     return Dict(
                            #lep 1,2,3,4 ordered by decending Pt 
                            :SR => Int32[],
+                           :event => UInt64[],
                            :sr_SF_inZ => Int32[],
                            :sr_SF_noZ => Int32[],
                            :sr_DF => Int32[],

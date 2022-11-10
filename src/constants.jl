@@ -4,12 +4,20 @@ const ALL_TAGS = (SIG_TAGS..., BKG_TAGS...)
 const Z_m = 91.1876 # everything in GeV
 const e_mass = 0.51099885 / 1000
 const m_mass = 105.65837 / 1000
-const e_pliv = [:EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR]
-const m_pliv = [:MUON_EFF_ISO_SYS, :MUON_EFF_ISO_STAT]
-const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR]
-const e_recowgt_list = [:EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR]
-const m_wgt_list = [:MUON_EFF_RECO_STAT_LOWPT, :MUON_EFF_RECO_SYS, :MUON_EFF_RECO_SYS_LOWPT, :MUON_EFF_RECO_STAT]
-const m_ttva_list = [:MUON_EFF_TTVA_STAT, :MUON_EFF_TTVA_SYS]
+function makeud(v)
+    res = Symbol[]
+    for each in v
+        push!(res, Symbol(each, :__1up))
+        push!(res, Symbol(each, :__1down))
+    end
+    return res
+end
+const e_pliv = [:EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR] |> makeud
+const m_pliv = [:MUON_EFF_ISO_SYS, :MUON_EFF_ISO_STAT] |> makeud
+const e_wgt_list = [:EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR] |> makeud
+const e_recowgt_list = [:EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR] |> makeud
+const m_wgt_list = [:MUON_EFF_RECO_STAT_LOWPT, :MUON_EFF_RECO_SYS, :MUON_EFF_RECO_SYS_LOWPT, :MUON_EFF_RECO_STAT] |> makeud
+const m_ttva_list = [:MUON_EFF_TTVA_STAT, :MUON_EFF_TTVA_SYS] |> makeud
 const btag_wgt_list = [
                        :FT_EFF_Eigen_C_1,
                        :FT_EFF_Eigen_B_0,
@@ -22,9 +30,9 @@ const btag_wgt_list = [
                        :FT_EFF_Eigen_C_0,
                        :FT_EFF_Eigen_Light_2,
                        :FT_EFF_Eigen_Light_1,
-                      ]
+                      ] |> makeud
 
-const weight_sf = [:JET_JvtEfficiency, :PRW_DATASF]
+const weight_sf = [:JET_JvtEfficiency, :PRW_DATASF] |> makeud
 const SF_BRANCH_DICT = Dict(
                             :weight => weight_sf,
                             :v_m_wgtIso_PflowLoose_VarRad => m_pliv,

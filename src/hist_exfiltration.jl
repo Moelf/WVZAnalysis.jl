@@ -8,8 +8,8 @@ function NN_hist_init(; sfsys, shape_variation)
 
         !sfsys && continue
         for (_,vs) in SF_BRANCH_DICT
-            for v in vs, ud in ("1up", "1down")
-                _dict[Symbol(n, :__, v, :__, ud)] = Hist1D(Float64; bins=0:0.01:1, overflow=true)
+            for v in vs
+                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins=0:0.01:1, overflow=true)
             end
         end
     end
