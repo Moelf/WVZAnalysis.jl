@@ -252,8 +252,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                     pusher!(dict[Symbol(SR_prefix, :__NN, :__, k)], NN_score, v)
                 end
             else
-
-                pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score, wgt[:NOMINAL])
+                pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score,
+                        wgt_dict[:NOMINAL])
             end
 
         elseif arrow_making
