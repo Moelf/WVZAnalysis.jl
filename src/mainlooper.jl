@@ -278,7 +278,11 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             jet_btagCont_2 = Njet < 2 ? -2 : v_j_btagCont[2]
             jet_btagCont_3 = Njet < 3 ? -2 : v_j_btagCont[3]
             jet_btagCont_4 = Njet < 4 ? -2 : v_j_btagCont[4]
-            mcGenWgt = first(evt.v_mcGenWgt)
+            mcGenWgt = if isdata
+                1.0
+            else
+                first(evt.v_mcGenWgt)
+            end
             event = evt.event
             @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
