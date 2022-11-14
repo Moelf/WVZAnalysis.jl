@@ -206,6 +206,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
         pt_4l = pt(sum(v_l_tlv))
 
+        MET_dPhi = LorentzVectorHEP.phi_mpi_pi(Z_phi - METPhi)
+
         sr_SF_inZ, sr_SF_noZ, sr_DF = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
             false, false, true
         elseif abs(other_mass - Z_m) < 20 # SF_inZ, already GeV
@@ -216,7 +218,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         wgt = wgt_dict[:NOMINAL]
-        if !arrow_making && (controlregion == :ZZ || NN_hist)
+        if !arrow_making && NN_hist
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
             #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
@@ -234,26 +236,30 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             NN_score = model(BDT_input)
         end
 
-        if controlregion == :ZZ
-            !sr_SF_inZ && continue
-            NN_score > 0.1 && continue
+        is_CR = begin
+            sr_SF_inZ &&
+            MET < 10 &&
+            Njet == 0
         end
 
         if NN_hist && !arrow_making
-            SR_prefix = if sr_SF_inZ
+            region_prefix = if sr_SF_inZ
                 :SFinZ
             elseif sr_SF_noZ
                 :SFnoZ
             else
                 :DF
             end
-            if sfsys
-                for (k,v) in wgt_dict
-                    pusher!(dict[Symbol(SR_prefix, :__NN, :__, k)], NN_score, v)
+            for (k,v) in wgt_dict
+                if is_CR
+                    pusher!(dict[Symbol(:CR, :__yield, :__, k)], NN_score, v)
+                else
+                    if k==:NOMINAL && shape_variation != "NOMINAL"
+                        k = shape_variation
+                    end
+                    pusher!(dict[Symbol(region_prefix, :__NN, :__, k)], NN_score, v)
+                    pusher!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
                 end
-            else
-                pusher!(dict[Symbol(SR_prefix, :__NN, :__, shape_variation)], NN_score,
-                        wgt_dict[:NOMINAL])
             end
 
         elseif arrow_making
@@ -286,7 +292,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             event = evt.event
             @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
-            METSig, METPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
+            METSig, METPhi, MET_dPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
             Zlep2_pt, Zlep2_eta, Zlep2_phi, Zlep2_dphi, Zlep2_pid, Wlep1_pt, Wlep1_eta, Wlep1_phi, Wlep1_dphi,
             Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, chisq, pt_4l, jet_pt_1,
             jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,

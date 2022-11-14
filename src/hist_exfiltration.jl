@@ -3,16 +3,39 @@ function NN_hist_init(; sfsys, shape_variation)
         error("can't do sf systematics and shape systematics at the same time")
     end
     _dict = Dict{Symbol, Hist1D}()
+    bins = 0:0.1:1
     for n in (:SFinZ__NN, :SFnoZ__NN, :DF__NN)
-        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins=0:0.01:1, overflow=true)
+        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
 
         !sfsys && continue
         for (_,vs) in SF_BRANCH_DICT
             for v in vs
-                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins=0:0.01:1, overflow=true)
+                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
             end
         end
     end
+    bins = 0:5:300
+    for n in (:SFinZ__MET, :SFnoZ__MET, :DF__MET)
+        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+
+        !sfsys && continue
+        for (_,vs) in SF_BRANCH_DICT
+            for v in vs
+                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
+            end
+        end
+    end
+    for n in (:CR__yield,)
+        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins=0:1, overflow=true)
+
+        !sfsys && continue
+        for (_,vs) in SF_BRANCH_DICT
+            for v in vs
+                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins=0:1, overflow=true)
+            end
+        end
+    end
+
     return _dict
 end
 

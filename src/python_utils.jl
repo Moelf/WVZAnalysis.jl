@@ -6,8 +6,8 @@ function make_TH1D(h)
     np = pyimport("numpy")
     pyhist = pyimport("hist")
 
-    hout = pyhist.Hist(pyhist.axis.Regular(100, 0, 1), storage=pyhist.storage.Weight())
     bc = bincounts(h)
+    hout = pyhist.Hist(pyhist.axis.Variable(np.array(binedges(h))), storage=pyhist.storage.Weight())
     va = h.sumw2
     hout[pybuiltins.Ellipsis] = np.stack([bc, va], axis=-1)
     return hout

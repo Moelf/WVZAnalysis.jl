@@ -30,6 +30,7 @@ function arrow_init()
                            :MET => Float32[],
                            :METSig => Float32[],
                            :METPhi => Float32[],
+                           :MET_dPhi => Float32[],
                            :leptonic_HT => Float32[],
                            :HT => Float32[],
                            :total_HT => Float32[],
