@@ -20,3 +20,17 @@ you may want to use `Manifest.toml` to keep exact versions of packages including
 
 - You should `]instantiate` or `]up` if you manually pulled this repo or the first time colneing it.
 
+
+## Real-time out-of-core processing
+```julia
+julia> using WVZAnalysis
+
+julia> using ClusterManagers, Distributed
+
+julia> addprocs(HTCManager(10); extrajdl=["+queue=\"short\""], exeflags = `-e 'include("/data/jiling/WVZ/init.jl")'`);
+Waiting for 10 workers: 1 2 3 4 5 6 7 8 9 10 .
+
+julia> foreach(WVZAnalysis.ALL_TAGS) do tag
+           WVZAnalysis.hist_root_pmap(tag; scouting=false, output_dir="/data/jiling/WVZ/v2.3_hists_uproot_nov14_andMET/");
+       end
+```
