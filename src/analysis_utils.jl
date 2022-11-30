@@ -6,7 +6,7 @@ const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 const ANALYSIS_DIR = Ref("/data/jiling/WVZ/v2.3_hists")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/bestbdt.model")
+const BDT_MODEL_PATH = Ref("/home/rjacobse/BDT/kfolding/")
 
  function init_ONNX()
      model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
@@ -21,6 +21,31 @@ const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/bestbdt.model")
      [rescaling_parameters["scale"][name] for name in NN_order],
      [rescaling_parameters["min"][name] for name in NN_order]
  end
+
+function init_BDT()
+    SFinZs = Tuple(
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "SFinZ$i.model"))
+              for i = 0:4
+             )
+    SFnoZs = Tuple(
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "SFnoZ$i.model"))
+              for i = 0:4
+             )
+    DFs = Tuple(
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "DF$i.model"))
+              for i = 0:4
+             )
+    return function f(ary; fold, region)
+        bst = if region == :SFinZ
+            SFinZs[fold]
+        elseif region == :SFnoZ
+            SFnoZs[fold]
+        elseif region == :DF
+            DFs[fold]
+        end
+        return Float32(predict(bst, permutedims(ary))[1])
+    end
+end
 
 
 """
@@ -100,11 +125,6 @@ function Base.show(io::IO, a::AnalysisTask)
         show(io, getproperty(a, n))
         println(io)
     end
-end
-
-function init_BDT()
-    bst = XGBoost.Booster(XGBoost.DMatrix[],  model_file = BDT_MODEL_PATH[])
-    return ary->Float32(predict(bst, permutedims(ary))[1])
 end
 
 
@@ -360,17 +380,21 @@ function hist_root_pmap(tag; output_dir, kw...)
     end
     @show nworkers()
 
-    @info "-------------- $tag SF + shapes ------------ "
-    sf_tasks = prep_tasks(tag; sfsys=true)
-    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation, sfsys=false), vcat,
-                                 SHAPE_TREE_NAMES)
-    sort!(shape_tasks; by = x->x.path)
-    all_tasks = vcat(sf_tasks, shape_tasks)
+    all_tasks = prep_tasks(tag; sfsys=true)
+    if tag != "Data"
+        @info "-------------- $tag SF + shapes ------------ "
+        shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation, sfsys=false), vcat,
+                                SHAPE_TREE_NAMES)
+        sort!(shape_tasks; by = x->x.path)
+        append!(all_tasks, shape_tasks)
+    else
+        @info "-------------- !!! $tag !!! ------------ "
+    end
     println("$(length(all_tasks)) tasks in total")
     all_list = @showprogress pmap(main_looper, all_tasks)
     Hs = reduce(mergewith(+), all_list)
 
-    serialize(joinpath(p, "$(tag)_pmap.jlserialize"), Hs)
+    serialize(joinpath(p, "$(tag).jlserialize"), Hs)
     Hs
 end
 

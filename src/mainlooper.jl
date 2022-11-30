@@ -102,7 +102,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
 
             ### for W leptons, require medium quality and PLIV tight
             ( !v_l_medium[W_pair[i]] ) && (pass_WWZ_cut = false)
-            isdata && break
         end
 
         !pass_WWZ_cut && continue
@@ -110,24 +109,24 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         b_idx, has_b = Bjet_cut(evt)
         (; MET, METSig, METPhi) = evt
         MET /= 1000
-        if controlregion == :ttZ
-            MET < 20 && continue
-            (other_mass > 80 && other_mass < 100) && continue
-            !has_b && continue
-        else
+        # if controlregion == :ttZ
+        #     MET < 20 && continue
+        #     (other_mass > 80 && other_mass < 100) && continue
+        #     !has_b && continue
+        # else
             has_b && continue
-        end
+        # end
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
-        make_sfsys_wgt!(evt, wgt_dict,
-                        :weight; sfsys, pre_mask=1)
-        make_sfsys_wgt!(evt, wgt_dict, 
-                        :v_j_wgt_btag77, b_idx; sfsys)
 
         l3, l4 = W_pair
         # force wgt to 1 for data
         if isdata
             wgt_dict[:NOMINAL] = 1.0
         else
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :weight; sfsys, pre_mask=1)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :v_j_wgt_btag77, b_idx; sfsys)
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
             Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
@@ -138,17 +137,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                             :v_e_wgtReco, e_etamask; sfsys)
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtTTVA, m_etamask; sfsys)
-            if controlregion!=:ZJets
-                # v_l_wgtPLTight = Vcat(evt.v_e_wgtIso_PLImprovedTight_Medium[e_etamask], 
-                # evt.v_m_wgtIso_PLImprovedTight[m_etamask])
-                # wgt *= @views reduce(*, v_l_wgtPLTight[W_pair]; init = 1.0)
-                make_sfsys_wgt!(evt, wgt_dict,
-                                :v_e_wgtIso_PLImprovedTight_Medium, 
-                                W_pair_in_e; pre_mask = e_etamask, sfsys)
-                make_sfsys_wgt!(evt, wgt_dict,
-                                :v_m_wgtIso_PLImprovedTight, 
-                                W_pair_in_m; pre_mask = m_etamask, sfsys)
-            end
             # quality weights
             # v_l_wgtLoose =  @views Vcat(evt.v_e_wgtLoose[e_etamask] , evt.v_m_wgtLoose[m_etamask]) # quality wgt
             # v_l_wgtMedium = @views Vcat(evt.v_e_wgtMedium[e_etamask], evt.v_m_wgtMedium[m_etamask]) # quality wgt
@@ -172,6 +160,14 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtIso_PflowLoose_VarRad,
                             Z_pair_in_m; pre_mask = m_etamask, sfsys)
+            if controlregion != :ZJets
+                make_sfsys_wgt!(evt, wgt_dict,
+                                :v_e_wgtIso_PLImprovedTight_Medium, 
+                                W_pair_in_e; pre_mask = e_etamask, sfsys)
+                make_sfsys_wgt!(evt, wgt_dict,
+                                :v_m_wgtIso_PLImprovedTight, 
+                                W_pair_in_m; pre_mask = m_etamask, sfsys)
+            end
         end
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
@@ -218,6 +214,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         wgt = wgt_dict[:NOMINAL]
+        event = evt.event
+        moded_event = mod1(event, 5)
         if !arrow_making && NN_hist
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
@@ -225,21 +223,20 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             #             Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
             #             leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
             #             sr_SF_inZ, sr_SF_noZ, sr_DF]
-            BDT_input = Float32[Zlep1_phi, leptonic_HT, Zlep2_phi, MET, Zlep1_dphi,
+            BDT_input = Float32[leptonic_HT, MET, Zlep1_dphi,
               Wlep1_pt, total_HT, Zlep2_dphi, Zlep2_eta, Njet, Wlep2_eta,
-              Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt, METPhi,
-              mass_4l, pt_4l, Wlep2_phi, Zlep1_eta, HT, Wlep1_eta,
-              Wlep2_dphi, Zcand_mass, Wlep2_pt, Wlep1_phi, sr_SF_inZ,
-              sr_SF_noZ, sr_DF]
+              Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt,
+              mass_4l, pt_4l, Zlep1_eta, HT, Wlep1_eta,
+              Wlep2_dphi, Zcand_mass, Wlep2_pt, MET_dPhi]
 
             # NN_score = NN_calc(model, scales, minimums, NN_input)
-            NN_score = model(BDT_input)
+            region = sr_SF_inZ ? :SFinZ : sr_SF_noZ ? :SFnoZ : :DF
+            NN_score = model(BDT_input; fold = moded_event, region)
         end
 
         is_CR = begin
             sr_SF_inZ &&
-            MET < 10 &&
-            Njet == 0
+            MET < 20
         end
 
         if NN_hist && !arrow_making
@@ -251,14 +248,15 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 :DF
             end
             for (k,v) in wgt_dict
+                if k==:NOMINAL && shape_variation != "NOMINAL"
+                    k = shape_variation
+                end
                 if is_CR
-                    pusher!(dict[Symbol(:CR, :__yield, :__, k)], NN_score, v)
+                    pusher!(dict[Symbol(:CR, :__Njet, :__, k)], Njet, v)
                 else
-                    if k==:NOMINAL && shape_variation != "NOMINAL"
-                        k = shape_variation
-                    end
                     pusher!(dict[Symbol(region_prefix, :__NN, :__, k)], NN_score, v)
                     pusher!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
+                    pusher!(dict[Symbol(region_prefix, :__Njet, :__, k)], Njet, v)
                 end
             end
 
@@ -289,7 +287,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             else
                 first(evt.v_mcGenWgt)
             end
-            event = evt.event
             @fill_dict! dict pusher! SR, Nlep, lep1_pid, lep2_pid, lep3_pid, lep4_pid, pt_1, pt_2, pt_3, pt_4, eta_1,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, MET_dPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,

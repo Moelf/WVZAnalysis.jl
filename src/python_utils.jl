@@ -18,7 +18,7 @@ function serial_to_root(p)
     up = pyimport("uproot")
     isdir(p) || error("$p is not a directory")
     for tag in WVZAnalysis.ALL_TAGS
-        path = joinpath(p, "$(tag)_pmap.jlserialize")
+        path = joinpath(p, "$(tag).jlserialize")
         !isfile(path) && continue
         Hs = deserialize(path)
         pywith(up.recreate(joinpath(p, "$(tag).root"))) do file
