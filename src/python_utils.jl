@@ -1,6 +1,6 @@
 delete!(ENV, "PYTHONPATH")
 delete!(ENV, "PYTHONHOME")
-using PythonCall, Serialization
+using PythonCall
 
 function make_TH1D(h)
     np = pyimport("numpy")
@@ -17,7 +17,10 @@ end
 function serial_to_root(p)
     up = pyimport("uproot")
     isdir(p) || error("$p is not a directory")
-    for tag in WVZAnalysis.ALL_TAGS
+    for fname in readdir(p)
+        m = match(r"(.*)\.jlserialize", fname)
+        isnothing(m) && continue
+        tag = m[1]
         path = joinpath(p, "$(tag).jlserialize")
         !isfile(path) && continue
         Hs = deserialize(path)

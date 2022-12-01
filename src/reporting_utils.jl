@@ -60,7 +60,7 @@ function significance(signal, bkg)
     return Sig ± err
 end
 
-function significance_matrix(; recreate, mapper=ThreadsX.map)
+function significance_matrix(; recreate, mapper=map)
     Ms = map(ALL_TAGS) do tag
         ## re-make
         res = if recreate

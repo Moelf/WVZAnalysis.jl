@@ -224,7 +224,7 @@ function sumsumWeight(dir_path)::Float64
     return res
 end
 
-function _runwork(tasks; mapper=ThreadsX.map)
+function _runwork(tasks; mapper=map)
     println("processing $(length(tasks)) root files in total.")
     P = Progress(length(tasks))
     s = mapper(tasks) do t
@@ -315,7 +315,7 @@ Returns a `dict` of vectors representing the datas after filtering.
 """
 function arrow_making(tasks)
     p = Progress(length(tasks))
-    res = ThreadsX.map(tasks) do t
+    res = map(tasks) do t
         x = main_looper(t)
         next!(p)
         x
@@ -342,7 +342,7 @@ function hist_root(tag; output_dir, kw...)
     sf_tasks = prep_tasks(tag)
     println("$(length(sf_tasks)) tasks in total")
     p1 = Progress(length(sf_tasks))
-    sf_list = ThreadsX.map(sf_tasks) do t
+    sf_list = map(sf_tasks) do t
         x = main_looper(t)
         next!(p1)
         x
@@ -355,7 +355,7 @@ function hist_root(tag; output_dir, kw...)
     sort!(shape_tasks; by = x->x.path)
     println("$(length(shape_tasks)) tasks in total")
     p2 = Progress(length(shape_tasks))
-    shape_list = ThreadsX.map(shape_tasks) do t
+    shape_list = map(shape_tasks) do t
         x = main_looper(t)
         next!(p2)
         x

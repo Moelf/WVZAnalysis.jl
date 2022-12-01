@@ -215,7 +215,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         
         wgt = wgt_dict[:NOMINAL]
         event = evt.event
-        moded_event = mod1(event, 5)
+        # WARNING: don't use `mod1` it's shifting in the opposite direction
+        moded_event = mod(event, 5) + 1
         if !arrow_making && NN_hist
             # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
             #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
