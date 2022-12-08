@@ -310,12 +310,12 @@ end
 """
     arrow_making(tasks)
 
-Take a collection of tasks, run them via `ThreadsX.map` and `mergewith(append!)`.
+Take a collection of tasks, run them via `map` and `mergewith(append!)`.
 Returns a `dict` of vectors representing the datas after filtering.
 """
-function arrow_making(tasks)
+function arrow_making(tasks; mapper = map)
     p = Progress(length(tasks))
-    res = map(tasks) do t
+    res = mapper(tasks) do t
         x = main_looper(t)
         next!(p)
         x

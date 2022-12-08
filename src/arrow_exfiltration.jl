@@ -53,6 +53,8 @@ function arrow_init()
                            :Wlep2_eta => Float32[],
                            :Wlep2_phi => Float32[],
                            :Wlep2_dphi => Float32[],
+                           :Wleps_deta => Float32[],
+                           :Wleps_dphi => Float32[],
                            :Wlep2_pid => Int32[],
                            :chisq => Float32[],
                            :pt_4l => Float32[],

@@ -36,7 +36,7 @@ function NN_hist_init(; sfsys, shape_variation)
             end
         end
     end
-    for n in (:CR__Njet,)
+    for n in (:ZZCR__Njet, :ttZCR__Njet)
         _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
 
         !sfsys && continue

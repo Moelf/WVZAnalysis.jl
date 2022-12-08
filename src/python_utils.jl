@@ -1,6 +1,6 @@
 delete!(ENV, "PYTHONPATH")
 delete!(ENV, "PYTHONHOME")
-using PythonCall
+using PythonCall, FHist, Serialization
 
 function make_TH1D(h)
     np = pyimport("numpy")

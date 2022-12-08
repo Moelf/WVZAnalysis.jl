@@ -16,7 +16,7 @@ for performance reason, because we have so many different behaviors in the same 
 """
 function main_looper(task::AnalysisTask)
     (; path, sumWeight, arrow_making, NN_hist, isdata, 
-     shape_variation, controlregion, sfsys) = task
+     shape_variation, sfsys) = task
 
     dict, pusher! = if arrow_making
         arrow_init(), push!
@@ -28,16 +28,14 @@ function main_looper(task::AnalysisTask)
     mytree = LazyTree(path, "tree_" * shape_variation)
 
     models = arrow_making ? nothing : init_BDT()
-    # models = init_ONNX()
     main_looper(mytree, sumWeight, dict, pusher!, models,
-                shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
+                shape_variation, sfsys, NN_hist, arrow_making, isdata)
 end
 
 # above is function barrier
 function main_looper(mytree, sumWeight, dict, pusher!, models, 
-        shape_variation, sfsys, NN_hist, arrow_making, isdata, controlregion)
+        shape_variation, sfsys, NN_hist, arrow_making, isdata)
     model = models # for BDT
-    # model, scales, minimums = models #for NN
     for evt in mytree
         ### initial_cut
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
@@ -72,16 +70,16 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
 
         ############## use PLIV for W lepton ISO #################
         v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        if controlregion == :Zjets
-            failed_PLTight = any(==(true), v_l_PLTight[W_pair])
-            failed_PLTight && continue
-            v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
-            failed_Loose = all(==(true), v_l_Loose[W_pair])
-            failed_Loose && continue
-        else
+        # if controlregion == :Zjets
+        #     failed_PLTight = any(==(true), v_l_PLTight[W_pair])
+        #     failed_PLTight && continue
+        #     v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
+        #     failed_Loose = all(==(true), v_l_Loose[W_pair])
+        #     failed_Loose && continue
+        # else
             failed_PLTight = any(==(false), v_l_PLTight[W_pair])
             failed_PLTight && continue
-        end
+        # end
         (;
          v_e_passIso_Loose_VarRad,
          v_m_passIso_PflowLoose_VarRad,
@@ -109,13 +107,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         b_idx, has_b = Bjet_cut(evt)
         (; MET, METSig, METPhi) = evt
         MET /= 1000
-        # if controlregion == :ttZ
-        #     MET < 20 && continue
-        #     (other_mass > 80 && other_mass < 100) && continue
-        #     !has_b && continue
-        # else
-            has_b && continue
-        # end
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
 
         l3, l4 = W_pair
@@ -160,14 +151,14 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtIso_PflowLoose_VarRad,
                             Z_pair_in_m; pre_mask = m_etamask, sfsys)
-            if controlregion != :ZJets
+            # if controlregion != :ZJets
                 make_sfsys_wgt!(evt, wgt_dict,
                                 :v_e_wgtIso_PLImprovedTight_Medium, 
                                 W_pair_in_e; pre_mask = e_etamask, sfsys)
                 make_sfsys_wgt!(evt, wgt_dict,
                                 :v_m_wgtIso_PLImprovedTight, 
                                 W_pair_in_m; pre_mask = m_etamask, sfsys)
-            end
+            # end
         end
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
@@ -192,14 +183,16 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         Zlep1_eta, Zlep2_eta = eta.(@view v_l_tlv[Z_pair])
         Zlep1_phi, Zlep2_phi = phi.(@view v_l_tlv[Z_pair])
         Zlep1_pid, Zlep2_pid = @view v_l_pid[Z_pair]
-        Zlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[1]]))
-        Zlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[Z_pair[2]]))
+        Zlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Zlep1_phi)
+        Zlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Zlep2_phi)
         Wlep1_pt, Wlep2_pt = pt.(@view v_l_tlv[W_pair])
         Wlep1_eta, Wlep2_eta = eta.(@view v_l_tlv[W_pair])
         Wlep1_phi, Wlep2_phi = phi.(@view v_l_tlv[W_pair])
         Wlep1_pid, Wlep2_pid = @view v_l_pid[W_pair]
-        Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[1]]))
-        Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - phi(v_l_tlv[W_pair[2]]))
+        Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Wlep1_phi)
+        Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Wlep2_phi)
+        Wleps_deta = abs(Wlep1_eta - Wlep2_eta)
+        Wleps_dphi = LorentzVectorHEP.phi_mpi_pi(Wlep1_phi - Wlep2_phi)
         pt_4l = pt(sum(v_l_tlv))
 
         MET_dPhi = LorentzVectorHEP.phi_mpi_pi(Z_phi - METPhi)
@@ -218,12 +211,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         # WARNING: don't use `mod1` it's shifting in the opposite direction
         moded_event = mod(event, 5) + 1
         if !arrow_making && NN_hist
-            # NN_input = Float32[HT, MET, METPhi, METSig, Njet, Wlep1_dphi, Wlep1_eta,
-            #             Wlep1_phi, Wlep1_pt, Wlep2_dphi, Wlep2_eta, Wlep2_phi,
-            #             Wlep2_pt, Zcand_mass, Zlep1_dphi, Zlep1_eta, Zlep1_phi,
-            #             Zlep1_pt, Zlep2_dphi, Zlep2_eta, Zlep2_phi, Zlep2_pt,
-            #             leptonic_HT, mass_4l, other_mass, pt_4l, total_HT,
-            #             sr_SF_inZ, sr_SF_noZ, sr_DF]
             BDT_input = Float32[leptonic_HT, MET, Zlep1_dphi,
               Wlep1_pt, total_HT, Zlep2_dphi, Zlep2_eta, Njet, Wlep2_eta,
               Zlep2_pt, METSig, other_mass, Wlep1_dphi, Zlep1_pt,
@@ -235,10 +222,9 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             NN_score = model(BDT_input; fold = moded_event, region)
         end
 
-        is_CR = begin
-            sr_SF_inZ &&
-            MET < 20
-        end
+        is_SR = !has_b
+        is_ZZCR = sr_SF_inZ && MET < 10 && is_SR
+        is_ttZCR = has_b
 
         if NN_hist && !arrow_making
             region_prefix = if sr_SF_inZ
@@ -252,9 +238,11 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 if k==:NOMINAL && shape_variation != "NOMINAL"
                     k = shape_variation
                 end
-                if is_CR
-                    pusher!(dict[Symbol(:CR, :__Njet, :__, k)], Njet, v)
-                else
+                if is_ZZCR
+                    pusher!(dict[Symbol(:ZZCR, :__Njet, :__, k)], Njet, v)
+                elseif is_ttZCR
+                    pusher!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
+                elseif is_SR
                     pusher!(dict[Symbol(region_prefix, :__NN, :__, k)], NN_score, v)
                     pusher!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
                     pusher!(dict[Symbol(region_prefix, :__Njet, :__, k)], Njet, v)
@@ -292,14 +280,14 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, MET_dPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
             Zlep2_pt, Zlep2_eta, Zlep2_phi, Zlep2_dphi, Zlep2_pid, Wlep1_pt, Wlep1_eta, Wlep1_phi, Wlep1_dphi,
-            Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, chisq, pt_4l, jet_pt_1,
+            Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, Wleps_deta, Wleps_dphi, chisq, pt_4l, jet_pt_1,
             jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,
             jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,
             sr_SF_inZ, sr_SF_noZ, sr_DF, event
         else
             @fill_dict! dict wgt pusher! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
-            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT,SR, 
+            eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT, SR,
             Z_eta, Z_phi, Z_pt, Z_rapidity, Njet
         end
     end
