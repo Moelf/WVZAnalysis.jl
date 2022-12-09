@@ -47,6 +47,8 @@ function NN_hist_init(; sfsys, shape_variation)
         end
     end
 
+    _dict[:CutFlow] = Hist1D(Int; bins=0:20)
+
     return _dict
 end
 

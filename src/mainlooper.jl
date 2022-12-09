@@ -38,6 +38,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
     model = models # for BDT
     for evt in mytree
         ### initial_cut
+        cutflow_ptr = 0
+        pusher!(dict[:CutFlow], cutflow_ptr)
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
@@ -45,6 +47,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         Nelec = count(e_etamask)
         Nmuon = Nlep - Nelec
         (; v_e_pt, v_e_eta, v_e_phi,
@@ -59,12 +63,20 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
         abs(best_Z_mass - Z_m) > 20 && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         ### end of initial_cut
         !(evt.passTrig) && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
         v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
 
@@ -79,6 +91,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         # else
             failed_PLTight = any(==(false), v_l_PLTight[W_pair])
             failed_PLTight && continue
+            cutflow_ptr += 1
+            pusher!(dict[:CutFlow], cutflow_ptr)
         # end
         (;
          v_e_passIso_Loose_VarRad,
@@ -103,8 +117,11 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
 
         !pass_WWZ_cut && continue
+        cutflow_ptr += 1
+        pusher!(dict[:CutFlow], cutflow_ptr)
         
-        b_idx, has_b = Bjet_cut(evt)
+        has_b = any(evt.v_j_btag77)
+
         (; MET, METSig, METPhi) = evt
         MET /= 1000
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
@@ -117,7 +134,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :weight; sfsys, pre_mask=1)
             make_sfsys_wgt!(evt, wgt_dict, 
-                            :v_j_wgt_btag77, b_idx; sfsys)
+                            :v_j_wgt_btag77, : ; sfsys)
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
             Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
@@ -243,6 +260,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 elseif is_ttZCR
                     pusher!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
                 elseif is_SR
+                    cutflow_ptr += 1
+                    pusher!(dict[:CutFlow], cutflow_ptr)
                     pusher!(dict[Symbol(region_prefix, :__NN, :__, k)], NN_score, v)
                     pusher!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
                     pusher!(dict[Symbol(region_prefix, :__Njet, :__, k)], Njet, v)
