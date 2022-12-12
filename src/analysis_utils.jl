@@ -392,6 +392,8 @@ function hist_root_pmap(tag; output_dir, kw...)
     end
     println("$(length(all_tasks)) tasks in total")
     all_list = @showprogress pmap(main_looper, all_tasks)
+    # TODO
+    # process_theory_syst!.(all_list)
     Hs = reduce(mergewith(+), all_list)
 
     serialize(joinpath(p, "$(tag).jlserialize"), Hs)

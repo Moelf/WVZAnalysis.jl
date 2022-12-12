@@ -6,6 +6,8 @@ function arrow_init()
                            :sr_SF_inZ => Int32[],
                            :sr_SF_noZ => Int32[],
                            :sr_DF => Int32[],
+                           :cr_ZZ => Int32[],
+                           :cr_ttZ => Int32[],
                            :Nlep => Int32[],
                            :lep1_pid => Int32[], 
                            :lep2_pid => Int32[],
