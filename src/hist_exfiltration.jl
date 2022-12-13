@@ -1,53 +1,31 @@
+function populate_hist!(dict, shape_variation, symbols, bins, sfsys)
+    for n in symbols
+        dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+        !sfsys && continue
+        for (_,vs) in SF_BRANCH_DICT
+            for v in vs
+                dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
+            end
+        end
+    end
+end
+
 function NN_hist_init(; sfsys, shape_variation)
     if sfsys && (shape_variation != "NOMINAL")
         error("can't do sf systematics and shape systematics at the same time")
     end
     _dict = Dict{Symbol, Hist1D}()
+
     bins = 0:0.01:1
-    for n in (:SFinZ__NN, :SFnoZ__NN, :DF__NN)
-        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+    populate_hist!(_dict, shape_variation, (:SFinZ__BDT, :SFnoZ__BDT, :DF__BDT), bins, sfsys)
 
-        !sfsys && continue
-        for (_,vs) in SF_BRANCH_DICT
-            for v in vs
-                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
-            end
-        end
-    end
     bins = 0:5:300
-    for n in (:SFinZ__MET, :SFnoZ__MET, :DF__MET)
-        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+    populate_hist!(_dict, shape_variation, (:SFinZ__MET, :SFnoZ__MET, :DF__MET), bins, sfsys)
 
-        !sfsys && continue
-        for (_,vs) in SF_BRANCH_DICT
-            for v in vs
-                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
-            end
-        end
-    end
     bins = 0:5
-    for n in (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet)
-        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+    populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet, :ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
 
-        !sfsys && continue
-        for (_,vs) in SF_BRANCH_DICT
-            for v in vs
-                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
-            end
-        end
-    end
-    for n in (:ZZCR__Njet, :ttZCR__Njet)
-        _dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
-
-        !sfsys && continue
-        for (_,vs) in SF_BRANCH_DICT
-            for v in vs
-                _dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
-            end
-        end
-    end
-
-    _dict[:CutFlow] = Hist1D(Int; bins=0:20)
+    _dict[:CutFlow] = Hist1D(Int; bins=1:20)
 
     return _dict
 end

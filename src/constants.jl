@@ -1,6 +1,19 @@
+const CUTFLOW_NAMES = [
+    :in_minitree,
+    :pass_trigger,
+    :fourl_with_eta_mask,
+    :has_Z_candidate,
+    :pass_lepton_quality,
+    :pass_lepton_iso,
+    :SFOS_m_12GeVplus,
+    :lepton_minimum_pts,
+    :dilepton_dR_0p1plus,
+    :no_Bjet,
+    :MET_10GeVplus
+    ]
 const SIG_TAGS = ("Signal", )
 const BKG_TAGS = ("ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
-const ALL_TAGS = (SIG_TAGS..., BKG_TAGS...)
+const ALL_TAGS = [SIG_TAGS...; BKG_TAGS...]
 const Z_m = 91.1876 # everything in GeV
 const e_mass = 0.51099885 / 1000
 const m_mass = 105.65837 / 1000

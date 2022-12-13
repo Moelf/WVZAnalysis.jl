@@ -38,17 +38,22 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
     model = models # for BDT
     for evt in mytree
         ### initial_cut
-        cutflow_ptr = 0
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
+        cutflow_ptr = Ref(1)
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
+        !(evt.passTrig) && continue
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
-        
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
         Nelec = count(e_etamask)
         Nmuon = Nlep - Nelec
         (; v_e_pt, v_e_eta, v_e_phi,
@@ -61,65 +66,61 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         v_e_tlv = @views LorentzVectorCyl.(v_e_pt[e_etamask], v_e_eta[e_etamask], v_e_phi[e_etamask], v_e_m[e_etamask])
         v_m_tlv = @views LorentzVectorCyl.(v_m_pt[m_etamask], v_m_eta[m_etamask], v_m_phi[m_etamask], v_m_m[m_etamask])
         v_l_tlv = Vcat(v_e_tlv, v_m_tlv)
+
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
         abs(best_Z_mass - Z_m) > 20 && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
         ### end of initial_cut
-        !(evt.passTrig) && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
+        
         v_l_order = sortperm(v_l_tlv; by=pt, rev=true)
-        v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask]) #quality
 
-        ############## use PLIV for W lepton ISO #################
-        v_l_PLTight = Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        # if controlregion == :Zjets
-        #     failed_PLTight = any(==(true), v_l_PLTight[W_pair])
-        #     failed_PLTight && continue
-        #     v_l_Loose = Vcat(evt.v_e_passIso_Loose_VarRad, evt.v_m_passIso_PflowLoose_VarRad)
-        #     failed_Loose = all(==(true), v_l_Loose[W_pair])
-        #     failed_Loose && continue
-        # else
-            failed_PLTight = any(==(false), v_l_PLTight[W_pair])
-            failed_PLTight && continue
-            cutflow_ptr += 1
-            if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
-        # end
-        (;
-         v_e_passIso_Loose_VarRad,
-         v_m_passIso_PflowLoose_VarRad,
-        ) = evt
+        ### QUALITY
+        v_l_medium = @views Vcat(evt.v_e_LHMedium[e_etamask] , evt.v_m_medium[m_etamask])
+        # for W leptons, require medium quality
+        !v_l_medium[W_pair[1]] && continue
+        !v_l_medium[W_pair[2]] && continue
+        # for Z leptons only Loose requirement, no additional quality cut
+        #
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
+        ### ISOLATION
+        # for W leptons, require PLIVTight Isolation
+        v_l_PLTight = @views Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
+        !v_l_PLTight[W_pair[1]] && continue
+        !v_l_PLTight[W_pair[2]] && continue
+        # for Z leptons require Loose isolation
+        (;v_e_passIso_Loose_VarRad, v_m_passIso_PflowLoose_VarRad) = evt
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
+        !v_l_passIso[Z_pair[1]] && continue
+        !v_l_passIso[Z_pair[2]] && continue
+
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+
 
         pass_WWZ_cut, chisq, W_id = WWZ_Cut(
                                             Z_pair,
                                             W_pair,
                                             v_l_pid,
                                             v_l_order,
-                                            v_l_tlv
+                                            v_l_tlv,
+                                            dict,
+                                            cutflow_ptr,
+                                            NN_hist
                                            )
-        for i in 1:2
-            ### for Z leptons isolation: Loose(e) and Loose(mu)
-            !v_l_passIso[Z_pair[i]] && (pass_WWZ_cut = false)
-
-            ### for W leptons, require medium quality and PLIV tight
-            !v_l_medium[W_pair[i]] && (pass_WWZ_cut = false)
-        end
 
         !pass_WWZ_cut && continue
-        cutflow_ptr += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr) end
         
         has_b = any(evt.v_j_btag77)
+        cutflow_ptr[] += 1
+        if !has_b && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
 
         (; MET, METSig, METPhi) = evt
         MET /= 1000
@@ -133,7 +134,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :weight; sfsys, pre_mask=1)
             make_sfsys_wgt!(evt, wgt_dict, 
-                            :v_j_wgt_btag77, : ; sfsys)
+                            :v_j_wgt_btag77, Colon() ; sfsys)
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
             Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
@@ -162,14 +163,12 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtIso_PflowLoose_VarRad,
                             Z_pair_in_m; pre_mask = m_etamask, sfsys)
-            # if controlregion != :ZJets
-                make_sfsys_wgt!(evt, wgt_dict,
-                                :v_e_wgtIso_PLImprovedTight_Medium, 
-                                W_pair_in_e; pre_mask = e_etamask, sfsys)
-                make_sfsys_wgt!(evt, wgt_dict,
-                                :v_m_wgtIso_PLImprovedTight, 
-                                W_pair_in_m; pre_mask = m_etamask, sfsys)
-            # end
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtIso_PLImprovedTight_Medium, 
+                            W_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtIso_PLImprovedTight, 
+                            W_pair_in_m; pre_mask = m_etamask, sfsys)
         end
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
@@ -238,6 +237,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         if cr_ZZ || cr_ttZ
             SR = -1
         end
+        cutflow_ptr[] += 1
+        if MET>10 && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
 
         if NN_hist && !arrow_making
             region_prefix = if sr_SF_inZ
@@ -256,9 +257,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 elseif cr_ttZ
                     pusher!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
                 elseif SR >= 0
-                    cutflow_ptr += 1
-                    pusher!(dict[:CutFlow], cutflow_ptr)
-                    pusher!(dict[Symbol(region_prefix, :__NN, :__, k)], NN_score, v)
+                    pusher!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
                     pusher!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
                     pusher!(dict[Symbol(region_prefix, :__Njet, :__, k)], Njet, v)
                 end
