@@ -15,5 +15,12 @@ function Find_Z_Pairs(v_l_pids, v_l_tlv)
             end
         end
     end
-    return Z_pair, setdiff(1:4, Z_pair), M
+    W_pair = setdiff(1:4, Z_pair)
+
+    # order W lep by pT
+    if pt(v_l_tlv[W_pair[1]]) < pt(v_l_tlv[W_pair[2]])
+        W_pair[1], W_pair[2] = W_pair[2], W_pair[1]
+    end
+
+    return Z_pair, W_pair, M
 end

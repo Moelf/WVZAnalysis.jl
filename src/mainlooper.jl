@@ -202,7 +202,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         Wlep1_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Wlep1_phi)
         Wlep2_dphi = LorentzVectorHEP.phi_mpi_pi(Z_phi - Wlep2_phi)
         Wleps_deta = abs(Wlep1_eta - Wlep2_eta)
-        Wleps_dphi = LorentzVectorHEP.phi_mpi_pi(Wlep1_phi - Wlep2_phi)
         pt_4l = pt(sum(v_l_tlv))
 
         MET_dPhi = LorentzVectorHEP.phi_mpi_pi(Z_phi - METPhi)
