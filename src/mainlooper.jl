@@ -135,6 +135,8 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                             :weight; sfsys, pre_mask=1)
             make_sfsys_wgt!(evt, wgt_dict, 
                             :v_j_wgt_btag77, Colon() ; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :w_sf_fjvt; sfsys, pre_mask=1)
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
             Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
@@ -293,7 +295,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             eta_2, eta_3, eta_4, phi_1, phi_2, phi_3, phi_4, Njet, mass_4l, Zcand_mass, other_mass, MET,
             METSig, METPhi, MET_dPhi, leptonic_HT, HT, total_HT, Zlep1_pt, Zlep1_eta, Zlep1_phi, Zlep1_dphi, Zlep1_pid,
             Zlep2_pt, Zlep2_eta, Zlep2_phi, Zlep2_dphi, Zlep2_pid, Wlep1_pt, Wlep1_eta, Wlep1_phi, Wlep1_dphi,
-            Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, Wleps_deta, Wleps_dphi, chisq, pt_4l, jet_pt_1,
+            Wlep1_pid, Wlep2_pt, Wlep2_eta, Wlep2_phi, Wlep2_dphi, Wlep2_pid, Wleps_deta, chisq, pt_4l, jet_pt_1,
             jet_pt_2, jet_pt_3, jet_pt_4, jet_eta_1, jet_eta_2, jet_eta_3, jet_eta_4, jet_phi_1, jet_phi_2,
             jet_phi_3, jet_phi_4, jet_m_1, jet_m_2, jet_m_3, jet_m_4, v_j_btagCont, v_j_btag60,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,

@@ -59,6 +59,7 @@ const SF_BRANCH_DICT = Dict(
                             :v_m_wgtMedium => m_wgt_list,
                             :v_j_wgt_btag77 => btag_wgt_list,
                             :v_m_wgtTTVA => m_ttva_list,
+                            :w_sf_fjvt => [:JET_fJvtEfficiency__1down, :JET_fJvtEfficiency__1up]
                            )
 const SHAPE_TREE_NAMES = [
                           "EG_RESOLUTION_ALL__1down",
