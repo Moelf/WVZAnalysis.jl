@@ -14,6 +14,35 @@ The main entry point for running the main looper for a given task, it's done in 
 This function also serves a [function barrier](https://docs.julialang.org/en/v1/manual/performance-tips/#kernel-functions)
 for performance reason, because we have so many different behaviors in the same loop function.
 """
+
+function WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
+    WWZ_tlv = Vector{eltype(v_l_tlv)}(undef, 4)
+    WWZ_tlv[1] = v_l_tlv[Z_pair[1]]
+    WWZ_tlv[2] = v_l_tlv[Z_pair[2]]
+    WWZ_tlv[3] = v_l_tlv[W_pair[1]]
+    WWZ_tlv[4] = v_l_tlv[W_pair[2]]
+    chi2 = Inf
+    local temp
+    Z1_tlv = zero(WWZ_tlv[1])
+    Z2_tlv = zero(WWZ_tlv[1])
+    @inbounds for i in 2:4
+        Z1_tlv = WWZ_tlv[1] + WWZ_tlv[i]
+        for j in 2:4
+            (j == i) && continue
+            Z2_tlv += WWZ_tlv[j]
+        end
+        mz1 = mass(Z1_tlv)
+        mz2 = mass(Z2_tlv)
+        temp =
+            (
+                (mz1 - Z_m)^2 + (mz2 - Z_m)^2
+            ) / 2495.2^2
+        (temp < chi2) && (chi2 = temp)
+    end
+    return chi2
+end
+
+
 function main_looper(task::AnalysisTask)
     (; path, sumWeight, arrow_making, NN_hist, isdata, 
      shape_variation, sfsys) = task
@@ -41,18 +70,31 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         cutflow_ptr = Ref(1)
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
 
+        wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
+        # force wgt to 1 for data
+        if isdata
+            wgt_dict[:NOMINAL] = 1.0
+        else
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :weight; sfsys, pre_mask=1)
+        end
+        wgt = wgt_dict[:NOMINAL]
         !(evt.passTrig) && continue
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
         m_etamask = [abs(η) < 2.5 for η in v_m_eta_orig]
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
         Nlep = length(v_l_pid)
+    
+
         Nlep != 4 && continue
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
         Nelec = count(e_etamask)
         Nmuon = Nlep - Nelec
@@ -73,6 +115,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         abs(best_Z_mass - Z_m) > 20 && continue
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -89,12 +132,16 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         #
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
         ### ISOLATION
         # for W leptons, require PLIVTight Isolation
         v_l_PLTight = @views Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
         !v_l_PLTight[W_pair[1]] && continue
         !v_l_PLTight[W_pair[2]] && continue
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
         # for Z leptons require Loose isolation
         (;v_e_passIso_Loose_VarRad, v_m_passIso_PflowLoose_VarRad) = evt
         v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
@@ -103,75 +150,50 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
 
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-
-
-        pass_WWZ_cut, chisq, W_id = WWZ_Cut(
-                                            Z_pair,
-                                            W_pair,
-                                            v_l_pid,
-                                            v_l_order,
-                                            v_l_tlv,
-                                            dict,
-                                            cutflow_ptr,
-                                            NN_hist
-                                           )
-
-        !pass_WWZ_cut && continue
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
         
+        chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
+        FAIL = (false, Inf, W_pair)
+        @inbounds for i in eachindex(v_l_tlv)
+            for j in (i + 1):length(v_l_tlv)
+                v_l_pid[i] + v_l_pid[j] != 0 && continue
+                WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j])
+                WWZ_dilepton_mass < 12 && break ##check if this works
+            end
+        end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
+
+        @inbounds pt(v_l_tlv[v_l_order[1]]) < 30 && continue
+        @inbounds pt(v_l_tlv[v_l_order[2]]) < 15 && continue
+        @inbounds pt(v_l_tlv[v_l_order[3]]) < 8 && continue
+        @inbounds pt(v_l_tlv[v_l_order[4]]) < 6 && continue
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
+
+        # selected lepton min dR
+        @inbounds for i in 1:4
+            for j in (i + 1):4
+                dR = deltar(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
+                dR < 0.1 && break
+            end
+        end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
+    
         has_b = any(evt.v_j_btag77)
         cutflow_ptr[] += 1
         if !has_b && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if !has_b && NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
         (; MET, METSig, METPhi) = evt
         MET /= 1000
-        wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
 
         l3, l4 = W_pair
-        # force wgt to 1 for data
-        if isdata
-            wgt_dict[:NOMINAL] = 1.0
-        else
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :weight; sfsys, pre_mask=1)
-            make_sfsys_wgt!(evt, wgt_dict, 
-                            :v_j_wgt_btag77, Colon() ; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict, 
-                            :w_sf_fjvt; sfsys, pre_mask=1)
-            # I hate indexing
-            Z_pair_in_e = filter(<=(Nelec), Z_pair)
-            Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
-            W_pair_in_e = filter(<=(Nelec), W_pair)
-            W_pair_in_m = filter!(>(0), W_pair .- Nelec)
-
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtReco, e_etamask; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtTTVA, m_etamask; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtLoose,
-                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtLoose,
-                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtMedium,
-                            W_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtMedium,
-                            W_pair_in_m; pre_mask = m_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
-                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtIso_PflowLoose_VarRad,
-                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtIso_PLImprovedTight_Medium, 
-                            W_pair_in_e; pre_mask = e_etamask, sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtIso_PLImprovedTight, 
-                            W_pair_in_m; pre_mask = m_etamask, sfsys)
-        end
+    
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
         pt_1, pt_2, pt_3, pt_4 = pt.(@view v_l_tlv[v_l_order])
@@ -217,7 +239,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
-        wgt = wgt_dict[:NOMINAL]
         event = evt.event
         # WARNING: don't use `mod1` it's shifting in the opposite direction
         moded_event = mod(event, 5) + 1
@@ -238,9 +259,61 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         if cr_ZZ || cr_ttZ
             SR = -1
         end
+
+        
+        if isdata
+            wgt_dict[:NOMINAL] = 1.0
+        else
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :weight; sfsys, pre_mask=1)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :v_j_wgt_btag77, Colon() ; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :w_sf_fjvt; sfsys, pre_mask=1)
+            # I hate indexing
+            Z_pair_in_e = filter(<=(Nelec), Z_pair)
+            Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
+            W_pair_in_e = filter(<=(Nelec), W_pair)
+            W_pair_in_m = filter!(>(0), W_pair .- Nelec)
+
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtReco, e_etamask; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtTTVA, m_etamask; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtLoose,
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtLoose,
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtMedium,
+                            W_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtMedium,
+                            W_pair_in_m; pre_mask = m_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
+                            Z_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtIso_PflowLoose_VarRad,
+                            Z_pair_in_m; pre_mask = m_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtIso_PLImprovedTight_Medium, 
+                            W_pair_in_e; pre_mask = e_etamask, sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtIso_PLImprovedTight, 
+                            W_pair_in_m; pre_mask = m_etamask, sfsys)
+        end
+        
+        wgt = wgt_dict[:NOMINAL]
         cutflow_ptr[] += 1
         if MET>10 && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if MET>10 && NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
 
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[],wgt) end
         if NN_hist && !arrow_making
             region_prefix = if sr_SF_inZ
                 :SFinZ
