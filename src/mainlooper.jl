@@ -37,13 +37,26 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         shape_variation, sfsys, NN_hist, arrow_making, isdata)
     model = models # for BDT
     for evt in mytree
+        wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
+        if isdata
+            wgt_dict[:NOMINAL] = 1.0
+        else
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :weight; sfsys, pre_mask=1)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :v_j_wgt_btag77, Colon() ; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict, 
+                            :w_sf_fjvt; sfsys, pre_mask=1)
+        end
         ### initial_cut
         cutflow_ptr = Ref(1)
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         !(evt.passTrig) && continue
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
         e_etamask = [abs(η) < 2.47 && (abs(η)<1.37 || abs(η)>1.52) for η in v_e_caloeta_orig]
@@ -51,8 +64,15 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         v_l_pid = @views Vcat(evt.v_e_pid[e_etamask], evt.v_m_pid[m_etamask])
         Nlep = length(v_l_pid)
         Nlep != 4 && continue
+        if !isdata
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_e_wgtReco, e_etamask; sfsys)
+            make_sfsys_wgt!(evt, wgt_dict,
+                            :v_m_wgtTTVA, m_etamask; sfsys)
+        end
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         Nelec = count(e_etamask)
         Nmuon = Nlep - Nelec
@@ -73,6 +93,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         abs(best_Z_mass - Z_m) > 20 && continue
         cutflow_ptr[] += 1
         if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -87,66 +108,12 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         !v_l_medium[W_pair[2]] && continue
         # for Z leptons only Loose requirement, no additional quality cut
         #
-        cutflow_ptr[] += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-
-        ### ISOLATION
-        # for W leptons, require PLIVTight Isolation
-        v_l_PLTight = @views Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
-        !v_l_PLTight[W_pair[1]] && continue
-        !v_l_PLTight[W_pair[2]] && continue
-        # for Z leptons require Loose isolation
-        (;v_e_passIso_Loose_VarRad, v_m_passIso_PflowLoose_VarRad) = evt
-        v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
-        !v_l_passIso[Z_pair[1]] && continue
-        !v_l_passIso[Z_pair[2]] && continue
-
-        cutflow_ptr[] += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-
-
-        pass_WWZ_cut, chisq, W_id = WWZ_Cut(
-                                            Z_pair,
-                                            W_pair,
-                                            v_l_pid,
-                                            v_l_order,
-                                            v_l_tlv,
-                                            dict,
-                                            cutflow_ptr,
-                                            NN_hist
-                                           )
-
-        !pass_WWZ_cut && continue
-        
-        has_b = any(evt.v_j_btag77)
-        cutflow_ptr[] += 1
-        if !has_b && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-
-        (; MET, METSig, METPhi) = evt
-        MET /= 1000
-        wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
-
-        l3, l4 = W_pair
-        # force wgt to 1 for data
-        if isdata
-            wgt_dict[:NOMINAL] = 1.0
-        else
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :weight; sfsys, pre_mask=1)
-            make_sfsys_wgt!(evt, wgt_dict, 
-                            :v_j_wgt_btag77, Colon() ; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict, 
-                            :w_sf_fjvt; sfsys, pre_mask=1)
+        if !isdata
             # I hate indexing
             Z_pair_in_e = filter(<=(Nelec), Z_pair)
             Z_pair_in_m = filter!(>(0), Z_pair .- Nelec)
             W_pair_in_e = filter(<=(Nelec), W_pair)
             W_pair_in_m = filter!(>(0), W_pair .- Nelec)
-
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_e_wgtReco, e_etamask; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict,
-                            :v_m_wgtTTVA, m_etamask; sfsys)
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtLoose,
                             Z_pair_in_e; pre_mask = e_etamask, sfsys)
@@ -159,6 +126,23 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_m_wgtMedium,
                             W_pair_in_m; pre_mask = m_etamask, sfsys)
+        end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        ### ISOLATION
+        # for W leptons, require PLIVTight Isolation
+        v_l_PLTight = @views Vcat(evt.v_e_passIso_PLImprovedTight[e_etamask], evt.v_m_passIso_PLImprovedTight[m_etamask])
+        !v_l_PLTight[W_pair[1]] && continue
+        !v_l_PLTight[W_pair[2]] && continue
+        # for Z leptons require Loose isolation
+        (;v_e_passIso_Loose_VarRad, v_m_passIso_PflowLoose_VarRad) = evt
+        v_l_passIso = @views Vcat(v_e_passIso_Loose_VarRad[e_etamask], v_m_passIso_PflowLoose_VarRad[m_etamask])
+        !v_l_passIso[Z_pair[1]] && continue
+        !v_l_passIso[Z_pair[2]] && continue
+
+        if !isdata
             make_sfsys_wgt!(evt, wgt_dict,
                             :v_e_wgtIso_Loose_VarRad_LooseBLayer, 
                             Z_pair_in_e; pre_mask = e_etamask, sfsys)
@@ -172,6 +156,50 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                             :v_m_wgtIso_PLImprovedTight, 
                             W_pair_in_m; pre_mask = m_etamask, sfsys)
         end
+        cutflow_ptr[] += 1
+        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+
+        pass_mll = true
+        chisq = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
+        @inbounds for i in eachindex(v_l_tlv), j in (i + 1):length(v_l_tlv)
+            v_l_pid[i] + v_l_pid[j] != 0 && continue
+            WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j])
+            WWZ_dilepton_mass < 12 && (pass_mll = false)
+        end
+        !pass_mll && continue
+        cutflow_ptr[] += 1
+        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        @inbounds pt(v_l_tlv[v_l_order[1]]) < 30 && continue
+        @inbounds pt(v_l_tlv[v_l_order[2]]) < 15 && continue
+        @inbounds pt(v_l_tlv[v_l_order[3]]) < 8 &&  continue
+        @inbounds pt(v_l_tlv[v_l_order[4]]) < 6 &&  continue
+        cutflow_ptr[] += 1
+        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        # selected lepton min dR
+        pass_dR = true
+        @inbounds for i in 1:4, j in (i + 1):4
+            dR = deltar(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
+            dR < 0.1 && (pass_dR = false)
+        end
+        !pass_dR && continue
+        cutflow_ptr[] += 1
+        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
+        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        
+        has_b = any(evt.v_j_btag77)
+
+        (; MET, METSig, METPhi) = evt
+        MET /= 1000
+
+        l3, l4 = W_pair
+        # force wgt to 1 for data
+
 
         lep1_pid, lep2_pid, lep3_pid, lep4_pid = @view v_l_pid[v_l_order]
         pt_1, pt_2, pt_3, pt_4 = pt.(@view v_l_tlv[v_l_order])
@@ -217,7 +245,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
-        wgt = wgt_dict[:NOMINAL]
         event = evt.event
         # WARNING: don't use `mod1` it's shifting in the opposite direction
         moded_event = mod(event, 5) + 1
@@ -240,6 +267,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         cutflow_ptr[] += 1
         if MET>10 && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
+        if MET>10 && NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         if NN_hist && !arrow_making
             region_prefix = if sr_SF_inZ
@@ -248,6 +276,11 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                 :SFnoZ
             else
                 :DF
+            end
+            if SR >= 0
+                cutflow_ptr[] += 1
+                pusher!(dict[:CutFlow], cutflow_ptr[])
+                pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
             end
             for (k,v) in wgt_dict
                 if k==:NOMINAL && shape_variation != "NOMINAL"
@@ -301,6 +334,7 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,
             sr_SF_inZ, sr_SF_noZ, sr_DF, cr_ZZ, cr_ttZ, event
         else
+            wgt = wgt_dict[:NOMINAL]
             @fill_dict! dict wgt pusher! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT, SR,
             Z_eta, Z_phi, Z_pt, Z_rapidity, Njet
