@@ -27,6 +27,12 @@ function NN_hist_init(; sfsys, shape_variation)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFinZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFinZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFnoZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFnoZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:DFCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:DFCutFlowWgt] = Hist1D(Float64; bins=1:20)
 
     return _dict
 end

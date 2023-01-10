@@ -92,8 +92,24 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
         abs(best_Z_mass - Z_m) > 20 && continue
         cutflow_ptr[] += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        
+        l3, l4 = W_pair
+        sr_SF_inZ, sr_SF_noZ, sr_DF = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
+            false, false, true
+        elseif abs(other_mass - Z_m) < 20 # SF_inZ, already GeV
+            true, false, false
+        else #SF_noZ
+            false, true, false
+        end
+        SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
+
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -128,8 +144,13 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                             W_pair_in_m; pre_mask = m_etamask, sfsys)
         end
         cutflow_ptr[] += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         ### ISOLATION
         # for W leptons, require PLIVTight Isolation
@@ -157,9 +178,13 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
                             W_pair_in_m; pre_mask = m_etamask, sfsys)
         end
         cutflow_ptr[] += 1
-        if NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         pass_mll = true
         chisq = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
@@ -170,16 +195,26 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         !pass_mll && continue
         cutflow_ptr[] += 1
-        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         @inbounds pt(v_l_tlv[v_l_order[1]]) < 30 && continue
         @inbounds pt(v_l_tlv[v_l_order[2]]) < 15 && continue
         @inbounds pt(v_l_tlv[v_l_order[3]]) < 8 &&  continue
         @inbounds pt(v_l_tlv[v_l_order[4]]) < 6 &&  continue
         cutflow_ptr[] += 1
-        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         # selected lepton min dR
         pass_dR = true
@@ -189,15 +224,19 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         end
         !pass_dR && continue
         cutflow_ptr[] += 1
-        if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-        if NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
         
         has_b = any(evt.v_j_btag77)
 
         (; MET, METSig, METPhi) = evt
         MET /= 1000
 
-        l3, l4 = W_pair
         # force wgt to 1 for data
 
 
@@ -235,15 +274,6 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
         pt_4l = pt(sum(v_l_tlv))
 
         MET_dPhi = LorentzVectorHEP.phi_mpi_pi(Z_phi - METPhi)
-
-        sr_SF_inZ, sr_SF_noZ, sr_DF = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
-            false, false, true
-        elseif abs(other_mass - Z_m) < 20 # SF_inZ, already GeV
-            true, false, false
-        else #SF_noZ
-            false, true, false
-        end
-        SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
         
         event = evt.event
         # WARNING: don't use `mod1` it's shifting in the opposite direction
@@ -266,8 +296,13 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             SR = -1
         end
         cutflow_ptr[] += 1
-        if MET>10 && NN_hist pusher!(dict[:CutFlow], cutflow_ptr[]) end
-        if MET>10 && NN_hist pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+
+        if MET>10 && NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+        if MET>10 && NN_hist && sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if MET>10 && NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+        if MET>10 && NN_hist && sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+        if MET>10 && NN_hist && sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+        if MET>10 && NN_hist && sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
 
         if NN_hist && !arrow_making
             region_prefix = if sr_SF_inZ
@@ -279,8 +314,12 @@ function main_looper(mytree, sumWeight, dict, pusher!, models,
             end
             if SR >= 0
                 cutflow_ptr[] += 1
-                pusher!(dict[:CutFlow], cutflow_ptr[])
-                pusher!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
+                if sr_SF_inZ pusher!(dict[:SFinZCutFlow], cutflow_ptr[]) end
+                if sr_SF_inZ pusher!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+                if sr_SF_noZ pusher!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
+                if sr_SF_noZ pusher!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
+                if sr_DF pusher!(dict[:DFCutFlow], cutflow_ptr[]) end
+                if sr_DF pusher!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
             end
             for (k,v) in wgt_dict
                 if k==:NOMINAL && shape_variation != "NOMINAL"
