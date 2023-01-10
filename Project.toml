@@ -1,2 +1,20 @@
+name = "WVZAnalysis"
+uuid = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"
+authors = ["Jerry Ling <proton@jling.dev> and contributors"]
+version = "0.2.3"
+
 [deps]
+Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 WVZAnalysisCore = "96227bb2-44ea-4def-a73b-39d4437f5402"
+
+[compat]
+WVZAnalysisCore = "0.2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

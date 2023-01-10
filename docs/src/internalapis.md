@@ -1,4 +1,4 @@
 ## Internal
 ```@autodocs
-Modules = [WVAZnalysis]
+Modules = [WVZAnalysis, WVZAnalysisCore]
 ```
