@@ -34,7 +34,6 @@ prep_tasks
 main_looper(t::AnalysisTask)
 arrow_making
 hist_root
-hist_root_pmap
 ```
 
 ### Result reporting

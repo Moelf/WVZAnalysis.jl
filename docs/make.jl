@@ -8,6 +8,7 @@ makedocs(;
     ),
     pages=[
         "Introduction" => "index.md",
+        "Internal APIs" => "internalapis.md",
     ],
     repo="https://github.com/Moelf/WVZAnalysis.jl/blob/{commit}{path}#L{line}",
     sitename="WVZAnalysis.jl",

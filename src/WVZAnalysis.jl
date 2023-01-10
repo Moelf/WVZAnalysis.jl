@@ -7,14 +7,11 @@ using ONNX, ONNX.Umlaut
 using Distributed
 
 export AnalysisTask
-export prep_tasks, main_looper, significance_table, print_sigtable, arrow_making, hist_root, hist_root_pmap
+export prep_tasks, main_looper, significance_table, print_sigtable, arrow_making, hist_root
 
 include("./analysis_utils.jl")
 include("./constants.jl")
-include("./ZZZ_ana.jl")
 include("./WWZ_ana.jl")
-include("./WZZ_ana.jl")
-include("./ana.jl")
 include("./arrow_exfiltration.jl")
 include("./hist_exfiltration.jl")
 include("./mainlooper.jl")

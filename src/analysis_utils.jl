@@ -1,26 +1,30 @@
-
 """
 extract dsid from a file name, used to match with systematic files
 """
 const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 const ANALYSIS_DIR = Ref("/data/jiling/WVZ/v2.3_hists")
 
-const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/kfolding/")
+# const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
+const BDT_MODEL_PATH = Ref(joinpath(dirname(@__DIR__), "config"))
 
-function init_ONNX()
-    model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
-    rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
-    NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
-                "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
-                "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
-                "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
-                "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
-                "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
-    return model, 
-    [rescaling_parameters["scale"][name] for name in NN_order],
-    [rescaling_parameters["min"][name] for name in NN_order]
-end
+# function init_ONNX()
+#     model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
+#     rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
+#     NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
+#                 "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
+#                 "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
+#                 "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
+#                 "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
+#                 "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
+#     return model, 
+#     [rescaling_parameters["scale"][name] for name in NN_order],
+#     [rescaling_parameters["min"][name] for name in NN_order]
+# end
+
+# function NN_calc(model, scales, minimums, NN_input)::Float32
+#     @. NN_input = fma(NN_input, scales, minimums)
+#     return Ghost.play!(model, NN_input)[1]
+# end
 
 function init_BDT()
     SFinZs = Tuple(
@@ -128,11 +132,6 @@ function Base.show(io::IO, a::AnalysisTask)
 end
 
 
-function NN_calc(model, scales, minimums, NN_input)::Float32
-    @. NN_input = fma(NN_input, scales, minimums)
-    return Ghost.play!(model, NN_input)[1]
-end
-
 
 """
 
@@ -224,15 +223,6 @@ function sumsumWeight(dir_path)::Float64
     return res
 end
 
-function _runwork(tasks; mapper=map)
-    println("processing $(length(tasks)) root files in total.")
-    P = Progress(length(tasks))
-    s = mapper(tasks) do t
-        main_looper(t)
-        next!(P)
-    end
-    return reduce(mergewith(+), s)
-end
 
 """
     prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
@@ -275,7 +265,6 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         PATHS = dir_to_paths(d; scouting)
         sumWeight = sumsumWeight(d)
         if occursin(r"346645|346646|346647", d)
-            @show d
             sumWeight *= 2.745e-4
         end
         [AnalysisTask(; path, sumWeight, isdata, shape_variation, kw...) for path in PATHS]
@@ -283,20 +272,6 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     files
 end
 
-function sfsys(tag; scouting=false, kw...)
-    isdata = (lowercase(tag) == "data")
-    tasks = prep_tasks(tag)
-    return _runwork(tasks; isdata, kw...)
-end
-
-function sfsys_pmap(tag)
-    isdata = (lowercase(tag) == "data")
-    tasks = prep_tasks(tag)
-    s = @showprogress @distributed mergewith((.+)) for t in tasks
-        main_looper(t)
-    end
-    s
-end
 
 function dir_to_paths(dir_path; scouting = false)
     paths = filter!(endswith(".root"), readdir(dir_path; join = true))
@@ -336,7 +311,6 @@ function hist_root(tag; mapper=pmap, no_shape = false, output_dir, kw...)
     if !isdir(p)
         mkdir(p)
     end
-    @show nworkers()
 
     all_tasks = prep_tasks(tag; sfsys=true)
     if tag != "Data"
@@ -353,12 +327,19 @@ function hist_root(tag; mapper=pmap, no_shape = false, output_dir, kw...)
         @info "-------------- !!! $tag !!! ------------ "
     end
     println("$(length(all_tasks)) tasks in total")
-    prog = Progress(length(all_tasks))
-    all_list = mapper(all_tasks) do task
-        _m = main_looper(task)
-        next!(prog)
-        return _m
+    all_list = if mapper == pmap
+        @showprogress pmap(all_tasks) do task
+            main_looper(task)
+        end
+    else
+        prog = Progress(length(all_tasks))
+        mapper(all_tasks) do task
+            _m = main_looper(task)
+            next!(prog)
+            return _m
+        end
     end
+
     # TODO
     # process_theory_syst!.(all_list)
     Hs = reduce(mergewith(+), all_list)
