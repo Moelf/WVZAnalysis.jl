@@ -1,4 +1,3 @@
-
 """
 extract dsid from a file name, used to match with systematic files
 """
@@ -21,6 +20,11 @@ function init_ONNX()
     [rescaling_parameters["scale"][name] for name in NN_order],
     [rescaling_parameters["min"][name] for name in NN_order]
 end
+function NN_calc(model, scales, minimums, NN_input)::Float32
+    @. NN_input = fma(NN_input, scales, minimums)
+    return Ghost.play!(model, NN_input)[1]
+end
+
 
 function init_BDT()
     SFinZs = Tuple(
@@ -128,11 +132,6 @@ function Base.show(io::IO, a::AnalysisTask)
 end
 
 
-function NN_calc(model, scales, minimums, NN_input)::Float32
-    @. NN_input = fma(NN_input, scales, minimums)
-    return Ghost.play!(model, NN_input)[1]
-end
-
 
 """
 
@@ -224,15 +223,6 @@ function sumsumWeight(dir_path)::Float64
     return res
 end
 
-function _runwork(tasks; mapper=map)
-    println("processing $(length(tasks)) root files in total.")
-    P = Progress(length(tasks))
-    s = mapper(tasks) do t
-        main_looper(t)
-        next!(P)
-    end
-    return reduce(mergewith(+), s)
-end
 
 """
     prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
@@ -281,21 +271,6 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         [AnalysisTask(; path, sumWeight, isdata, shape_variation, kw...) for path in PATHS]
     end
     files
-end
-
-function sfsys(tag; scouting=false, kw...)
-    isdata = (lowercase(tag) == "data")
-    tasks = prep_tasks(tag)
-    return _runwork(tasks; isdata, kw...)
-end
-
-function sfsys_pmap(tag)
-    isdata = (lowercase(tag) == "data")
-    tasks = prep_tasks(tag)
-    s = @showprogress @distributed mergewith((.+)) for t in tasks
-        main_looper(t)
-    end
-    s
 end
 
 function dir_to_paths(dir_path; scouting = false)
