@@ -24,38 +24,3 @@ function WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
     end
     return chi2
 end
-
-function WWZ_Cut(
-    Z_pair, W_pair, v_l_pid, v_l_order, v_l_tlv, dict, cutflow_ptr, NN_hist
-)
-    chi2 = WWZ_chi2(Z_pair, W_pair, v_l_pid, v_l_tlv)
-    FAIL = (false, Inf, W_pair)
-    @inbounds for i in eachindex(v_l_tlv)
-        for j in (i + 1):length(v_l_tlv)
-            v_l_pid[i] + v_l_pid[j] != 0 && continue
-            WWZ_dilepton_mass = mass(v_l_tlv[i] + v_l_tlv[j])
-            WWZ_dilepton_mass < 12 && return FAIL
-        end
-    end
-    cutflow_ptr[] += 1
-    if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-
-    @inbounds pt(v_l_tlv[v_l_order[1]]) < 30 && return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[2]]) < 15 && return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[3]]) < 8 &&  return FAIL
-    @inbounds pt(v_l_tlv[v_l_order[4]]) < 6 &&  return FAIL
-    cutflow_ptr[] += 1
-    if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-
-    # selected lepton min dR
-    @inbounds for i in 1:4
-        for j in (i + 1):4
-            dR = deltar(v_l_tlv[v_l_order[i]], v_l_tlv[v_l_order[j]])
-            dR < 0.1 && return FAIL
-        end
-    end
-    cutflow_ptr[] += 1
-    if NN_hist push!(dict[:CutFlow], cutflow_ptr[]) end
-
-    return true, chi2, W_pair
-end

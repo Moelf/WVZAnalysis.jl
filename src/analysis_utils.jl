@@ -6,7 +6,7 @@ const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 const ANALYSIS_DIR = Ref("/data/jiling/WVZ/v2.3_hists")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref("/home/rjacobse/BDT/kfolding/")
+const BDT_MODEL_PATH = Ref("/data/rjacobse/WVZ/kfolding/")
 
 function init_ONNX()
     model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
@@ -326,54 +326,12 @@ end
 
 
 """
-    hist_root(tag; output_dir, kw...)
-
-return a dictionary of all systematics histograms for a given tag, the `output_dir` is
-used to store Julia Serializatio files as a backup measure, and for later conversion to
-`.root` histograms via `PythonCall.jl` + `uproot`.
-"""
-function hist_root(tag; output_dir, kw...)
-    p = output_dir
-    if !isdir(p)
-        mkdir(p)
-    end
-    @show Threads.nthreads()
-    @info "-------------- $tag SF begin ------------ "
-    sf_tasks = prep_tasks(tag)
-    println("$(length(sf_tasks)) tasks in total")
-    p1 = Progress(length(sf_tasks))
-    sf_list = map(sf_tasks) do t
-        x = main_looper(t)
-        next!(p1)
-        x
-    end
-    sf_hist = reduce(mergewith(+), sf_list)
-
-    @info "-------------- $tag shapes begin ------------ "
-    shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation), vcat,
-                                 SHAPE_TREE_NAMES)
-    sort!(shape_tasks; by = x->x.path)
-    println("$(length(shape_tasks)) tasks in total")
-    p2 = Progress(length(shape_tasks))
-    shape_list = map(shape_tasks) do t
-        x = main_looper(t)
-        next!(p2)
-        x
-    end
-    shape_hist = reduce(mergewith(+), shape_list)
-
-    Hs = merge(sf_hist, shape_hist)
-    serialize(joinpath(p, "$(tag).jlserialize"), Hs)
-    Hs
-end
-
-"""
-    hist_root_pmap(tag; output_dir, kw...)
+    hist_root(tag; mapper=pmap, no_shape=false, output_dir, kw...)
 
 Similar to the one without `pmap`, except uses pmap for everything. Checkout `ClusterManager.jl`
 and be sure to have a handful of workers before running this.
 """
-function hist_root_pmap(tag; output_dir, kw...)
+function hist_root(tag; mapper=pmap, no_shape = false, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)
@@ -382,16 +340,25 @@ function hist_root_pmap(tag; output_dir, kw...)
 
     all_tasks = prep_tasks(tag; sfsys=true)
     if tag != "Data"
-        @info "-------------- $tag SF + shapes ------------ "
-        shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation, sfsys=false), vcat,
-                                SHAPE_TREE_NAMES)
-        sort!(shape_tasks; by = x->x.path)
-        append!(all_tasks, shape_tasks)
+        if no_shape
+            @info "-------------- $tag SF ------------ "
+        else
+            @info "-------------- $tag SF + shapes ------------ "
+            shape_tasks = mapreduce(shape_variation -> prep_tasks(tag; shape_variation, sfsys=false), vcat,
+                                    SHAPE_TREE_NAMES)
+            sort!(shape_tasks; by = x->x.path)
+            append!(all_tasks, shape_tasks)
+        end
     else
         @info "-------------- !!! $tag !!! ------------ "
     end
     println("$(length(all_tasks)) tasks in total")
-    all_list = @showprogress pmap(main_looper, all_tasks)
+    prog = Progress(length(all_tasks))
+    all_list = mapper(all_tasks) do task
+        _m = main_looper(task)
+        next!(prog)
+        return _m
+    end
     # TODO
     # process_theory_syst!.(all_list)
     Hs = reduce(mergewith(+), all_list)
