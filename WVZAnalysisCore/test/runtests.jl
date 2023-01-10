@@ -1,9 +1,9 @@
-using WVZAnalysis
-using WVZAnalysis.FHist
+using WVZAnalysisCore
+using WVZAnalysisCore.FHist
 using Test
 
 if endswith(gethostname(), "uchicago.edu")
-    @testset "WVZAnalysis.jl" begin
+    @testset "WVZAnalysisCore.jl" begin
         fs = prep_tasks("Signal"; shape_variation="NOMINAL", sfsys=false);
         @test length(fs) == 33
         res = main_looper(sort(fs; by = x->filesize(x.path))[8]);
