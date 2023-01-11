@@ -1,7 +1,7 @@
 module WVZAnalysisCore
 
 using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, LazyArrays, JSON3, ProgressMeter
-using XGBoost
+using XGBoost, Distributed, Serialization
 using ONNX, ONNX.Umlaut 
 
 export AnalysisTask
