@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.7'
+          - '1.8'
           - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
         os:
           - ubuntu-latest
@@ -28,27 +28,24 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: Dev WVZAnalysisCore 
+        run: |
+          julia --project=monorepo -e '
+          using Pkg
+          pkg"dev ./WVZAnalysisCore"
+          '
+      - name: Run tests
+        run: >
+          julia --color=yes --project=monorepo -e 'using Pkg; Pkg.test("WVZAnalysisCore", coverage=true)'
+          && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@v1
         with:
           version: '1'
-      - run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
-      - run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta
-            using WVZAnalysis
-            DocMeta.setdocmeta!(WVZAnalysis, :DocTestSetup, :(using WVZAnalysis); recursive=true)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

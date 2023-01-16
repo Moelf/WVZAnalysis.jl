@@ -48,7 +48,7 @@ function rebinscan(S, B; atleast=1, from=:right, by = (s,b) -> s/sqrt(b))
     return _binedges[newEdges]
 end
 
-function significance(signal, bkg)
+function _significance(signal, bkg)
     S = integral(signal)
     B = integral(bkg)
     Sig = sqrt(2*((S + B) * log(1 + S/B) - S))
@@ -114,7 +114,7 @@ end
 function significance_table(body::Matrix; recreate=false)
     total_sig = body[1:1, :] #first row
     total_bkg = mapreduce(sum, hcat, eachcol(body[2:end, :])) #2:end row
-    sig_errors = significance.(total_sig, total_bkg)
+    sig_errors = _significance.(total_sig, total_bkg)
     combined_sig = sqrt(sum(x[1]^2 for x in sig_errors))
 
     full_nums = [
