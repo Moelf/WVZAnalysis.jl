@@ -108,6 +108,7 @@ function main_looper(mytree, sumWeight, dict, models,
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
         abs(best_Z_mass - Z_m) > 20 && continue
+        cutflow_SRs!(cutflow_ptr, dict, wgt_dict; NN_hist, SR, shape_variation)
 
         
         l3, l4 = W_pair
@@ -119,7 +120,6 @@ function main_looper(mytree, sumWeight, dict, models,
             false, true, false
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
-        cutflow_SRs!(cutflow_ptr, dict, wgt_dict; NN_hist, SR, shape_variation)
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -265,14 +265,8 @@ function main_looper(mytree, sumWeight, dict, models,
             NN_score = model(BDT_input; fold = moded_event, region)
         end
 
-        cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
-        cr_ttZ = has_b
-        if cr_ZZ || cr_ttZ
-            SR = -1
-        end
-        cutflow_ptr[] += 1
-
         if MET > 10 && NN_hist && shape_variation == "NOMINAL"
+            cutflow_ptr[] += 1
             if sr_SF_inZ push!(dict[:SFinZCutFlow], cutflow_ptr[]) end
             if sr_SF_inZ push!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
             if sr_SF_noZ push!(dict[:SFnoZCutFlow], cutflow_ptr[]) end
@@ -282,6 +276,12 @@ function main_looper(mytree, sumWeight, dict, models,
         end
 
         if NN_hist && !arrow_making
+            cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
+            cr_ttZ = has_b
+            if MET < 10 || cr_ZZ || cr_ttZ
+                SR = -1
+            end
+
             region_prefix = if sr_SF_inZ
                 :SFinZ
             elseif sr_SF_noZ
