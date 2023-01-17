@@ -108,7 +108,6 @@ function main_looper(mytree, sumWeight, dict, models,
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
         abs(best_Z_mass - Z_m) > 20 && continue
-        cutflow_SRs!(cutflow_ptr, dict, wgt_dict; NN_hist, SR, shape_variation)
 
         
         l3, l4 = W_pair
@@ -120,6 +119,7 @@ function main_looper(mytree, sumWeight, dict, models,
             false, true, false
         end
         SR = sr_SF_inZ ? 0 : (sr_SF_noZ ? 1 : 2)
+        cutflow_SRs!(cutflow_ptr, dict, wgt_dict; NN_hist, SR, shape_variation)
 
         mass_4l = mass(sum(v_l_tlv))
         mass_4l < 0.0 && continue
@@ -275,12 +275,13 @@ function main_looper(mytree, sumWeight, dict, models,
             if sr_DF push!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL]) end
         end
 
+        wgt = wgt_dict[:NOMINAL]
+        cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
+        cr_ttZ = has_b
+        if MET < 10 || cr_ZZ || cr_ttZ
+            SR = -1
+        end
         if NN_hist && !arrow_making
-            cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
-            cr_ttZ = has_b
-            if MET < 10 || cr_ZZ || cr_ttZ
-                SR = -1
-            end
 
             region_prefix = if sr_SF_inZ
                 :SFinZ
@@ -350,7 +351,6 @@ function main_looper(mytree, sumWeight, dict, models,
             v_j_btag70, v_j_btag77, v_j_btag85, jet_btagCont_1, jet_btagCont_2, jet_btagCont_3, jet_btagCont_4, wgt, mcGenWgt,
             sr_SF_inZ, sr_SF_noZ, sr_DF, cr_ZZ, cr_ttZ, event
         else
-            wgt = wgt_dict[:NOMINAL]
             @fill_dict! dict wgt push! pt_1, pt_2, pt_3, pt_4, eta_1, eta_2, 
             eta_3, eta_4, mass_4l, Zcand_mass, other_mass, METSig, MET, HT, leptonic_HT, total_HT, SR,
             Z_eta, Z_phi, Z_pt, Z_rapidity, Njet
