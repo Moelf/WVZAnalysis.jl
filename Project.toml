@@ -13,6 +13,7 @@ Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 WVZAnalysisCore = "96227bb2-44ea-4def-a73b-39d4437f5402"
 
 [compat]
+ClusterManagers = "0.4"
 WVZAnalysisCore = "0.2"
 
 [extras]
