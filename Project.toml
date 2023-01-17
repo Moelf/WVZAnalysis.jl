@@ -14,6 +14,9 @@ WVZAnalysisCore = "96227bb2-44ea-4def-a73b-39d4437f5402"
 
 [compat]
 Measurements = "2"
+ClusterManagers = "0.4"
+PythonCall = "0.9"
+PrettyTables = "2"
 WVZAnalysisCore = "0.2"
 
 [extras]
