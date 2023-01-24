@@ -15,7 +15,9 @@ directly.
 source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.sh
 ```
 
-- Launch Julia via `julia --project=<path to this repo folder>`, this is because
+- `$ cd <path to this repo folder>`
+
+- Launch Julia via `julia --project=.`, this is because
 you want to use `Manifest.toml` to keep exact versions of packages including all dependencies.
 
 - for first time only, `]dev ./WVZAnalysisCore`
