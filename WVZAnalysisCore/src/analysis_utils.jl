@@ -5,7 +5,7 @@ const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
 const ANALYSIS_DIR = Ref("/data/jiling/WVZ/v2.3_hists")
 
 const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref(joinpath(dirname(@__DIR__), "BDT_models"))
+const BDT_MODEL_PATH = Ref(joinpath(dirname(@__DIR__), "config"))
 
 function init_ONNX()
     model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))

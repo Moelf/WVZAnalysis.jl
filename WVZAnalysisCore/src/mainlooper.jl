@@ -107,13 +107,13 @@ function main_looper(mytree, sumWeight, dict, models,
         Z_pair, W_pair, best_Z_mass = Find_Z_Pairs(v_l_pid, v_l_tlv)
         isinf(best_Z_mass) && continue
         other_mass = mass(v_l_tlv[W_pair[1]] + v_l_tlv[W_pair[2]])
-        abs(best_Z_mass - Z_m) > 20 && continue
+        abs(best_Z_mass - Z_m) > 40 && continue
 
         
         l3, l4 = W_pair
         sr_SF_inZ, sr_SF_noZ, sr_DF = if abs(v_l_pid[l3]) != abs(v_l_pid[l4]) #DF
             false, false, true
-        elseif abs(other_mass - Z_m) < 20 # SF_inZ, already GeV
+        elseif abs(other_mass - Z_m) < 40 # SF_inZ, already GeV
             true, false, false
         else #SF_noZ
             false, true, false
@@ -278,7 +278,7 @@ function main_looper(mytree, sumWeight, dict, models,
         wgt = wgt_dict[:NOMINAL]
         cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
         cr_ttZ = has_b
-        if MET < 10 || cr_ZZ || cr_ttZ
+        if has_b
             SR = -1
         end
         if NN_hist && !arrow_making
