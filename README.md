@@ -18,6 +18,8 @@ source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.s
 - Launch Julia via `julia --project=<path to this repo folder>`, this is because
 you want to use `Manifest.toml` to keep exact versions of packages including all dependencies.
 
+- for first time only, `]dev ./WVZAnalysisCore`
+
 - You should `]instantiate` or `]up` if you manually pulled this repo or the first time colneing it.
 
 ## Folder structre:
