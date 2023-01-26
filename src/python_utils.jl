@@ -1,8 +1,3 @@
-delete!(ENV, "PYTHONPATH")
-delete!(ENV, "PYTHONHOME")
-using WVZAnalysisCore.FHist
-using PythonCall, Serialization
-
 function make_TH1D(h)
     np = pyimport("numpy")
     pyhist = pyimport("hist")

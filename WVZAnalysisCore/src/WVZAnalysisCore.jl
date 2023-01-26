@@ -4,7 +4,7 @@ using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, LazyArrays, JSON3, Progres
 using XGBoost, Distributed, Serialization
 using ONNX, ONNX.Umlaut 
 
-export AnalysisTask, ALL_TAGS, ANALYSIS_DIR
+export AnalysisTask, ALL_TAGS
 export prep_tasks, main_looper, hist_root, arrow_making
 
 include("./analysis_utils.jl")

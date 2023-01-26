@@ -132,7 +132,7 @@ end
 const sigtable_fmt = (v, i, j) -> v isa Number ? "$(round(Measurements.value(v); digits=2)) ± $(round(Measurements.uncertainty(v); digits=2))" : v
 
 """
-    print_sigtable(full_table)
+    print_sigtable(full_table; io=stdout)
 
 Takes the output of [`significance_table`](@ref) and pretty print it:
 
@@ -164,7 +164,7 @@ julia> print_sigtable(M)
 └──────────────┴────────────────┴───────────────┴──────────────┴──────────────┴───────────────┘
 ```
 """
-print_sigtable(full_table) = pretty_table(
+print_sigtable(full_table; io=stdout) = pretty_table(io, 
     full_table;
     header = ["", "SF-inZ", "SF-noZ", "DF", "CR-ZZ", "CR-ttZ"],
     formatters = sigtable_fmt,
