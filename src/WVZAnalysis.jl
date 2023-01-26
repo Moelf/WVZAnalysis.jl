@@ -1,6 +1,6 @@
 module WVZAnalysis
 
-using WVZAnalysisCore
+using WVZAnalysisCore, FHist
 export WVZAnalysisCore
 export arrow_making, hist_root, significance_table, print_sigtable
 
