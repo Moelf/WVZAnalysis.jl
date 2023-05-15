@@ -60,15 +60,19 @@ function main_looper(mytree, sumWeight, dict, models,
     model = models # for BDT
     for evt in mytree
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
+        v_j_eta = evt.v_j_eta
+        # we don't look at forward jet at all
+        j_eta_mask = abs.(v_j_eta) .< 2.5
+
         if isdata
             wgt_dict[:NOMINAL] = 1.0
         else
             make_sfsys_wgt!(evt, wgt_dict,
                             :weight; sfsys, pre_mask=1)
             make_sfsys_wgt!(evt, wgt_dict, 
-                            :v_j_wgt_btag77, Colon() ; sfsys)
-            make_sfsys_wgt!(evt, wgt_dict, 
-                            :w_sf_fjvt; sfsys, pre_mask=1)
+                            :v_j_wgt_btag77, j_eta_mask ; sfsys)
+            # make_sfsys_wgt!(evt, wgt_dict, 
+            #                 :w_sf_fjvt; sfsys, pre_mask=1)
         end
         ### initial_cut
         cutflow_ptr = Ref(0)
@@ -207,7 +211,7 @@ function main_looper(mytree, sumWeight, dict, models,
         !pass_dR && continue
         cutflow_SRs!(cutflow_ptr, dict, wgt_dict; NN_hist, SR, shape_variation)
         
-        has_b = any(evt.v_j_btag77)
+        has_b = any(@view evt.v_j_btag77[j_eta_mask])
 
         (; MET, METSig, METPhi) = evt
         MET /= 1000
@@ -220,7 +224,7 @@ function main_looper(mytree, sumWeight, dict, models,
         eta_1, eta_2, eta_3, eta_4 = eta.(@view v_l_tlv[v_l_order])
         phi_1, phi_2, phi_3, phi_4 = phi.(@view v_l_tlv[v_l_order])
         phi_1, phi_2, phi_3, phi_4 = phi.(@view v_l_tlv[v_l_order])
-        v_j_tlv = LorentzVectorCyl.(evt.v_j_pt ./ 1000, evt.v_j_eta, evt.v_j_phi, evt.v_j_m ./ 1000)
+        v_j_tlv = @views LorentzVectorCyl.(evt.v_j_pt[j_eta_mask] ./ 1000, v_j_eta[j_eta_mask], evt.v_j_phi[j_eta_mask], evt.v_j_m[j_eta_mask] ./ 1000)
         v_j_order = sortperm(v_j_tlv; by=pt, rev=true)
         Njet = length(v_j_tlv)
         Zcand_mass = best_Z_mass
