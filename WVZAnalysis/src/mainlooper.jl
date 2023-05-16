@@ -48,8 +48,6 @@ function main_looper(mytree, sumWeight, dict, models,
                             :weight; sfsys, pre_mask=1)
             make_sfsys_wgt!(evt, wgt_dict, 
                             :v_j_wgt_btag77, j_eta_mask ; sfsys)
-            # make_sfsys_wgt!(evt, wgt_dict, 
-            #                 :w_sf_fjvt; sfsys, pre_mask=1)
         end
         ### initial_cut
         cutflow_ptr = Ref(0)
