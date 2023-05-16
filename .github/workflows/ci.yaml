@@ -15,8 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.8'
-          - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
+          - '1.9'
         os:
           - ubuntu-latest
         arch:
@@ -25,28 +24,35 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.version }}
+          version: '1.9'
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
-      - name: Dev WVZAnalysisCore 
+      - name: Dev
         run: |
-          julia --project=monorepo -e '
+          julia --project=. -e '
           using Pkg
-          pkg"dev ./WVZAnalysisCore"
+          Pkg.instantiate()
           '
       - name: Run tests
         run: >
-          julia --color=yes --project=monorepo -e 'using Pkg; Pkg.test("WVZAnalysisCore", coverage=true)'
+          julia --color=yes --project=. -e 'using Pkg; Pkg.test("WVZAnalysis", coverage=true)'
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/setup-julia@v1
         with:
-          version: '1'
-      - run: julia --project=docs docs/make.jl
+          version: '1.9'
+          arch: 'x64'
+      - uses: julia-actions/cache@v1
+      - run: |
+          julia --project=WVZAnalysis/docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path="./WVZAnalysis"))
+            Pkg.instantiate()'
+      - run: julia --project=WVZAnalysis/docs WVZAnalysis/docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
