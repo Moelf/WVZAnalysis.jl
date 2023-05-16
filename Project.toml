@@ -17,6 +17,7 @@ ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 WVZAnalysisCore = "96227bb2-44ea-4def-a73b-39d4437f5402"
 
 [compat]
+Arrow = "2"
 ClusterManagers = "0.4"
 FHist = "0.10"
 Measurements = "2"
