@@ -1,33 +1,26 @@
-function init_ONNX()
-    model=ONNX.load(ONNX_MODEL_PATH[], zeros(Float32, 30, 1))
-    rescaling_parameters = joinpath(dirname(@__DIR__), "config/NN_08_23_rescaling_parameters.json") |> read |> JSON3.read
-    NN_order = ("HT", "MET", "METPhi", "METSig", "Njet", "Wlep1_dphi", "Wlep1_eta",
-                "Wlep1_phi", "Wlep1_pt", "Wlep2_dphi", "Wlep2_eta", "Wlep2_phi",
-                "Wlep2_pt", "Zcand_mass", "Zlep1_dphi", "Zlep1_eta", "Zlep1_phi",
-                "Zlep1_pt", "Zlep2_dphi", "Zlep2_eta", "Zlep2_phi", "Zlep2_pt",
-                "leptonic_HT", "mass_4l", "other_mass", "pt_4l", "total_HT",
-                "sr_SF_inZ", "sr_SF_noZ", "sr_DF")
-    return model, 
-    [rescaling_parameters["scale"][name] for name in NN_order],
-    [rescaling_parameters["min"][name] for name in NN_order]
+function populate_hist!(dict, shape_variation, symbols, bins, sfsys)
+    for n in symbols
+        dict[Symbol(n, :__, shape_variation)] = Hist1D(Float64; bins, overflow=true)
+        !sfsys && continue
+        for (_,vs) in SF_BRANCH_DICT
+            for v in vs
+                dict[Symbol(n, :__, v)] = Hist1D(Float64; bins, overflow=true)
+            end
+        end
+    end
 end
-function NN_calc(model, scales, minimums, NN_input)::Float32
-    @. NN_input = fma(NN_input, scales, minimums)
-    return Ghost.play!(model, NN_input)[1]
-end
-
 
 function init_BDT()
     SFinZs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "SFinZ$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFinZ$i.model"))
               for i = 0:4
              )
     SFnoZs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "SFnoZ$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFnoZ$i.model"))
               for i = 0:4
              )
     DFs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_PATH[], "DF$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "DF$i.model"))
               for i = 0:4
              )
     return function f(ary; fold, region)
@@ -42,13 +35,41 @@ function init_BDT()
     end
 end
 
+function BDT_hist_init(; sfsys, shape_variation)
+    if sfsys && (shape_variation != "NOMINAL")
+        error("can't do sf systematics and shape systematics at the same time")
+    end
+    _dict = Dict{Symbol, Hist1D}()
+
+    bins = 0:0.01:1
+    populate_hist!(_dict, shape_variation, (:SFinZ__BDT, :SFnoZ__BDT, :DF__BDT), bins, sfsys)
+
+    bins = 0:5:300
+    populate_hist!(_dict, shape_variation, (:SFinZ__MET, :SFnoZ__MET, :DF__MET), bins, sfsys)
+
+    bins = 0:5
+    populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet, :ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
+
+    _dict[:CutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFinZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFinZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFnoZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFnoZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:DFCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:DFCutFlowWgt] = Hist1D(Float64; bins=1:20)
+
+    return _dict
+end
+
+
 
 """
     struct AnalysisTask
         path::String
         sumWeight::Float64
         isdata::Bool = false
-        NN_hist::Bool = true
+        BDT_hist::Bool = true
         arrow_making::Bool = false
         sfsys::Bool = false
         shape_variation::String = "NOMINAL"
@@ -67,7 +88,7 @@ julia> prep_tasks("Signal") |> first
 path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.363507.e6379_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896106._000001.ANALYSIS.root"
 sumWeight=13812.79638671875
 isdata=false
-NN_hist=true
+BDT_hist=true
 arrow_making=false
 sfsys=false
 shape_variation="NOMINAL"
@@ -79,11 +100,11 @@ Stacktrace:
 ...
 ..
 
-julia> prep_tasks("Signal"; arrow_making=true, NN_hist=false) |> first
+julia> prep_tasks("Signal"; arrow_making=true, BDT_hist=false) |> first
 path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.363507.e6379_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896106._000001.ANALYSIS.root"
 sumWeight=13812.79638671875
 isdata=false
-NN_hist=false
+BDT_hist=false
 arrow_making=true
 sfsys=false
 shape_variation="NOMINAL"
@@ -95,21 +116,21 @@ struct AnalysisTask
     path::String
     sumWeight::Float64
     isdata::Bool
-    NN_hist::Bool
+    BDT_hist::Bool
     arrow_making::Bool
     sfsys::Bool
     shape_variation::String
     controlregion::Symbol
-    function AnalysisTask(; path, sumWeight, isdata=false, NN_hist=true,
+    function AnalysisTask(; path, sumWeight, isdata=false, BDT_hist=true,
             arrow_making=false, sfsys=false, shape_variation="NOMINAL",
             controlregion=:none)
         shapesys = (shape_variation != "NOMINAL")
         if sfsys && shapesys
             error("can't do SF systematic and Shape systematic at the same time")
-        elseif arrow_making && NN_hist
+        elseif arrow_making && BDT_hist
             error("can't produce arrow and NN histograms at the same time")
         else
-            new(path, sumWeight, isdata, NN_hist, arrow_making, sfsys, shape_variation, controlregion)
+            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion)
         end
     end
 end
@@ -120,6 +141,10 @@ function Base.show(io::IO, a::AnalysisTask)
         show(io, getproperty(a, n))
         println(io)
     end
+end
+
+function Base.filesize(a::AnalysisTask)
+    filesize(a.path)
 end
 
 
@@ -173,17 +198,17 @@ function root_dirs(tag::AbstractString; variation = "sf")
     _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
     folders = _LIST[tag]
     if lowercase(tag) == "data"
-        sel1 = filter(readdir(MINITREE_DIR[])) do folder_name
+        sel1 = filter(readdir(MINITREE_DIR)) do folder_name
             contains(folder_name, "_13TeV") && contains(folder_name, "data")
         end
-        return joinpath.(MINITREE_DIR[], sel1)
+        return joinpath.(MINITREE_DIR, sel1)
     else
         dsids = unique(map(extrac_dsid, folders))
         # folder_name needs to contain any one element of the dsids
-        sel2 = filter(readdir(MINITREE_DIR[])) do folder_name
+        sel2 = filter(readdir(MINITREE_DIR)) do folder_name
             any(occursin(folder_name), dsids) && contains(folder_name, variation)
         end
-        return joinpath.(MINITREE_DIR[], sel2)
+        return joinpath.(MINITREE_DIR, sel2)
     end
 end
 
@@ -192,7 +217,10 @@ multiple tags
 """
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
-function sumsumWeight(dir_path)::Float64
+"""
+    Compute the sum of weights given path to a directory, and cache the result in a text file.
+"""
+function sumsumWeight(dir_path)
     cache = joinpath(dir_path, "sumsumWeight.txt")
     if isfile(cache)
         return parse(Float64, readchomp(cache))
@@ -362,4 +390,27 @@ function make_sfsys_wgt!(evt, wgt, wgt_name, wgt_idx=1; pre_mask=Colon(), sfsys)
         wgt[:NOMINAL] *= nominal_new
     end
     nothing
+end
+
+function cutflow_total!(cutflow_ptr, dict, wgt_dict; BDT_hist, shape_variation)
+    if BDT_hist && shape_variation == "NOMINAL"
+        cutflow_ptr[] += 1
+        push!(dict[:CutFlow], cutflow_ptr[])
+        push!(dict[:CutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
+    end
+end
+function cutflow_SRs!(cutflow_ptr, dict, wgt_dict; BDT_hist, SR, shape_variation)
+    if BDT_hist && shape_variation == "NOMINAL"
+        cutflow_ptr[] += 1
+        if SR == 0
+            push!(dict[:SFinZCutFlow], cutflow_ptr[])
+            push!(dict[:SFinZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
+        elseif SR == 1
+            push!(dict[:SFnoZCutFlow], cutflow_ptr[])
+            push!(dict[:SFnoZCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
+        else
+            push!(dict[:DFCutFlow], cutflow_ptr[])
+            push!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
+        end
+    end
 end

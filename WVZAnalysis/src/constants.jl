@@ -1,11 +1,3 @@
-"""
-extract dsid from a file name, used to match with systematic files
-"""
-const MINITREE_DIR = Ref("/data/jiling/WVZ/v2.3")
-
-const ONNX_MODEL_PATH = Ref("/data/grabanal/NN/NN_08_23.onnx")
-const BDT_MODEL_PATH = Ref(joinpath(dirname(@__DIR__), "BDT_models"))
-
 const CUTFLOW_NAMES = [
     :in_minitree,
     :pass_trigger,
