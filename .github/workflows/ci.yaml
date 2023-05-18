@@ -33,9 +33,11 @@ jobs:
           using Pkg
           Pkg.instantiate()
           '
-      - name: Run tests
+      - name: Set Preferences
         run: >
           julia --project=. -e 'using WVZAnalysis; set_minitree_dir("$(@__DIR__)/WVZAnalysis/test/")' &&
+      - name: Run tests
+        run: >
           julia --color=yes --project=. -e 'using Pkg; Pkg.test("WVZAnalysis", coverage=true)'
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
       - uses: julia-actions/julia-processcoverage@v1
