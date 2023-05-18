@@ -4,15 +4,13 @@ authors = ["Jerry Ling <proton@jling.dev> and contributors"]
 version = "0.2.3"
 
 [deps]
-Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LorentzVectorHEP = "f612022c-142a-473f-8cfd-a09cf3793c6c"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
-ONNX = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
+Parallelism = "c8c83da1-e5f9-4e2c-a857-b8617bac3554"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 SentinelArrays = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
@@ -36,8 +34,8 @@ ClusterManagers = "0.4"
 FHist = "0.10"
 Measurements = "2"
 PrettyTables = "2"
-UnROOT = "^0.10.11"
 PythonCall = "0.9"
+UnROOT = "^0.10.12"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

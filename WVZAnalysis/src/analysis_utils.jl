@@ -189,13 +189,13 @@ function extrac_dsid(str)
     return match(r"(\d{6})", str).captures[1] #dsid
 end
 
+const _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
 """
     root_dirs(tag::AbstractString; variation = "sf")
 
 Reutrn a list of dir paths associated with a `tag` +sf or +shape
 """
 function root_dirs(tag::AbstractString; variation = "sf")
-    _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
     folders = _LIST[tag]
     if lowercase(tag) == "data"
         sel1 = filter(readdir(MINITREE_DIR)) do folder_name
@@ -320,17 +320,14 @@ end
 
 
 """
-    hist_root(tag; mapper=pmap, no_shape=false, output_dir, kw...)
+    hist_root(tag; mapper=robust_pmap, no_shape=false, output_dir, kw...)
 
-Similar to the one without `pmap`, except uses pmap for everything. Checkout `ClusterManager.jl`
-and be sure to have a handful of workers before running this.
 """
-function hist_root(tag; mapper=pmap, no_shape = false, output_dir, kw...)
+function hist_root(tag; mapper=robust_pmap, no_shape = false, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)
     end
-    @show nworkers()
 
     all_tasks = prep_tasks(tag; sfsys=true)
     if tag != "Data"

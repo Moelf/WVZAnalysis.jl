@@ -9,7 +9,7 @@ If you're familiar with basic Julia workflow, check out the [documentation](http
 directly.
 
 ## New to Julia:
-- Download Julia, we recommend 1.8 or above
+- Download Julia, we require 1.9 or above (for Pkg extension functionality)
     - if you have access to `/cvmfs`, you can also access Julia via LCG release:
 ```
 source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.sh
@@ -23,14 +23,10 @@ you want to use `Manifest.toml` to keep exact versions of packages including all
 - For the first time only, you should run `]instantiate` to install all the depeendencies.
 
 ## Folder structre:
-- The analysis algorithm and cutflows are implemengted inside `WVZAnalysisCore` package
-- The top-level (i.e. `WVZAnalysis`) is used for reporting, plotting, PythonCall -> `.root` and
-most importantly to provide a `Manifest.toml` environment for exact reproduction.
-- `WVZAnalysisCore/config` contains trained XGBoost model files and JSON files that map process name
-(i.e. "Signal", "ttZ") to a list of files (DSIDs).
+- The source code of analysis algorithm and cutflows etc. are inside `WVZAnalysis/src`
 
 
-## Example workflow
+## Example
 ```bash
 $ pwd
 /home/jiling/.julia/dev/WVZAnalysis/ 
@@ -39,14 +35,40 @@ $ julia --project=.
 ```
 then in Julia REPL:
 ```julia
-julia> using WVZAnalysisCore, ClusterManagers, Distributed
+julia> using WVZAnalysis
 
-julia> addprocs(HTCManager(10); extrajdl=["+queue=\"short\""], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
-Waiting for 10 workers: 1 2 3 4 5 6 7 8 9 10 .
+julia> tasks = prep_tasks("VH");
 
-julia> @everywhere using WVZAnalysisCore
+julia> tasks[1]
+path="/data/jiling/WVZ/v2.3/user.jiling.WVZ_v2.3sf.342284.e4246_s3126_r10201_p4434_ANALYSIS.root/user.jiling.29896151._000001.ANALYSIS.root"
+sumWeight=100000.0
+isdata=false
+BDT_hist=true
+arrow_making=false
+sfsys=false
+shape_variation="NOMINAL"
+controlregion=:none
 
-julia> foreach(WVZAnalysisCore.ALL_TAGS) do tag
-           hist_root(tag; scouting=false, output_dir="/data/jiling/WVZ/v2.3_hists_uproot_jan9/");
-       end
+
+julia> main_looper(tasks[1])
+Dict{Symbol, FHist.Hist1D} with 19 entries:
+  :SFnoZ__BDT__NOMINAL  => Hist1D{Float64}, edges=0.0:0.01:1.0, integral=0.0
+  :CutFlow              => Hist1D{Int64}, edges=1:20, integral=149
+  :SFinZCutFlow         => Hist1D{Int64}, edges=1:20, integral=0
+  :DF__BDT__NOMINAL     => Hist1D{Float64}, edges=0.0:0.01:1.0, integral=0.4336316428757472
+  :DFCutFlowWgt         => Hist1D{Float64}, edges=1:20, integral=3.582834263543141
+  :SFnoZCutFlow         => Hist1D{Int64}, edges=1:20, integral=2
+  :DF__Njet__NOMINAL    => Hist1D{Float64}, edges=0:5, integral=0.4336316428757472
+  :SFnoZ__MET__NOMINAL  => Hist1D{Float64}, edges=0:5:300, integral=0.0
+  :SFinZ__MET__NOMINAL  => Hist1D{Float64}, edges=0:5:300, integral=0.0
+  :CutFlowWgt           => Hist1D{Float64}, edges=1:20, integral=77.51041686776865
+  :ZZCR__Njet__NOMINAL  => Hist1D{Float64}, edges=0:5, integral=0.0
+  :SFnoZCutFlowWgt      => Hist1D{Float64}, edges=1:20, integral=0.9438591695752855
+  :SFnoZ__Njet__NOMINAL => Hist1D{Float64}, edges=0:5, integral=0.0
+  :DFCutFlow            => Hist1D{Int64}, edges=1:20, integral=8
+  :SFinZCutFlowWgt      => Hist1D{Float64}, edges=1:20, integral=0.0
+  :SFinZ__BDT__NOMINAL  => Hist1D{Float64}, edges=0.0:0.01:1.0, integral=0.0
+  :DF__MET__NOMINAL     => Hist1D{Float64}, edges=0:5:300, integral=0.4336316428757472
+  :ttZCR__Njet__NOMINAL => Hist1D{Float64}, edges=0:5, integral=0.0
+  :SFinZ__Njet__NOMINAL => Hist1D{Float64}, edges=0:5, integral=0.0
 ```
