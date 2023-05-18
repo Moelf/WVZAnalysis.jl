@@ -1,5 +1,5 @@
 using WVZAnalysis
-using WVZAnalysis.ThreadsX
+using ThreadsX
 using WVZAnalysis.FHist
 using Test
 
