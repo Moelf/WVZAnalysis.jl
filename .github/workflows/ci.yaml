@@ -34,8 +34,8 @@ jobs:
           Pkg.instantiate()
           '
       - name: Set Preferences
-        run: >
-          julia --project=. -e 'using WVZAnalysis; set_minitree_dir("$(@__DIR__)/WVZAnalysis/test/")' &&
+        run: |
+          julia --project=. -e 'using WVZAnalysis; set_minitree_dir("$(@__DIR__)/WVZAnalysis/test/")'
       - name: Run tests
         run: >
           julia --color=yes --project=. -e 'using Pkg; Pkg.test("WVZAnalysis", coverage=true)'
