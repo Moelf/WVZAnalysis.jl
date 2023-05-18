@@ -35,6 +35,7 @@ jobs:
           '
       - name: Run tests
         run: >
+          julia --project=. -e 'using WVZAnalysis; set_minitree_dir("$(@__DIR__)/WVZAnalysis/test/")' &&
           julia --color=yes --project=. -e 'using Pkg; Pkg.test("WVZAnalysis", coverage=true)'
           && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
       - uses: julia-actions/julia-processcoverage@v1
