@@ -1483,7 +1483,7 @@ version = "1.0.2"
 
 [[deps.UnROOT]]
 deps = ["AbstractTrees", "ArraysOfArrays", "BitIntegers", "CodecLz4", "CodecXz", "CodecZstd", "HTTP", "IterTools", "LRUCache", "LibDeflate", "LorentzVectors", "Memoization", "Mixers", "Mmap", "Parameters", "PrettyTables", "SentinelArrays", "StaticArrays", "StructArrays", "Tables", "xrootdgo_jll"]
-path = "../UnROOT"
+git-tree-sha1 = "580d27ed9a8a9e47b7ebfef56071d1ec747cd3a0"
 uuid = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 version = "0.10.12"
 
