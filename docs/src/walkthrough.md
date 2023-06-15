@@ -33,7 +33,7 @@ git checkout refactor_Julia_v1p9
 Finally, instantiate the exact Julia versions we used for this analysis:
 ```
 JULIA_CONDAPKG_BACKEND=Null julia --project=. # `.` here is the root directory of this git repo
-]instantiate # when you press `]` the prompt should switch to `pkg>`
+]instantiate # when you press `]` the prompt should switch to `(WVZAnalysis) pkg>`
 ```
 
 !!! note
