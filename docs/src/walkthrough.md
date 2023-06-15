@@ -24,7 +24,7 @@ source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.s
 
 You should also clone this repository and checkout the `refactor_Julia_v1p9` branch (or if this
 branch is merged, just whatever release tag you need):
-```
+```bash
 git clone https://github.com/Moelf/WVZAnalysis.jl/
 cd WVZAnalysis.jl
 git checkout refactor_Julia_v1p9
@@ -43,7 +43,7 @@ JULIA_CONDAPKG_BACKEND=Null julia --project=. # `.` here is the root directory o
 
 # Step 1
 
-```
+```julia
 using WVZAnalysis
 
 foreach(ALL_TAGS) do tag
@@ -62,7 +62,7 @@ Remember to change `output_dir` to somewhere you have write access.
 # Step 2
 Now that the arrow files are in place, we can train XGBoost, you should start a new Julia process
 for this (and exit after done, since this reserve a GPU node):
-```
+```julia
 using ClusterManagers, Distributed
 
 addprocs(HTCManager(1); extrajdl=["+queue=\"short\"", "request_gpus=1"], extraenv=["export JULIA_CPU_TARGET=generic"], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
@@ -86,13 +86,13 @@ As before, remember to reaplce `output_dir` and input path with what you have
 In this step, we use the cluster (HTCondor in this case) to run through all systematic variations:
 
 But first, you need to point our package to the new location that stores the XGBoost models:
-```
+```bash
 $ JULIA_CONDAPKG_BACKEND=Null julia --project=. -e 'using WVZAnalysis; WVZAnalysis.set_bdt_model_dir("/data/jiling/WVZ/v2.3-2023_06_15_hists/")'
 ```
 
 Then restart Julia session as instructed,
 
-```
+```julia
 using ClusterManagers, Distributed, WVZAnalysis
 
 addprocs(HTCManager(100); extrajdl=["+queue=\"short\""], extraenv=["export JULIA_CPU_TARGET=generic"], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
@@ -104,7 +104,7 @@ addprocs(HTCManager(100); extrajdl=["+queue=\"short\""], extraenv=["export JULIA
     The difference between this `addprocs` from the last one is that we now request 100 jobs, and we
     dropped the gpu requirement since we're not training.
 
-```
+```julia
 foreach([ALL_TAGS; "Data"]) do tag
     hist_main(tag; output_dir="/data/jiling/WVZ/v2.3-2023_06_15_hists/");
 end
@@ -117,12 +117,12 @@ You want to exit this Julia session after you're finished, which will also kill 
 
 Finally, we will convert the output from last step into `.root` files, start a new Julia session if
 you exit the last one:
-```
+```bash
 JULIA_CONDAPKG_BACKEND=Null julia --project=.
 ```
 
 and simply use the little Python "extention" package we wrote:
-```
+```julia
 julia> using WVZPythonExt
 
 julia> serial_to_root("/data/jiling/WVZ/v2.3-2023_06_15_hists/")
