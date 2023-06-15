@@ -1,0 +1,9 @@
+name = "WVZPythonExt"
+uuid = "473e61d0-be27-49e9-a959-28cb081f953f"
+authors = ["Moelf <proton@jling.dev>"]
+version = "0.1.0"
+
+[deps]
+FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"

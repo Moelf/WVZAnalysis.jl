@@ -35,34 +35,6 @@ function init_BDT()
     end
 end
 
-function BDT_hist_init(; sfsys, shape_variation)
-    if sfsys && (shape_variation != "NOMINAL")
-        error("can't do sf systematics and shape systematics at the same time")
-    end
-    _dict = Dict{Symbol, Hist1D}()
-
-    bins = 0:0.01:1
-    populate_hist!(_dict, shape_variation, (:SFinZ__BDT, :SFnoZ__BDT, :DF__BDT), bins, sfsys)
-
-    bins = 0:5:300
-    populate_hist!(_dict, shape_variation, (:SFinZ__MET, :SFnoZ__MET, :DF__MET), bins, sfsys)
-
-    bins = 0:5
-    populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet, :ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
-
-    _dict[:CutFlow] = Hist1D(Int; bins=1:20)
-    _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
-    _dict[:SFinZCutFlow] = Hist1D(Int; bins=1:20)
-    _dict[:SFinZCutFlowWgt] = Hist1D(Float64; bins=1:20)
-    _dict[:SFnoZCutFlow] = Hist1D(Int; bins=1:20)
-    _dict[:SFnoZCutFlowWgt] = Hist1D(Float64; bins=1:20)
-    _dict[:DFCutFlow] = Hist1D(Int; bins=1:20)
-    _dict[:DFCutFlowWgt] = Hist1D(Float64; bins=1:20)
-
-    return _dict
-end
-
-
 
 """
     struct AnalysisTask
@@ -276,7 +248,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     isdata = (lowercase(tag) == "data")
 
     if scouting
-        @info "scounting"
+        @info "scouting"
         dirs = first(dirs, 1)
     end
 
@@ -320,10 +292,11 @@ end
 
 
 """
-    hist_root(tag; mapper=robust_pmap, no_shape=false, output_dir, kw...)
+    Running the main looper for a tag (e.g. VH, ttZ) to produce histogram
+    kw... takes anything that AnalysisTask takes.
 
 """
-function hist_root(tag; mapper=robust_pmap, no_shape = false, output_dir, kw...)
+function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)
@@ -344,10 +317,8 @@ function hist_root(tag; mapper=robust_pmap, no_shape = false, output_dir, kw...)
         @info "-------------- !!! $tag !!! ------------ "
     end
     println("$(length(all_tasks)) tasks in total")
-    prog = Progress(length(all_tasks))
-    all_list = mapper(all_tasks) do task
+    all_list = progress_map(all_tasks; mapfun) do task
         _m = main_looper(task)
-        next!(prog)
         return _m
     end
     # TODO
@@ -356,6 +327,29 @@ function hist_root(tag; mapper=robust_pmap, no_shape = false, output_dir, kw...)
 
     serialize(joinpath(p, "$(tag).jlserialize"), Hs)
     Hs
+end
+
+function arrow_main(tag; mapfun=robust_pmap, output_dir, kw...)
+    p = output_dir
+    if !isdir(p)
+        mkdir(p)
+    end
+
+    all_tasks = prep_tasks(tag; arrow_making=true, BDT_hist=false)
+    if tag != "Data"
+        @info "-------------- $tag SF ------------ "
+    else
+        @info "-------------- !!! $tag !!! ------------ "
+    end
+    println("$(length(all_tasks)) tasks in total")
+    all_list = progress_map(all_tasks; mapfun) do task
+        _m = main_looper(task)
+        return _m
+    end
+
+    Hs = reduce(mergewith(vcat), all_list)
+
+    Arrow.write(joinpath(p, "$(tag).arrow"), Hs)
 end
 
 """
@@ -410,4 +404,122 @@ function cutflow_SRs!(cutflow_ptr, dict, wgt_dict; BDT_hist, SR, shape_variation
             push!(dict[:DFCutFlowWgt], cutflow_ptr[], wgt_dict[:NOMINAL])
         end
     end
+end
+
+function BDT_hist_init(; sfsys, shape_variation)
+    if sfsys && (shape_variation != "NOMINAL")
+        error("can't do sf systematics and shape systematics at the same time")
+    end
+    _dict = Dict{Symbol, Hist1D}()
+
+    bins = 0:0.01:1
+    populate_hist!(_dict, shape_variation, (:SFinZ__BDT, :SFnoZ__BDT, :DF__BDT), bins, sfsys)
+
+    bins = 0:5:300
+    populate_hist!(_dict, shape_variation, (:SFinZ__MET, :SFnoZ__MET, :DF__MET), bins, sfsys)
+
+    bins = 0:5
+    populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet, :ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
+
+    _dict[:CutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFinZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFinZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:SFnoZCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:SFnoZCutFlowWgt] = Hist1D(Float64; bins=1:20)
+    _dict[:DFCutFlow] = Hist1D(Int; bins=1:20)
+    _dict[:DFCutFlowWgt] = Hist1D(Float64; bins=1:20)
+
+    return _dict
+end
+
+function arrow_init()
+    return Dict(
+                           #lep 1,2,3,4 ordered by decending Pt 
+                           :SR => Int32[],
+                           :event => UInt64[],
+                           :sr_SF_inZ => Int32[],
+                           :sr_SF_noZ => Int32[],
+                           :sr_DF => Int32[],
+                           :cr_ZZ => Int32[],
+                           :cr_ttZ => Int32[],
+                           :Nlep => Int32[],
+                           :lep1_pid => Int32[], 
+                           :lep2_pid => Int32[],
+                           :lep3_pid => Int32[],
+                           :lep4_pid => Int32[],
+                           :pt_1 => Float32[],
+                           :pt_2 => Float32[],
+                           :pt_3 => Float32[],
+                           :pt_4 => Float32[],
+                           :eta_1 => Float32[],
+                           :eta_2 => Float32[],
+                           :eta_3 => Float32[],
+                           :eta_4 => Float32[],
+                           :phi_1 => Float32[],
+                           :phi_2 => Float32[],
+                           :phi_3 => Float32[],
+                           :phi_4 => Float32[],
+                           :Njet => Int32[],
+                           :mass_4l => Float32[],
+                           :Zcand_mass => Float32[],
+                           :other_mass => Float32[],
+                           :MET => Float32[],
+                           :METSig => Float32[],
+                           :METPhi => Float32[],
+                           :MET_dPhi => Float32[],
+                           :leptonic_HT => Float32[],
+                           :HT => Float32[],
+                           :total_HT => Float32[],
+                           :Zlep1_pt => Float32[],
+                           :Zlep1_eta => Float32[],
+                           :Zlep1_phi => Float32[],
+                           :Zlep1_dphi => Float32[],
+                           :Zlep1_pid => Int32[],
+                           :Zlep2_pt => Float32[],
+                           :Zlep2_eta => Float32[],
+                           :Zlep2_phi => Float32[],
+                           :Zlep2_dphi => Float32[],
+                           :Zlep2_pid => Int32[],
+                           :Wlep1_pt => Float32[],
+                           :Wlep1_eta => Float32[],
+                           :Wlep1_phi => Float32[],
+                           :Wlep1_dphi => Float32[],
+                           :Wlep1_pid => Int32[],
+                           :Wlep2_pt => Float32[],
+                           :Wlep2_eta => Float32[],
+                           :Wlep2_phi => Float32[],
+                           :Wlep2_dphi => Float32[],
+                           :Wleps_deta => Float32[],
+                           :Wlep2_pid => Int32[],
+                           :pt_4l => Float32[],
+                           :wgt => Float64[],
+                           :mcGenWgt => Float32[],
+                           :jet_pt_1 => Float32[],
+                           :jet_pt_2 => Float32[],
+                           :jet_pt_3 => Float32[],
+                           :jet_pt_4 => Float32[],
+                           :jet_eta_1 => Float32[],
+                           :jet_eta_2 => Float32[],
+                           :jet_eta_3 => Float32[],
+                           :jet_eta_4 => Float32[],
+                           :jet_phi_1 => Float32[],
+                           :jet_phi_2 => Float32[],
+                           :jet_phi_3 => Float32[],
+                           :jet_phi_4 => Float32[],
+                           :jet_m_1 => Float32[],
+                           :jet_m_2 => Float32[],
+                           :jet_m_3 => Float32[],
+                           :jet_m_4 => Float32[],
+                           :jet_m_4 => Float32[],
+                           :v_j_btagCont => Vector{Int32}[],
+                           :v_j_btag60 => Vector{Bool}[],
+                           :v_j_btag70 => Vector{Bool}[],
+                           :v_j_btag77 => Vector{Bool}[],
+                           :v_j_btag85 => Vector{Bool}[],
+                           :jet_btagCont_1 => Int32[],
+                           :jet_btagCont_2 => Int32[],
+                           :jet_btagCont_3 => Int32[],
+                           :jet_btagCont_4 => Int32[],
+                          )
 end
