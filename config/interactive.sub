@@ -1,0 +1,7 @@
+executable = /bin/bash
+universe = vanilla
++queue="short"
+request_gpus = 1
+request_cpus = 8
+request_memory = 16GB
+queue
