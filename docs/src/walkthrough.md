@@ -31,8 +31,11 @@ git checkout refactor_Julia_v1p9
 ```
 
 Finally, instantiate the exact Julia versions we used for this analysis:
-```
-JULIA_CONDAPKG_BACKEND=Null julia --project=. # `.` here is the root directory of this git repo
+```bash
+# this is generally the command we need to use to start a Julia REPL
+# `.` here is the root directory of this git repo
+JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=. 
+
 ]instantiate # when you press `]` the prompt should switch to `(WVZAnalysis) pkg>`
 ```
 
@@ -60,26 +63,38 @@ Remember to change `output_dir` to somewhere you have write access.
     sessions via `Preference.jl`, the values are stored in the `LocalPreferences.toml` file.
 
 # Step 2
-Now that the arrow files are in place, we can train XGBoost, you should start a new Julia process
-for this (and exit after done, since this reserve a GPU node):
-```julia
-using ClusterManagers, Distributed
+Now that the arrow files are in place, we can train XGBoost, you really want to use GPU for this
+training, in the walkthrough, we will use AF UChicago's gpu node.
 
-addprocs(HTCManager(1); extrajdl=["+queue=\"short\"", "request_gpus=1"], extraenv=["export JULIA_CPU_TARGET=generic"], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
-
-@fetchfrom 2 begin
-    @eval using WVZXGBoostExt
-    df_all = WVZXGBoostExt.load_all_arrow("/data/jiling/WVZ/v2.3-2023_06_06_arrow/")
-    WVZXGBoostExt.train_and_log(df_all; output_dir = "/data/jiling/WVZ/v2.3-2023_06_15_hists/", tree_method="gpu_hist")
-end
+First we start an interactive condor job:
+```bash
+condor_submit -interactive config/interactive.sub
 ```
 
-As before, remember to reaplce `output_dir` and input path with what you have
+Then once you're dropped onto remote worker, you need to re setup environment:
+```
+source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.sh
+
+cd <where you cloned WVZAnalysis.jl>
+
+JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=./WVZXGBoostExt
+```
+
+Then, we need to instantiate on this node because hardware has changed (we have a GPU now):
+```
+]instantiate
+```
+
+Finally, we can run our XGBoost training (remember to replace the paths):
+```julia
+using WVZXGBoostExt
+
+df_all = WVZXGBoostExt.load_all_arrow("/data/jiling/WVZ/v2.3-2023_06_06_arrow/")
+WVZXGBoostExt.train_and_log(df_all; output_dir = "/data/jiling/WVZ/v2.3-2023_06_15_hists/", tree_method="gpu_hist")
+```
 
 !!! note
-    The `+queue="short"` and `request_gpus=1` are specific to AF UChicago, and the inclusion of
-    `init.jl` fixes an issue where remote Julia workers sometimes can't find the correct network
-    interface.
+    The `+queue="short"` and `request_gpus=1` (in `interactive.sub`) are used by AF UChicago.
 
 
 # Step 3
@@ -87,11 +102,15 @@ In this step, we use the cluster (HTCondor in this case) to run through all syst
 
 But first, you need to point our package to the new location that stores the XGBoost models:
 ```bash
-$ JULIA_CONDAPKG_BACKEND=Null julia --project=. -e 'using WVZAnalysis; WVZAnalysis.set_bdt_model_dir("/data/jiling/WVZ/v2.3-2023_06_15_hists/")'
+$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=. -e 'using WVZAnalysis; WVZAnalysis.set_bdt_model_dir("/data/jiling/WVZ/v2.3-2023_06_15_hists/")'
 ```
 
-Then restart Julia session as instructed,
+Then start a new Julia session:
+```
+$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=.
+```
 
+Then, we can schedule all the histogram making jobs:
 ```julia
 using ClusterManagers, Distributed, WVZAnalysis
 
@@ -101,8 +120,9 @@ addprocs(HTCManager(100); extrajdl=["+queue=\"short\""], extraenv=["export JULIA
 ```
 
 !!! note
-    The difference between this `addprocs` from the last one is that we now request 100 jobs, and we
-    dropped the gpu requirement since we're not training.
+    We now request 100 jobs, and we no longer need gpu requirement since we're not training. 
+    The `init.jl` fixes an issue where remote Julia workers sometimes can't find the correct network
+    interface.
 
 ```julia
 foreach([ALL_TAGS; "Data"]) do tag
@@ -115,10 +135,10 @@ You want to exit this Julia session after you're finished, which will also kill 
 
 # Step 4
 
-Finally, we will convert the output from last step into `.root` files, start a new Julia session if
+In this last step, we will convert the output from last step into `.root` files, start a new Julia session if
 you exit the last one:
 ```bash
-JULIA_CONDAPKG_BACKEND=Null julia --project=.
+$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=.
 ```
 
 and simply use the little Python "extention" package we wrote:
