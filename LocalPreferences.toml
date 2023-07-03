@@ -3,4 +3,4 @@ precompile_workload = false
 
 [WVZAnalysis]
 BDT_MODEL_DIR = "/data/jiling/WVZ/v2.3-2023_06_12_hists/"
-MINITREE_DIR = "/data/jiling/WVZ/v2.3"
+MINITREE_DIR = "/data/grabanal/WVZ/v2.4.1/"
