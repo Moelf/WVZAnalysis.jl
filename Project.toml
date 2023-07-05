@@ -5,25 +5,34 @@ version = "0.2.3"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClusterManagers = "34f1f09b-3a8b-5176-ab39-66d58a4d544e"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LorentzVectorHEP = "f612022c-142a-473f-8cfd-a09cf3793c6c"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
-PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
-PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+Parallelism = "c8c83da1-e5f9-4e2c-a857-b8617bac3554"
+Preferences = "21216c6a-2e73-6563-6e65-726566657250"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+ROCCurves = "90902b46-5383-4c97-8f8a-bddf608a7bc6"
+SentinelArrays = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
-WVZAnalysisCore = "96227bb2-44ea-4def-a73b-39d4437f5402"
+UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
+WVZPythonExt = "473e61d0-be27-49e9-a959-28cb081f953f"
+WVZXGBoostExt = "60698fcb-37af-470f-b275-26546941db85"
+XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 
 [compat]
 ClusterManagers = "0.4"
 FHist = "0.10"
 Measurements = "2"
-PrettyTables = "2"
-PythonCall = "0.9"
+UnROOT = "^0.10.12"
 
 [extras]
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]

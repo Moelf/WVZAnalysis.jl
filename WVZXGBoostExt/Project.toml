@@ -1,0 +1,16 @@
+authors = ["Moelf <proton@jling.dev>"]
+name = "WVZXGBoostExt"
+uuid = "60698fcb-37af-470f-b275-26546941db85"
+version = "0.1.0"
+
+[deps]
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+ROCCurves = "90902b46-5383-4c97-8f8a-bddf608a7bc6"
+XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
+
+[extras]
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"

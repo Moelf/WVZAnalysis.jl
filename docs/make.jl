@@ -1,14 +1,9 @@
-using Pkg
-cd(@__DIR__)
-Pkg.activate(".")
-pkg"dev .. ../WVZAnalysisCore"
-Pkg.instantiate()
 using Documenter
 
-using WVZAnalysis, WVZAnalysisCore
+using WVZAnalysis
 
 makedocs(;
-         modules=[WVZAnalysis, WVZAnalysisCore],
+         modules=[WVZAnalysis],
          format = Documenter.HTML(
                                   prettyurls = get(ENV, "CI", nothing) == "true",
                                   assets=String[],
@@ -16,6 +11,7 @@ makedocs(;
          pages=[
                 "Introduction" => "index.md",
                 "Internal APIs" => "internalapis.md",
+                "Step-by-step Walkthrough" => "walkthrough.md",
                ],
          repo="https://github.com/Moelf/WVZAnalysis.jl/blob/{commit}{path}#L{line}",
          sitename="WVZAnalysis.jl",
