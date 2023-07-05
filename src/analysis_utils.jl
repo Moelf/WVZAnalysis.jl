@@ -206,11 +206,15 @@ function sumsumWeight(dir_path)
             res = 1.0
             break
         end
-        res += r["sumWeight"][:fN][3]
+        # 2.4.1 has double counting, need divide by 2
+        res += r["sumWeight"][:fN][3] / 2
     end
-    open(cache, "w") do io
-        println(io, res)
-    end
+    # try
+        open(cache, "w") do io
+            println(io, res)
+        end
+    # catch
+    # end
     return res
 end
 
@@ -329,7 +333,7 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     Hs
 end
 
-function arrow_main(tag; mapfun=robust_pmap, output_dir, kw...)
+function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)

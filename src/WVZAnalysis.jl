@@ -3,7 +3,7 @@ module WVZAnalysis
 using Preferences
 
 using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, SentinelArrays, JSON3, ProgressMeter, Arrow
-using XGBoost, Parallelism, Serialization
+using XGBoost, Parallelism, Serialization, ThreadsX
 
 export AnalysisTask, ALL_TAGS
 export prep_tasks, main_looper, hist_main, arrow_main
