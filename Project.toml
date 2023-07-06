@@ -28,6 +28,7 @@ XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 [compat]
 ClusterManagers = "0.4"
 FHist = "0.10"
+JSON3 = "1"
 Measurements = "2"
 UnROOT = "^0.10.12"
 
