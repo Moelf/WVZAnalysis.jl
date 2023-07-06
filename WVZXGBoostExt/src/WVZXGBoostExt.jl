@@ -4,7 +4,7 @@ using Dates, ROCCurves, Arrow, DataFrames, CSV
 import XGBoost
 using XGBoost: DMatrix
 
-const ALL_TAGS = ["Signal", "ZZ", "Zjets", "Zgamma", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others"];
+const ALL_TAGS = ["Signal", "ZZ", "Zjets", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others"];
 
 const useful_features = [
     :leptonic_HT, :MET, :Zlep1_dphi,  :Wlep1_pt, :total_HT, :Zlep2_dphi, :Zlep2_eta, 

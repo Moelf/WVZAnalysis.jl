@@ -16,7 +16,7 @@ for performance reason, because we have so many different behaviors in the same 
 """
 function main_looper(task::AnalysisTask)
     (; path, sumWeight, arrow_making, BDT_hist, isdata, 
-     shape_variation, sfsys) = task
+     shape_variation, sfsys, require_VHSig) = task
 
     dict, pusher! = if arrow_making
         arrow_init(), push!
@@ -33,11 +33,11 @@ function main_looper(task::AnalysisTask)
 
     models = arrow_making ? nothing : init_BDT()
     main_looper(mytree, sumWeight, dict, models,
-                shape_variation, sfsys, BDT_hist, arrow_making, isdata)
+                shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig)
 end
 
 function main_looper(mytree, sumWeight, dict, models, 
-        shape_variation, sfsys, BDT_hist, arrow_making, isdata)
+        shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig)
     model = models # for BDT
     for evt in mytree
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
@@ -58,6 +58,9 @@ function main_looper(mytree, sumWeight, dict, models,
         cutflow_total!(cutflow_ptr, dict, wgt_dict; BDT_hist, shape_variation)
 
         !(evt.passTrig) && continue
+        if require_VHSig != nothing
+            xor(require_VHSig, evt.isVHSig) && continue
+        end
         cutflow_total!(cutflow_ptr, dict, wgt_dict; BDT_hist, shape_variation)
 
         v_m_eta_orig, v_e_caloeta_orig = evt.v_m_eta, evt.v_e_caloeta
