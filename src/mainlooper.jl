@@ -25,7 +25,11 @@ function main_looper(task::AnalysisTask)
     else
         kinematic_hist_init(), push!
     end
-    mytree = LazyTree(path, "tree_" * shape_variation)
+    mytree = try
+        LazyTree(path, "tree_" * shape_variation)
+    catch
+        println(shape_variation, "not found in $path")
+    end
 
     models = arrow_making ? nothing : init_BDT()
     main_looper(mytree, sumWeight, dict, models,

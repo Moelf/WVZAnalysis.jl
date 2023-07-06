@@ -195,7 +195,9 @@ root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, 
 function sumsumWeight(dir_path)
     cache = joinpath(dir_path, "sumsumWeight.txt")
     if isfile(cache)
-        return parse(Float64, readchomp(cache))
+
+        res = parse(Float64, readchomp(cache))
+        return res
     end
     
     res = 0.0
@@ -208,9 +210,16 @@ function sumsumWeight(dir_path)
         end
         res += r["sumWeight"][:fN][3]
     end
+    # 2.4.1 has double counting, need divide by 2
+    if contains(dir_path, "2.4.1sf")
+        res /= 2
+    end
+    # try
     open(cache, "w") do io
         println(io, res)
     end
+    # catch
+    # end
     return res
 end
 
@@ -329,7 +338,7 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     Hs
 end
 
-function arrow_main(tag; mapfun=robust_pmap, output_dir, kw...)
+function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)
