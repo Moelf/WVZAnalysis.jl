@@ -11,7 +11,7 @@ const CUTFLOW_NAMES = [
     :no_Bjet,
     :MET_10GeVplus
     ]
-const SIG_TAGS = ("Signal", )
+const SIG_TAGS = ("Signal", "Signal_WWZ", "Signal_WZZ", "Signal_ZZZ", "Signal_VH_WWZ", "Signal_VH_WZZ", "Signal_VH_ZZZ")
 const BKG_TAGS = ("ZZ", "Zjets", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others")
 const ALL_TAGS = [SIG_TAGS...; BKG_TAGS...]
 const Z_m = 91.1876 # everything in GeV
