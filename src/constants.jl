@@ -12,7 +12,7 @@ const CUTFLOW_NAMES = [
     :MET_10GeVplus
     ]
 const SIG_TAGS = ("Signal_WWZ", "Signal_WZZ", "Signal_ZZZ", "Signal_ZH_ZWW", "Signal_WH_WZZ", "Signal_ZH_ZZZ")
-const BKG_TAGS = ("ZZ", "Zjets", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "WH_Signal", "WH_Bkg", "ZH_Signal", "ZH_Bkg", "Others")
+const BKG_TAGS = ("ZZ", "Zjets", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "WH_Bkg", "ZH_Bkg", "Others")
 const ALL_TAGS = [SIG_TAGS...; BKG_TAGS...]
 const Z_m = 91.1876 # everything in GeV
 const e_mass = 0.51099885 / 1000
