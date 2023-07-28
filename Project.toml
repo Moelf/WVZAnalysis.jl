@@ -25,6 +25,7 @@ Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
 WVZPythonExt = "473e61d0-be27-49e9-a959-28cb081f953f"
+WVZReportExt = "6febcfd3-d541-434d-ba4f-f35a3fbd23d7"
 WVZXGBoostExt = "60698fcb-37af-470f-b275-26546941db85"
 XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 

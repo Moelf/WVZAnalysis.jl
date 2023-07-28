@@ -275,7 +275,6 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         PATHS = dir_to_paths(d; scouting)
         sumWeight = sumsumWeight(d)
         if occursin(r"346645|346646|346647", d)
-            @show d
             sumWeight *= 2.745e-4
         end
         [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, kw...) for path in PATHS]
@@ -323,7 +322,7 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
 
     all_tasks = prep_tasks(tag; sfsys=true)
     if tag != "Data"
-        if no_shape
+        if no_shape || tag in ("WH_Bkg", "ZH_Bkg")
             @info "-------------- $tag SF ------------ "
         else
             @info "-------------- $tag SF + shapes ------------ "
