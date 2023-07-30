@@ -190,25 +190,26 @@
         "mc16_13TeV.341454.PowhegPythia8EvtGen_CT10_AZNLO_ZH125J_MINLO_tautauWWlvqq_VpT.deriv.DAOD_STDM3.e4212_s3126_r10724_p4434"
     ],
     "Signal_WH_WZZ":[
-        "mc16_13TeV.346646.PowhegPythia8EvtGen_NNPDF30_AZNLO_WpH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434",
-        "mc16_13TeV.346646.PowhegPythia8EvtGen_NNPDF30_AZNLO_WpH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
         "mc16_13TeV.346646.PowhegPythia8EvtGen_NNPDF30_AZNLO_WpH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r9364_p4434",
-        "mc16_13TeV.346647.PowhegPythia8EvtGen_NNPDF30_AZNLO_WmH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
+        "mc16_13TeV.346646.PowhegPythia8EvtGen_NNPDF30_AZNLO_WpH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
+        "mc16_13TeV.346646.PowhegPythia8EvtGen_NNPDF30_AZNLO_WpH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434",
         "mc16_13TeV.346647.PowhegPythia8EvtGen_NNPDF30_AZNLO_WmH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r9364_p4434",
+        "mc16_13TeV.346647.PowhegPythia8EvtGen_NNPDF30_AZNLO_WmH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
         "mc16_13TeV.346647.PowhegPythia8EvtGen_NNPDF30_AZNLO_WmH125J_Wincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434"
     ],
     "Signal_ZH_ZZZ":[
-        "mc16_13TeV.345066.PowhegPythia8EvtGen_NNPDF3_AZNLO_ggZH125_ZZ4lepZinc.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
         "mc16_13TeV.345066.PowhegPythia8EvtGen_NNPDF3_AZNLO_ggZH125_ZZ4lepZinc.deriv.DAOD_STDM3.e7735_s3126_r9364_p4434",
+        "mc16_13TeV.345066.PowhegPythia8EvtGen_NNPDF3_AZNLO_ggZH125_ZZ4lepZinc.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
         "mc16_13TeV.345066.PowhegPythia8EvtGen_NNPDF3_AZNLO_ggZH125_ZZ4lepZinc.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434",
-        "mc16_13TeV.346645.PowhegPythia8EvtGen_NNPDF30_AZNLO_ZH125J_Zincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434",
+        "mc16_13TeV.346645.PowhegPythia8EvtGen_NNPDF30_AZNLO_ZH125J_Zincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r9364_p4434",
         "mc16_13TeV.346645.PowhegPythia8EvtGen_NNPDF30_AZNLO_ZH125J_Zincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10201_p4434",
-        "mc16_13TeV.346645.PowhegPythia8EvtGen_NNPDF30_AZNLO_ZH125J_Zincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r9364_p4434"
+        "mc16_13TeV.346645.PowhegPythia8EvtGen_NNPDF30_AZNLO_ZH125J_Zincl_MINLO_shw.deriv.DAOD_STDM3.e7735_s3126_r10724_p4434"
     ],
+
     "ZZ":[
-        "mc16_13TeV.364250.Sherpa_222_NNPDF30NNLO_llll.deriv.DAOD_STDM3.e5894_s3126_r10201_p4434",
-        "mc16_13TeV.364250.Sherpa_222_NNPDF30NNLO_llll.deriv.DAOD_STDM3.e5894_s3126_r9364_p4434",
-        "mc16_13TeV.364250.Sherpa_222_NNPDF30NNLO_llll.deriv.DAOD_STDM3.e5894_s3126_r10724_p4434",
+        "mc16_13TeV.700600.Sh_2212_llll.deriv.DAOD_STDM3.e8433_s3126_r9364_p4434",
+        "mc16_13TeV.700600.Sh_2212_llll.deriv.DAOD_STDM3.e8433_s3126_r10201_p4434",
+        "mc16_13TeV.700600.Sh_2212_llll.deriv.DAOD_STDM3.e8433_s3126_r10724_p4434",
         "mc16_13TeV.364288.Sherpa_222_NNPDF30NNLO_llll_lowMllPtComplement.deriv.DAOD_STDM3.e6096_s3126_r9364_p4434",
         "mc16_13TeV.364288.Sherpa_222_NNPDF30NNLO_llll_lowMllPtComplement.deriv.DAOD_STDM3.e6096_s3126_r10724_p4434",
         "mc16_13TeV.364288.Sherpa_222_NNPDF30NNLO_llll_lowMllPtComplement.deriv.DAOD_STDM3.e6096_s3126_r10201_p4434",
@@ -224,9 +225,9 @@
     ],
 
     "WZ":[
-        "mc16_13TeV.364253.Sherpa_222_NNPDF30NNLO_lllv.deriv.DAOD_STDM3.e5916_s3126_r10201_p4252.root",
-        "mc16_13TeV.364253.Sherpa_222_NNPDF30NNLO_lllv.deriv.DAOD_STDM3.e5916_s3126_r10724_p4252.root",
-        "mc16_13TeV.364253.Sherpa_222_NNPDF30NNLO_lllv.deriv.DAOD_STDM3.e5916_s3126_r9364_p4252.root",
+        "mc16_13TeV.700601.Sh_2212_lllv.deriv.DAOD_STDM3.e8433_s3126_r9364_p4434",
+        "mc16_13TeV.700601.Sh_2212_lllv.deriv.DAOD_STDM3.e8433_s3126_r10201_p4434",
+        "mc16_13TeV.700601.Sh_2212_lllv.deriv.DAOD_STDM3.e8433_s3126_r10724_p4434",
         "mc16_13TeV.364289.Sherpa_222_NNPDF30NNLO_lllv_lowMllPtComplement.deriv.DAOD_STDM3.e6133_s3126_r10201_p4434.root",
         "mc16_13TeV.364289.Sherpa_222_NNPDF30NNLO_lllv_lowMllPtComplement.deriv.DAOD_STDM3.e6133_s3126_r10724_p4434.root",
         "mc16_13TeV.364289.Sherpa_222_NNPDF30NNLO_lllv_lowMllPtComplement.deriv.DAOD_STDM3.e6133_s3126_r9364_p4434.root",
