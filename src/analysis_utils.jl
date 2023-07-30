@@ -277,6 +277,18 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         if occursin(r"346645|346646|346647", d)
             sumWeight *= 2.745e-4
         end
+        if occursin(r"341450", d)
+            sumWeight *= (11.007105/2.412326)
+        end
+        if occursin(r"341452", d)
+            sumWeight *= (11.186538/2.409899)
+        end
+        if occursin(r"341454", d)
+            sumWeight *= (11.101932/2.411167)
+        end
+        if occursin(r"345066", d)
+            sumWeight *= (57.429000/3.368E-02)
+        end
         [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, kw...) for path in PATHS]
     end
     files
