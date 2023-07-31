@@ -275,7 +275,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         PATHS = dir_to_paths(d; scouting)
         sumWeight = sumsumWeight(d)
         if occursin(r"346645|346646|346647", d)
-            sumWeight *= 2.745e-4
+            sumWeight /= 2.745e-4
         end
         if occursin(r"341450", d)
             sumWeight *= (11.007105/2.412326)
