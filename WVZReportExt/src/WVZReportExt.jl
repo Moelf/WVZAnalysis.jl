@@ -2,6 +2,8 @@ module WVZReportExt
 
 export significance_table, print_sigtable
 
+include(joinpath(@__DIR__, "../../src/alltags.jl"))
+
 using PrettyTables, Serialization, Measurements, FHist
 
 """
@@ -64,7 +66,6 @@ function _significance(signal, bkg)
     return Sig ± err
 end
 
-ALL_TAGS = ["Signal", "ZZ", "Zjets", "ttbar", "WZ", "tZ", "ttZ", "tWZ", "VBS", "VH", "Others"]
 
 function significance_matrix(input_dir::AbstractString)
     Ms = map(ALL_TAGS) do tag
