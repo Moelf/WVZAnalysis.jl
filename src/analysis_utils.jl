@@ -93,16 +93,17 @@ struct AnalysisTask
     sfsys::Bool
     shape_variation::String
     controlregion::Symbol
+    require_VHSig::Union{Nothing, Bool}
     function AnalysisTask(; path, sumWeight, isdata=false, BDT_hist=true,
             arrow_making=false, sfsys=false, shape_variation="NOMINAL",
-            controlregion=:none)
+            controlregion=:none, require_VHSig=nothing)
         shapesys = (shape_variation != "NOMINAL")
         if sfsys && shapesys
             error("can't do SF systematic and Shape systematic at the same time")
         elseif arrow_making && BDT_hist
             error("can't produce arrow and NN histograms at the same time")
         else
-            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion)
+            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion, require_VHSig)
         end
     end
 end
@@ -261,14 +262,31 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         dirs = first(dirs, 1)
     end
 
+    require_VHSig = if contains(tag, "H_Signal")
+        true
+    elseif contains(tag, "H_Bkg")
+        false
+    else
+        nothing
+    end
+
+
     files = mapreduce(vcat, dirs) do d
         PATHS = dir_to_paths(d; scouting)
         sumWeight = sumsumWeight(d)
-        if occursin(r"346645|346646|346647", d)
-            @show d
-            sumWeight *= 2.745e-4
+        if occursin(r"341450", d)
+            sumWeight *= (11.007105/2.412326)
         end
-        [AnalysisTask(; path, sumWeight, isdata, shape_variation, kw...) for path in PATHS]
+        if occursin(r"341452", d)
+            sumWeight *= (11.186538/2.409899)
+        end
+        if occursin(r"341454", d)
+            sumWeight *= (11.101932/2.411167)
+        end
+        if occursin(r"345066", d)
+            sumWeight *= (57.429000/3.368E-02)
+        end
+        [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, kw...) for path in PATHS]
     end
     files
 end
@@ -313,7 +331,7 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
 
     all_tasks = prep_tasks(tag; sfsys=true)
     if tag != "Data"
-        if no_shape
+        if no_shape || tag in ("WH_Bkg", "ZH_Bkg")
             @info "-------------- $tag SF ------------ "
         else
             @info "-------------- $tag SF + shapes ------------ "
