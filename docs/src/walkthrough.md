@@ -77,7 +77,7 @@ source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.s
 
 cd <where you cloned WVZAnalysis.jl>
 
-JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=./WVZXGBoostExt
+LD_LIBRARY_PATH='' JULIA_CPU_TARGET=generic julia --project=./WVZXGBoostExt
 ```
 
 Then, we need to instantiate on this node because hardware has changed (we have a GPU now):

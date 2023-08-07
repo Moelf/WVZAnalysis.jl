@@ -44,14 +44,15 @@ function train_and_log(df_all; output_dir, tree_method="gpu_hist")
                 y_eval = df_eval.is_signal;
 
                 res, log = xgboost_log(DMatrix(x_train, y_train);
-                num_round=250,
-                testdm = DMatrix(x_eval, y_eval),
-                eta = 0.05,
-                max_depth=8,
-                colsample_bytree=0.8, 
-                lambda = 1.0,
-                alpha = 0.0,
-                tree_method
+                    num_round=250,
+                    testdm = DMatrix(x_eval, y_eval),
+                    eta = 0.05,
+                    max_depth=8,
+                    colsample_bytree=0.8, 
+                    lambda = 1.0,
+                    alpha = 0.0,
+                    objective="binary:logistic",
+                    tree_method
                 );
 
                 # these two functions use different order convention, cursed if you ask me
