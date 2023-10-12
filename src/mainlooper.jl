@@ -192,7 +192,7 @@ function main_looper(mytree, sumWeight, dict, models,
         !pass_dR && continue
         cutflow_SRs!(cutflow_ptr, dict, wgt_dict; BDT_hist, SR, shape_variation)
         
-        has_b = any(@view evt.v_j_btag77[j_eta_mask])
+        NBjets = count(@view evt.v_j_btag77[j_eta_mask])
 
         (; MET, METSig, METPhi) = evt
         MET /= 1000
@@ -259,8 +259,8 @@ function main_looper(mytree, sumWeight, dict, models,
         end
 
         wgt = wgt_dict[:NOMINAL]
-        cr_ZZ = sr_SF_inZ && MET < 10 && !has_b
-        cr_ttZ = has_b
+        cr_ZZ = sr_SF_inZ && MET < 10 && (NBjets > 0)
+        cr_ttZ = NBjets > 1
         if MET < 10 || cr_ZZ || cr_ttZ
             SR = -1
         end
@@ -287,9 +287,9 @@ function main_looper(mytree, sumWeight, dict, models,
                     k = shape_variation
                 end
                 if cr_ZZ
-                    push!(dict[Symbol(:ZZCR, :__Njet, :__, k)], Njet, v)
+                    push!(dict[Symbol(:ZZCR, :__m4l, :__, k)], mass_4l, v)
                 elseif cr_ttZ
-                    push!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
+                    push!(dict[Symbol(:ttZCR, :__m4l, :__, k)], mass_4l, v)
                 elseif SR >= 0
                     push!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
                     push!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
