@@ -34,7 +34,7 @@ Finally, instantiate the exact Julia versions we used for this analysis:
 ```bash
 # this is generally the command we need to use to start a Julia REPL
 # `.` here is the root directory of this git repo
-JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=. 
+JULIA_CPU_TARGET="generic;znver2,clone_all" JULIA_CONDAPKG_BACKEND=Null julia --project=. 
 
 ]instantiate # when you press `]` the prompt should switch to `(WVZAnalysis) pkg>`
 ```
@@ -77,7 +77,7 @@ source /cvmfs/sft.cern.ch/lcg/views/dev4/latest/x86_64-centos7-gcc11-opt/setup.s
 
 cd <where you cloned WVZAnalysis.jl>
 
-LD_LIBRARY_PATH='' JULIA_CPU_TARGET=generic julia --project=./WVZXGBoostExt
+LD_LIBRARY_PATH='' julia --project=./WVZXGBoostExt
 ```
 
 Then, we need to instantiate on this node because hardware has changed (we have a GPU now):
@@ -102,19 +102,19 @@ In this step, we use the cluster (HTCondor in this case) to run through all syst
 
 But first, you need to point our package to the new location that stores the XGBoost models:
 ```bash
-$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=. -e 'using WVZAnalysis; WVZAnalysis.set_bdt_model_dir("/data/jiling/WVZ/v2.3-2023_06_15_hists/")'
+$ JULIA_CPU_TARGET="generic;znver2,clone_all" JULIA_CONDAPKG_BACKEND=Null julia --project=. -e 'using WVZAnalysis; WVZAnalysis.set_bdt_model_dir("/data/jiling/WVZ/v2.3-2023_06_15_hists/")'
 ```
 
 Then start a new Julia session:
 ```
-$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=.
+$ JULIA_CPU_TARGET="generic;znver2,clone_all" JULIA_CONDAPKG_BACKEND=Null julia --project=.
 ```
 
 Then, we can schedule all the histogram making jobs:
 ```julia
 using ClusterManagers, Distributed, WVZAnalysis
 
-addprocs(HTCManager(100); extrajdl=["+queue=\"short\""], extraenv=["export JULIA_CPU_TARGET=generic"], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
+addprocs(HTCManager(80); extrajdl=["+queue=\"short\""], exeflags = `--project=$(Base.active_project()) -e 'include("/data/jiling/WVZ/init.jl")'`);
 
 @everywhere using WVZAnalysis
 ```
@@ -138,7 +138,7 @@ You want to exit this Julia session after you're finished, which will also kill 
 In this last step, we will convert the output from last step into `.root` files, start a new Julia session if
 you exit the last one:
 ```bash
-$ JULIA_CPU_TARGET=generic JULIA_CONDAPKG_BACKEND=Null julia --project=.
+$ JULIA_CPU_TARGET="generic;znver2,clone_all" JULIA_CONDAPKG_BACKEND=Null julia --project=.
 ```
 
 and simply use the little Python "extention" package we wrote:
