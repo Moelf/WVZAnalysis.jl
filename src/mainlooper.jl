@@ -259,7 +259,7 @@ function main_looper(mytree, sumWeight, dict, models,
         end
 
         wgt = wgt_dict[:NOMINAL]
-        cr_ZZ = sr_SF_inZ && MET < 10 && (NBjets > 0)
+        cr_ZZ = sr_SF_inZ && MET < 10 && iszero(NBjets)
         cr_ttZ = NBjets > 1
         if MET < 10 || cr_ZZ || cr_ttZ
             SR = -1
