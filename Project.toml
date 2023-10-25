@@ -33,7 +33,7 @@ XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 ClusterManagers = "0.4"
 FHist = "0.10"
 Measurements = "2"
-UnROOT = "^0.10.12"
+UnROOT = "^0.10.17"
 
 [extras]
 CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
