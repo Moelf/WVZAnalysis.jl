@@ -12,15 +12,15 @@ end
 
 function init_BDT()
     SFinZs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFinZ$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFinZ$i.model"), nthread=1)
               for i = 0:4
              )
     SFnoZs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFnoZ$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "SFnoZ$i.model"), nthread=1)
               for i = 0:4
              )
     DFs = Tuple(
-              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "DF$i.model"))
+              XGBoost.Booster(XGBoost.DMatrix[],  model_file = joinpath(BDT_MODEL_DIR, "DF$i.model"), nthread=1)
               for i = 0:4
              )
     return function f(ary; fold, region)
