@@ -78,10 +78,14 @@ function significance_matrix(Ms)
     res = mapreduce(vcat, Ms) do M
         N = nbins(M[:DF__BDT__NOMINAL])
         hists = rebin.([M[:SFinZ__BDT__NOMINAL], M[:SFnoZ__BDT__NOMINAL], M[:DF__BDT__NOMINAL]], N)
-        N = nbins(M[:ZZCR__m4l__NOMINAL])
-        push!(hists, rebin(M[:ZZCR__m4l__NOMINAL], N))
-        N = nbins(M[:ttZCR__m4l__NOMINAL])
-        push!(hists, rebin(M[:ttZCR__m4l__NOMINAL], N))
+
+        zzCR = M[:ZZCR0j__Njet__NOMINAL]+ M[:ZZCR1j__Njet__NOMINAL]+ M[:ZZCR2plusj__Njet__NOMINAL]
+        N = nbins(zzCR)
+        push!(hists, rebin(zzCR, N))
+
+        ttzCR = M[:ttZCR0j__Njet__NOMINAL]+ M[:ttZCR1j__Njet__NOMINAL]+ M[:ttZCR2plusj__Njet__NOMINAL]
+        N = nbins(ttzCR)
+        push!(hists, rebin(ttzCR, N))
 
         permutedims(hists) 
     end

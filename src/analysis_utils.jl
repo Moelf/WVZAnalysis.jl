@@ -448,8 +448,10 @@ function BDT_hist_init(; sfsys, shape_variation)
     bins = 0:5
     populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet), bins, sfsys)
 
-    bins = 0:10:1000
-    populate_hist!(_dict, shape_variation, (:ZZCR__m4l, :ttZCR__m4l), bins, sfsys)
+    bins = 0:5
+    populate_hist!(_dict, shape_variation, (:ZZCR0j__Njet, :ttZCR0j__Njet), bins, sfsys)
+    populate_hist!(_dict, shape_variation, (:ZZCR1j__Njet, :ttZCR1j__Njet), bins, sfsys)
+    populate_hist!(_dict, shape_variation, (:ZZCR2plusj__Njet, :ttZCR2plusj__Njet), bins, sfsys)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)

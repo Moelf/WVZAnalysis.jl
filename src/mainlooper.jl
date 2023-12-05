@@ -287,9 +287,21 @@ function main_looper(mytree, sumWeight, dict, models,
                     k = shape_variation
                 end
                 if cr_ZZ
-                    push!(dict[Symbol(:ZZCR, :__m4l, :__, k)], mass_4l, v)
+                    if Njet == 0
+                        push!(dict[Symbol(:ZZCR0j, :__Njet, :__, k)], Njet, v)
+                    elseif Njet == 1
+                        push!(dict[Symbol(:ZZCR1j, :__Njet, :__, k)], Njet, v)
+                    else
+                        push!(dict[Symbol(:ZZCR2plusj, :__Njet, :__, k)], Njet, v)
+                    end
                 elseif cr_ttZ
-                    push!(dict[Symbol(:ttZCR, :__m4l, :__, k)], mass_4l, v)
+                    if Njet == 0
+                        push!(dict[Symbol(:ttZCR0j, :__Njet, :__, k)], Njet, v)
+                    elseif Njet == 1
+                        push!(dict[Symbol(:ttZCR1j, :__Njet, :__, k)], Njet, v)
+                    else
+                        push!(dict[Symbol(:ttZCR2plusj, :__Njet, :__, k)], Njet, v)
+                    end
                 elseif SR >= 0
                     push!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
                     push!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
