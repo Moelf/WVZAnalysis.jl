@@ -70,7 +70,8 @@ function serial_to_root(p)
                     for (k,v) in Hs
                         k_str = string(k)
                         if !(contains(k_str, "CR") && contains(k_str, "Njet"))
-                            file[k_str] = make_TH1D(v)
+                            # other histograms are already combined
+                            # file[k_str] = make_TH1D(v)
                         elseif contains(k_str, ext)
                             file[replace(k_str, ext=>"")] = make_TH1D(v)
                         end
