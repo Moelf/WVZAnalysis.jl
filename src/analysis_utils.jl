@@ -165,13 +165,13 @@ function extrac_dsid(str)
     return match(r"(\d{6})", str).captures[1] #dsid
 end
 
-const _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
 """
     root_dirs(tag::AbstractString; variation = "sf")
 
 Reutrn a list of dir paths associated with a `tag` +sf or +shape
 """
 function root_dirs(tag::AbstractString; variation = "sf")
+    _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
     folders = _LIST[tag]
     if lowercase(tag) == "data"
         sel1 = filter(readdir(MINITREE_DIR)) do folder_name
@@ -463,9 +463,10 @@ function BDT_hist_init(; sfsys, shape_variation)
 
     bins = 0:5
     populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet), bins, sfsys)
-
-    bins = 0:5
     populate_hist!(_dict, shape_variation, (:ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
+
+    bins = 0:10:1000
+    populate_hist!(_dict, shape_variation, (:ttZCR__m4l, ), bins, sfsys)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)

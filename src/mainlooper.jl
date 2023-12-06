@@ -298,6 +298,7 @@ function main_looper(mytree, sumWeight, dict, models,
                 if cr_ZZ
                     push!(dict[Symbol(:ZZCR, :__Njet, :__, k)], Njet, v)
                 elseif cr_ttZ
+                    push!(dict[Symbol(:ttZCR, :__m4l, :__, k)], mass_4l, v)
                     push!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
                 elseif SR >= 0
                     push!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
