@@ -16,7 +16,7 @@ for performance reason, because we have so many different behaviors in the same 
 """
 function main_looper(task::AnalysisTask)
     (; path, sumWeight, arrow_making, BDT_hist, isdata, 
-     shape_variation, sfsys, require_VHSig) = task
+     shape_variation, sfsys, require_VHSig, sel_Njet) = task
 
     dict, pusher! = if arrow_making
         arrow_init(), push!
@@ -33,11 +33,11 @@ function main_looper(task::AnalysisTask)
 
     models = arrow_making ? nothing : init_BDT()
     main_looper(mytree, sumWeight, dict, models,
-                shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig)
+                shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig, sel_Njet)
 end
 
 function main_looper(mytree, sumWeight, dict, models, 
-        shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig)
+        shape_variation, sfsys, BDT_hist, arrow_making, isdata, require_VHSig, sel_Njet)
     model = models # for BDT
     for evt in mytree
         wgt_dict = Dict(:NOMINAL => 1 / sumWeight)
@@ -206,6 +206,15 @@ function main_looper(mytree, sumWeight, dict, models,
         v_j_tlv = @views LorentzVectorCyl.(evt.v_j_pt[j_eta_mask] ./ 1000, v_j_eta[j_eta_mask], evt.v_j_phi[j_eta_mask], evt.v_j_m[j_eta_mask] ./ 1000)
         v_j_order = sortperm(v_j_tlv; by=pt, rev=true)
         Njet = length(v_j_tlv)
+        if sel_Njet isa Int
+            if sel_Njet==0 && Njet != 0
+                continue
+            elseif sel_Njet==1 && Njet!=1
+                continue
+            elseif sel_Njet==2 && Njet<2
+                continue
+            end
+        end
         Zcand_mass = best_Z_mass
         Z_eta = eta(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
         Z_phi = phi(v_l_tlv[Z_pair[1]]+v_l_tlv[Z_pair[2]])
@@ -287,21 +296,9 @@ function main_looper(mytree, sumWeight, dict, models,
                     k = shape_variation
                 end
                 if cr_ZZ
-                    if Njet == 0
-                        push!(dict[Symbol(:ZZCR0j, :__Njet, :__, k)], Njet, v)
-                    elseif Njet == 1
-                        push!(dict[Symbol(:ZZCR1j, :__Njet, :__, k)], Njet, v)
-                    else
-                        push!(dict[Symbol(:ZZCR2plusj, :__Njet, :__, k)], Njet, v)
-                    end
+                    push!(dict[Symbol(:ZZCR, :__Njet, :__, k)], Njet, v)
                 elseif cr_ttZ
-                    if Njet == 0
-                        push!(dict[Symbol(:ttZCR0j, :__Njet, :__, k)], Njet, v)
-                    elseif Njet == 1
-                        push!(dict[Symbol(:ttZCR1j, :__Njet, :__, k)], Njet, v)
-                    else
-                        push!(dict[Symbol(:ttZCR2plusj, :__Njet, :__, k)], Njet, v)
-                    end
+                    push!(dict[Symbol(:ttZCR, :__Njet, :__, k)], Njet, v)
                 elseif SR >= 0
                     push!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
                     push!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)

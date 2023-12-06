@@ -46,6 +46,8 @@ end
         sfsys::Bool = false
         shape_variation::String = "NOMINAL"
         controlregion::Symbol = :none
+        require_VHSig::Union{Nothing, Bool} = nothing
+        sel_Njet::Union{Nothing, Int} = nothing
     end
 
 Fully define a task to be run on an executor, by calling `main_looper(task::AnalysisTask)`; see also
@@ -94,16 +96,17 @@ struct AnalysisTask
     shape_variation::String
     controlregion::Symbol
     require_VHSig::Union{Nothing, Bool}
+    sel_Njet::Union{Nothing, Int}
     function AnalysisTask(; path, sumWeight, isdata=false, BDT_hist=true,
             arrow_making=false, sfsys=false, shape_variation="NOMINAL",
-            controlregion=:none, require_VHSig=nothing)
+            controlregion=:none, require_VHSig = nothing, sel_Njet = nothing)
         shapesys = (shape_variation != "NOMINAL")
         if sfsys && shapesys
             error("can't do SF systematic and Shape systematic at the same time")
         elseif arrow_making && BDT_hist
             error("can't produce arrow and NN histograms at the same time")
         else
-            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion, require_VHSig)
+            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion, require_VHSig, sel_Njet)
         end
     end
 end
@@ -249,6 +252,18 @@ julia> length(all_nominal_tasks)
 ```
 """
 function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
+    sel_Njet = nothing
+    if startswith(tag, "ZZ")
+        sel_Njet = if startswith(tag, "ZZ0")
+            0
+        elseif startswith(tag, "ZZ1")
+            1
+        elseif startswith(tag, "ZZ2")
+            2
+        end
+        tag="ZZ"
+    end
+
     dirs = if shape_variation == "NOMINAL"
         root_dirs(tag; variation = "sf")
     else
@@ -269,6 +284,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     else
         nothing
     end
+    
 
 
     files = mapreduce(vcat, dirs) do d
@@ -286,7 +302,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         if occursin(r"345066", d)
             sumWeight *= (57.429000/3.368E-02)
         end
-        [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, kw...) for path in PATHS]
+        [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, sel_Njet, kw...) for path in PATHS]
     end
     files
 end
@@ -449,9 +465,7 @@ function BDT_hist_init(; sfsys, shape_variation)
     populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet), bins, sfsys)
 
     bins = 0:5
-    populate_hist!(_dict, shape_variation, (:ZZCR0j__Njet, :ttZCR0j__Njet), bins, sfsys)
-    populate_hist!(_dict, shape_variation, (:ZZCR1j__Njet, :ttZCR1j__Njet), bins, sfsys)
-    populate_hist!(_dict, shape_variation, (:ZZCR2plusj__Njet, :ttZCR2plusj__Njet), bins, sfsys)
+    populate_hist!(_dict, shape_variation, (:ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
