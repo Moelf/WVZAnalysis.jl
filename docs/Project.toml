@@ -1,3 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 WVZAnalysis = "15e846ca-95d3-4e21-8d51-3cc2ce27e5cd"
+WVZPythonExt = "473e61d0-be27-49e9-a959-28cb081f953f"
+WVZReportExt = "6febcfd3-d541-434d-ba4f-f35a3fbd23d7"
+WVZXGBoostExt = "60698fcb-37af-470f-b275-26546941db85"

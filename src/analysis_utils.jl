@@ -188,9 +188,6 @@ function root_dirs(tag::AbstractString; variation = "sf")
     end
 end
 
-"""
-multiple tags
-"""
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
 """

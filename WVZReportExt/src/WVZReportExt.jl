@@ -1,7 +1,5 @@
 module WVZReportExt
 
-export significance_table, print_sigtable
-
 include(joinpath(@__DIR__, "../../src/alltags.jl"))
 
 using PrettyTables, Serialization, Measurements, FHist

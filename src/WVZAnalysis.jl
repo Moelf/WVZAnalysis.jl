@@ -15,6 +15,9 @@ export prep_tasks, main_looper, hist_main, arrow_main
 export set_minitree_dir, set_bdt_model_dir
 export serial_to_root
 
+using WVZReportExt
+export significance_table, print_sigtable
+
 include("./alltags.jl")
 include("./constants.jl")
 include("./analysis_utils.jl")

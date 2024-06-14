@@ -1,4 +1,8 @@
 ## Internal
 ```@autodocs
-Modules = [WVZAnalysis, WVZAnalysisCore]
+Modules = [WVZAnalysis, WVZReportExt]
+Filter = t -> t ∉ (WVZAnalysis.AnalysisTask,
+    WVZAnalysis.prep_tasks,
+    WVZAnalysis.main_looper,
+    WVZAnalysis.arrow_main)
 ```

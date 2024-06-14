@@ -1,9 +1,9 @@
 using Documenter
 
-using WVZAnalysis
+using WVZAnalysis, WVZReportExt
 
 makedocs(;
-         modules=[WVZAnalysis],
+         modules=[WVZAnalysis, WVZReportExt],
          format = Documenter.HTML(
                                   prettyurls = get(ENV, "CI", nothing) == "true",
                                   assets=String[],
@@ -19,5 +19,5 @@ makedocs(;
         )
 
 deploydocs(;
-           repo="https://github.com/Moelf/WVZAnalysis.jl",
+           repo="github.com/Moelf/WVZAnalysis.jl",
           )
