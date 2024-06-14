@@ -54,6 +54,9 @@ jobs:
           julia --project=./docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path="."))
+            Pkg.develop(PackageSpec(path="./WVZReportExt"))
+            Pkg.develop(PackageSpec(path="./WVZPythonExt"))
+            Pkg.develop(PackageSpec(path="./WVZXGBoostExt"))
             Pkg.instantiate()'
       - run: julia --project=docs docs/make.jl
         env:
