@@ -32,7 +32,7 @@ These functions/types and the direct callees are more documented than the rest o
 AnalysisTask
 prep_tasks
 main_looper(t::AnalysisTask)
-arrow_making
+arrow_main
 hist_root
 ```
 

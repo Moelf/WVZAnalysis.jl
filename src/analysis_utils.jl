@@ -317,7 +317,7 @@ function dir_to_paths(dir_path; scouting = false)
 end
 
 """
-    arrow_making(tasks)
+    arrow_making(tasks; mapper = map)
 
 Take a collection of tasks, run them via `map` and `mergewith(append!)`.
 Returns a `dict` of vectors representing the datas after filtering.
@@ -335,9 +335,10 @@ end
 
 
 """
-    Running the main looper for a tag (e.g. VH, ttZ) to produce histogram
-    kw... takes anything that AnalysisTask takes.
+    hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
 
+Running the main looper for a tag (e.g. VH, ttZ) to produce histogram
+kw... takes anything that AnalysisTask takes.
 """
 function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     p = output_dir
@@ -372,6 +373,13 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     Hs
 end
 
+"""
+    arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
+
+Running the main looper for a tag (e.g. VH, ttZ) to produce arrow
+kw... takes anything that AnalysisTask takes.
+
+"""
 function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
     p = output_dir
     if !isdir(p)
