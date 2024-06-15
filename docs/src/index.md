@@ -29,15 +29,14 @@ These functions/types and the direct callees are more documented than the rest o
 
 ### Analysis and data dumping
 ```@docs
-AnalysisTask
-prep_tasks
-main_looper(t::AnalysisTask)
-arrow_making
-hist_root
+WVZAnalysis.AnalysisTask
+WVZAnalysis.prep_tasks
+WVZAnalysis.main_looper(t::AnalysisTask)
+WVZAnalysis.arrow_main
 ```
 
 ### Result reporting
 ```@docs
-significance_table
-print_sigtable
+WVZReportExt.significance_table
+WVZReportExt.print_sigtable
 ```

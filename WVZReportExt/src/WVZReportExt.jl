@@ -1,7 +1,5 @@
 module WVZReportExt
 
-export significance_table, print_sigtable
-
 include(joinpath(@__DIR__, "../../src/alltags.jl"))
 
 using PrettyTables, Serialization, Measurements, FHist
@@ -78,10 +76,10 @@ function significance_matrix(Ms)
     res = mapreduce(vcat, Ms) do M
         N = nbins(M[:DF__BDT__NOMINAL])
         hists = rebin.([M[:SFinZ__BDT__NOMINAL], M[:SFnoZ__BDT__NOMINAL], M[:DF__BDT__NOMINAL]], N)
-        N = nbins(M[:ZZCR__m4l__NOMINAL])
-        push!(hists, rebin(M[:ZZCR__m4l__NOMINAL], N))
-        N = nbins(M[:ttZCR__m4l__NOMINAL])
-        push!(hists, rebin(M[:ttZCR__m4l__NOMINAL], N))
+        N = nbins(M[:ZZCR__Njet__NOMINAL])
+        push!(hists, rebin(M[:ZZCR__Njet__NOMINAL], N))
+        N = nbins(M[:ttZCR__Njet__NOMINAL])
+        push!(hists, rebin(M[:ttZCR__Njet__NOMINAL], N))
 
         permutedims(hists) 
     end

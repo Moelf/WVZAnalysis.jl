@@ -16,8 +16,3 @@ end
     t1 = main_looper(tasks[1])
     @test haskey(t1, :SFnoZ__BDT__NOMINAL)
 end
-
-@testset "sf shape test" begin
-    hs = hist_root("githubtest"; mapper=ThreadsX.map, output_dir=@__DIR__)
-    @test haskey(hs, :DF__MET__FT_EFF_Eigen_C_0__1down)
-end

@@ -46,6 +46,8 @@ end
         sfsys::Bool = false
         shape_variation::String = "NOMINAL"
         controlregion::Symbol = :none
+        require_VHSig::Union{Nothing, Bool} = nothing
+        sel_Njet::Union{Nothing, Int} = nothing
     end
 
 Fully define a task to be run on an executor, by calling `main_looper(task::AnalysisTask)`; see also
@@ -94,16 +96,17 @@ struct AnalysisTask
     shape_variation::String
     controlregion::Symbol
     require_VHSig::Union{Nothing, Bool}
+    sel_Njet::Union{Nothing, Int}
     function AnalysisTask(; path, sumWeight, isdata=false, BDT_hist=true,
             arrow_making=false, sfsys=false, shape_variation="NOMINAL",
-            controlregion=:none, require_VHSig=nothing)
+            controlregion=:none, require_VHSig = nothing, sel_Njet = nothing)
         shapesys = (shape_variation != "NOMINAL")
         if sfsys && shapesys
             error("can't do SF systematic and Shape systematic at the same time")
         elseif arrow_making && BDT_hist
             error("can't produce arrow and NN histograms at the same time")
         else
-            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion, require_VHSig)
+            new(path, sumWeight, isdata, BDT_hist, arrow_making, sfsys, shape_variation, controlregion, require_VHSig, sel_Njet)
         end
     end
 end
@@ -162,13 +165,13 @@ function extrac_dsid(str)
     return match(r"(\d{6})", str).captures[1] #dsid
 end
 
-const _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
 """
     root_dirs(tag::AbstractString; variation = "sf")
 
 Reutrn a list of dir paths associated with a `tag` +sf or +shape
 """
 function root_dirs(tag::AbstractString; variation = "sf")
+    _LIST = joinpath(dirname(@__DIR__), "config/file_list.json") |> read |> JSON3.read
     folders = _LIST[tag]
     if lowercase(tag) == "data"
         sel1 = filter(readdir(MINITREE_DIR)) do folder_name
@@ -185,9 +188,6 @@ function root_dirs(tag::AbstractString; variation = "sf")
     end
 end
 
-"""
-multiple tags
-"""
 root_dirs(tags; variation = "sf") = mapreduce(x->root_dirs(x; variation), vcat, unique(tags))
 
 """
@@ -249,6 +249,18 @@ julia> length(all_nominal_tasks)
 ```
 """
 function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
+    sel_Njet = nothing
+    if startswith(tag, "ZZ")
+        sel_Njet = if startswith(tag, "ZZ0")
+            0
+        elseif startswith(tag, "ZZ1")
+            1
+        elseif startswith(tag, "ZZ2")
+            2
+        end
+        tag="ZZ"
+    end
+
     dirs = if shape_variation == "NOMINAL"
         root_dirs(tag; variation = "sf")
     else
@@ -269,6 +281,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
     else
         nothing
     end
+    
 
 
     files = mapreduce(vcat, dirs) do d
@@ -286,7 +299,7 @@ function prep_tasks(tag; shape_variation="NOMINAL", scouting=false, kw...)
         if occursin(r"345066", d)
             sumWeight *= (57.429000/3.368E-02)
         end
-        [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, kw...) for path in PATHS]
+        [AnalysisTask(; path, sumWeight, isdata, shape_variation, require_VHSig, sel_Njet, kw...) for path in PATHS]
     end
     files
 end
@@ -301,7 +314,7 @@ function dir_to_paths(dir_path; scouting = false)
 end
 
 """
-    arrow_making(tasks)
+    arrow_making(tasks; mapper = map)
 
 Take a collection of tasks, run them via `map` and `mergewith(append!)`.
 Returns a `dict` of vectors representing the datas after filtering.
@@ -319,9 +332,10 @@ end
 
 
 """
-    Running the main looper for a tag (e.g. VH, ttZ) to produce histogram
-    kw... takes anything that AnalysisTask takes.
+    hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
 
+Running the main looper for a tag (e.g. VH, ttZ) to produce histogram
+kw... takes anything that AnalysisTask takes.
 """
 function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     p = output_dir
@@ -356,6 +370,13 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     Hs
 end
 
+"""
+    arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
+
+Running the main looper for a tag (e.g. VH, ttZ) to produce arrow
+kw... takes anything that AnalysisTask takes.
+
+"""
 function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
     p = output_dir
     if !isdir(p)
@@ -447,9 +468,10 @@ function BDT_hist_init(; sfsys, shape_variation)
 
     bins = 0:5
     populate_hist!(_dict, shape_variation, (:SFinZ__Njet, :SFnoZ__Njet, :DF__Njet), bins, sfsys)
+    populate_hist!(_dict, shape_variation, (:ZZCR__Njet, :ttZCR__Njet), bins, sfsys)
 
     bins = 0:10:1000
-    populate_hist!(_dict, shape_variation, (:ZZCR__m4l, :ttZCR__m4l), bins, sfsys)
+    populate_hist!(_dict, shape_variation, (:ttZCR__m4l, ), bins, sfsys)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)
