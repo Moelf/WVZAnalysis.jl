@@ -1,3 +1,28 @@
+```@raw html
+---
+layout: home
+
+hero:
+  name: "WVZAnalysis.jl"
+  text: Run 2 VVZ analysis (4-lepton channel)
+  tagline: "ANA-STDM-2020-08"
+  image:
+    src: /logo.png
+    alt: DocumenterVitepress
+  actions:
+    - theme: brand
+      text: Walkthrough
+      link: /walkthrough
+    - theme: alt
+      text: APIs
+      link: /internalapis
+    - theme: alt
+      text: ATLAS-Glance
+      link: "https://atlas-glance.cern.ch/atlas/analysis/analyses/details.php?ref_code=ANA-STDM-2020-08"
+
+---
+```
+
 ## The Big Picture
 
 - like any Julia package, the source files are under [/src](https://github.com/Moelf/WVZAnalysis.jl/tree/master/src)

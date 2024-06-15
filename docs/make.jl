@@ -1,13 +1,13 @@
 using Documenter
+using DocumenterVitepress
 
 using WVZAnalysis, WVZReportExt
 
+repopath = "github.com/Moelf/WVZAnalysis.jl"
+
 makedocs(;
          modules=[WVZAnalysis, WVZReportExt],
-         format = Documenter.HTML(
-                                  prettyurls = get(ENV, "CI", nothing) == "true",
-                                  assets=String[],
-                                 ),
+         format=DocumenterVitepress.MarkdownVitepress(; repo = repopath, devbranch = "main", devurl = "dev"),
          pages=[
                 "Introduction" => "index.md",
                 "Internal APIs" => "internalapis.md",
@@ -19,5 +19,5 @@ makedocs(;
         )
 
 deploydocs(;
-           repo="github.com/Moelf/WVZAnalysis.jl",
+           repo=repopath
           )
