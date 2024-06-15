@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "eb225f550d946c2fda16cd1729ab052445e90dd2"
+project_hash = "41355ccee5b5ef5b87c0e2ddbb6c5e2d93e9f58c"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -469,6 +469,18 @@ deps = ["ANSIColoredPrinters", "AbstractTrees", "Base64", "CodecZlib", "Dates", 
 git-tree-sha1 = "5461b2a67beb9089980e2f8f25145186b6d34f91"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "1.4.1"
+
+[[deps.DocumenterVitepress]]
+deps = ["ANSIColoredPrinters", "Base64", "DocStringExtensions", "Documenter", "IOCapture", "Markdown", "NodeJS_20_jll", "REPL"]
+git-tree-sha1 = "a58b1681c9d3ef9f5842ac86c13f9f5b8ff2eee6"
+uuid = "4710194d-e776-4893-9690-8d956a29c365"
+version = "0.1.1"
+
+    [deps.DocumenterVitepress.extensions]
+    DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+
+    [deps.DocumenterVitepress.weakdeps]
+    DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
@@ -1281,6 +1293,12 @@ version = "1.1.1"
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[deps.NodeJS_20_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "0b1b4a83773cfdefa5d9dc0322e4c0624ce88b5b"
+uuid = "c7aee132-11e1-519c-8219-0a43005e73c2"
+version = "20.12.2+0"
 
 [[deps.Observables]]
 git-tree-sha1 = "7438a59546cf62428fc9d1bc94729146d37a7225"
