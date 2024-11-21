@@ -1,5 +1,5 @@
-const SIG_TAGS = ("Signal_WWZ", "Signal_WZZ", "Signal_ZZZ", "Signal_ZH_ZWW", "Signal_WH_WZZ", "Signal_ZH_ZZZ")
-const BKG_TAGS = ("ZZ0j", "ZZ1j", "ZZ2plusj",
+const SIG_TAGS = ("Signal", "Signal_WWZ", "Signal_WZZ", "Signal_ZZZ", "Signal_ZH_ZWW", "Signal_WH_WZZ", "Signal_ZH_ZZZ")
+const BKG_TAGS = ("ZZ0j", "ZZ1j", "ZZ2plusj", "ZZ",
  # "Zjets",
  # "ttbar",
  # "WZ",

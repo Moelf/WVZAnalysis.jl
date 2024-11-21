@@ -16,6 +16,8 @@ JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LorentzVectorHEP = "f612022c-142a-473f-8cfd-a09cf3793c6c"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
+ParallelProcessingTools = "8e8a01fc-6193-5ca1-a2f1-20776dae4199"
 Parallelism = "c8c83da1-e5f9-4e2c-a857-b8617bac3554"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
@@ -31,8 +33,9 @@ XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 
 [compat]
 ClusterManagers = "0.4"
-FHist = "0.10"
+FHist = "0.10, 0.11"
 Measurements = "2"
+OhMyThreads = "0.7.0"
 UnROOT = "^0.10.17"
 
 [extras]

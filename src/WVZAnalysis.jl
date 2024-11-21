@@ -3,7 +3,7 @@ module WVZAnalysis
 using Preferences
 
 using UnROOT, FHist, LinearAlgebra, LorentzVectorHEP, SentinelArrays, JSON3, ProgressMeter, Arrow
-using XGBoost, Parallelism, Serialization, ThreadsX
+using XGBoost, Parallelism, Serialization, ThreadsX, OhMyThreads
 
 import Parallelism
 import ProgressMeter

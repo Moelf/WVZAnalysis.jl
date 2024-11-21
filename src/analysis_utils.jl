@@ -215,12 +215,12 @@ function sumsumWeight(dir_path)
     if contains(dir_path, "2.4.1sf")
         res /= 2
     end
-    # try
+    try
     open(cache, "w") do io
         println(io, res)
     end
-    # catch
-    # end
+    catch
+    end
     return res
 end
 
@@ -357,9 +357,12 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
     else
         @info "-------------- !!! $tag !!! ------------ "
     end
-    println("$(length(all_tasks)) tasks in total")
-    all_list = progress_map(all_tasks; mapfun) do task
+    n = length(all_tasks)
+    println("$n tasks in total")
+    pm = Progress(n; dt=1.0)
+    all_list = mapfun(all_tasks) do task
         _m = main_looper(task)
+        next!(pm)
         return _m
     end
     # TODO
@@ -371,13 +374,13 @@ function hist_main(tag; mapfun=robust_pmap, no_shape = false, output_dir, kw...)
 end
 
 """
-    arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
+    arrow_main(tag; mapfun=OhMyThreads.tmap, output_dir, kw...)
 
 Running the main looper for a tag (e.g. VH, ttZ) to produce arrow
 kw... takes anything that AnalysisTask takes.
 
 """
-function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
+function arrow_main(tag; mapfun=OhMyThreads.tmap, output_dir, kw...)
     p = output_dir
     if !isdir(p)
         mkdir(p)
@@ -389,9 +392,12 @@ function arrow_main(tag; mapfun=ThreadsX.map, output_dir, kw...)
     else
         @info "-------------- !!! $tag !!! ------------ "
     end
-    println("$(length(all_tasks)) tasks in total")
-    all_list = progress_map(all_tasks; mapfun) do task
+    n = length(all_tasks)
+    println("$n tasks in total")
+    pm = Progress(n; dt=1.0)
+    all_list = mapfun(all_tasks) do task
         _m = main_looper(task)
+        next!(pm)
         return _m
     end
 
@@ -472,6 +478,68 @@ function BDT_hist_init(; sfsys, shape_variation)
 
     bins = 0:10:1000
     populate_hist!(_dict, shape_variation, (:ttZCR__m4l, ), bins, sfsys)
+
+    leptonic_HT_names = (Symbol(x, :__leptonic_HT) for x in (:SFinZ, :SFnoZ, :DF))
+    HT_names = (Symbol(x, :__HT) for x in (:SFinZ, :SFnoZ, :DF))
+    total_HT_names = (Symbol(x, :__total_HT) for x in (:SFinZ, :SFnoZ, :DF))
+    MET_names = (Symbol(x, :__MET) for x in (:SFinZ, :SFnoZ, :DF))
+    METsig_names = (Symbol(x, :__METsig) for x in (:SFinZ, :SFnoZ, :DF))
+    METdphi_names = (Symbol(x, :__METdphi) for x in (:SFinZ, :SFnoZ, :DF))
+    Z_mass_names = (Symbol(x, :__Z_mass) for x in (:SFinZ, :SFnoZ, :DF))
+    WW_mass_names = (Symbol(x, :__WW_mass) for x in (:SFinZ, :SFnoZ, :DF))
+    pt4l_names = (Symbol(x, :__pt4l) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_pt1_names = (Symbol(x, :__Wl_pt1) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_pt2_names = (Symbol(x, :__Wl_pt2) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_eta1_names = (Symbol(x, :__Wl_eta1) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_eta2_names = (Symbol(x, :__Wl_eta2) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_pt1_names = (Symbol(x, :__Zl_pt1) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_pt2_names = (Symbol(x, :__Zl_pt2) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_eta1_names = (Symbol(x, :__Zl_eta1) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_eta2_names = (Symbol(x, :__Zl_eta2) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_dphi1_names = (Symbol(x, :__Zl_dphi1) for x in (:SFinZ, :SFnoZ, :DF))
+    Zl_dphi2_names = (Symbol(x, :__Zl_dphi2) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_dphi1_names = (Symbol(x, :__Wl_dphi1) for x in (:SFinZ, :SFnoZ, :DF))
+    Wl_dphi2_names = (Symbol(x, :__Wl_dphi2) for x in (:SFinZ, :SFnoZ, :DF))
+
+
+    bins = range(length=101, start=0, stop=1000);
+    populate_hist!(_dict, shape_variation, leptonic_HT_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, HT_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, total_HT_names, bins, sfsys)
+    bins = range(length=101, start=0, stop=400);
+    populate_hist!(_dict, shape_variation, MET_names, bins, sfsys)
+    bins = range(length=101, start=0, stop=100);
+    populate_hist!(_dict, shape_variation, METsig_names, bins, sfsys)
+    bins = range(length=101, start=-3.14, stop=3.14);
+    populate_hist!(_dict, shape_variation, METdphi_names, bins, sfsys)
+    bins = range(length=101, start=0, stop=400);
+    populate_hist!(_dict, shape_variation, Z_mass_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, WW_mass_names, bins, sfsys)
+
+    bins = range(length=101, start=0, stop=1000);
+    populate_hist!(_dict, shape_variation, pt4l_names, bins, sfsys)
+
+    bins = range(length=101, start=0, stop=400);
+    populate_hist!(_dict, shape_variation, Wl_pt1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Wl_pt2_names, bins, sfsys)
+
+    bins = range(length=31, start=-3, stop=3);
+    populate_hist!(_dict, shape_variation, Wl_eta1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Wl_eta2_names, bins, sfsys)
+
+    bins = range(length=101, start=0, stop=400);
+    populate_hist!(_dict, shape_variation, Zl_pt1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Zl_pt2_names, bins, sfsys)
+
+    bins = range(length=31, start=-3, stop=3);
+    populate_hist!(_dict, shape_variation, Zl_eta1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Zl_eta2_names, bins, sfsys)
+
+    bins = range(length=41, start=-3.14, stop=3.14);
+    populate_hist!(_dict, shape_variation, Zl_dphi1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Zl_dphi2_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Wl_dphi1_names, bins, sfsys)
+    populate_hist!(_dict, shape_variation, Wl_dphi2_names, bins, sfsys)
 
     _dict[:CutFlow] = Hist1D(Int; bins=1:20)
     _dict[:CutFlowWgt] = Hist1D(Float64; bins=1:20)

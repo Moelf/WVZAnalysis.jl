@@ -28,7 +28,7 @@ function main_looper(task::AnalysisTask)
     mytree = try
         LazyTree(path, "tree_" * shape_variation)
     catch
-        println(shape_variation, "not found in $path")
+        println(shape_variation, " not found in $path")
     end
 
     models = arrow_making ? nothing : init_BDT()
@@ -304,6 +304,27 @@ function main_looper(mytree, sumWeight, dict, models,
                     push!(dict[Symbol(region_prefix, :__BDT, :__, k)], NN_score, v)
                     push!(dict[Symbol(region_prefix, :__MET, :__, k)], MET, v)
                     push!(dict[Symbol(region_prefix, :__Njet, :__, k)], Njet, v)
+                    push!(dict[Symbol(region_prefix, :__leptonic_HT, :__, k)], leptonic_HT, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_dphi1, :__, k)], Zlep1_dphi, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_pt1, :__, k)], Wlep1_pt, v)
+                    push!(dict[Symbol(region_prefix, :__total_HT, :__, k)], total_HT, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_dphi2, :__, k)], Zlep2_dphi, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_eta2, :__, k)], Zlep2_eta, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_eta2, :__, k)], Wlep2_eta, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_pt2, :__, k)], Zlep2_pt, v)
+                    push!(dict[Symbol(region_prefix, :__METsig, :__, k)], METSig, v)
+                    push!(dict[Symbol(region_prefix, :__WW_mass, :__, k)], other_mass, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_dphi1, :__, k)], Wlep1_dphi, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_pt1, :__, k)], Zlep1_pt, v)
+                    # push!(dict[Symbol(region_prefix, :__mass_4l, :__, k)], mass_4l, v)
+                    push!(dict[Symbol(region_prefix, :__pt4l, :__, k)], pt_4l, v)
+                    push!(dict[Symbol(region_prefix, :__Zl_eta1, :__, k)], Zlep1_eta, v)
+                    push!(dict[Symbol(region_prefix, :__total_HT, :__, k)], HT, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_eta1, :__, k)], Wlep1_eta, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_dphi2, :__, k)], Wlep2_dphi, v)
+                    push!(dict[Symbol(region_prefix, :__Z_mass, :__, k)], Zcand_mass, v)
+                    push!(dict[Symbol(region_prefix, :__Wl_pt2, :__, k)], Wlep2_pt, v)
+                    push!(dict[Symbol(region_prefix, :__METdphi, :__, k)], MET_dPhi, v)
                 end
             end
 
